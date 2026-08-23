@@ -1,0 +1,145 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css');
+@import "tailwindcss";
+
+/* ============================================================================
+   Reread — 디자인 토큰
+   ----------------------------------------------------------------------------
+   Wanted Design System(_ds/wanted-design-system-813460a7…)의 primitive/semantic
+   토큰을 그대로 옮겼다. 값을 새로 만들지 않는다 — 모바일 화면과 같은 팔레트를
+   쓰는 것이 웹 디자인의 전제다.
+   ========================================================================== */
+
+:root {
+  /* --- primitive -------------------------------------------------------- */
+  --blue-50: #0066ff;
+  --blue-45: #005eeb;
+  --violet-50: #6541f2;
+  --violet-55: #5b37ed;
+  --green-50: #00bf40;
+  --green-45: #00a537;
+  --orange-50: #ff9200;
+  --red-50: #ff4242;
+  --cyan-50: #00a8e8;
+
+  /* --- brand ------------------------------------------------------------ */
+  --color-primary: var(--blue-50);
+  --color-primary-strong: var(--blue-45);
+  --color-primary-bg: rgba(0, 102, 255, 0.06);
+  --color-primary-line: rgba(0, 102, 255, 0.2);
+  --color-accent: var(--violet-50);
+
+  /* --- text ------------------------------------------------------------- */
+  --text-primary: #171717;
+  --text-neutral: rgba(23, 23, 25, 0.88);
+  --text-secondary: rgba(23, 23, 25, 0.61);
+  --text-meta: rgba(23, 23, 25, 0.45);
+  --text-assistive: rgba(23, 23, 25, 0.28);
+  --text-on-ink: #ffffff;
+  --text-on-ink-muted: rgba(255, 255, 255, 0.5);
+  --text-on-ink-faint: rgba(255, 255, 255, 0.35);
+
+  /* --- surface ---------------------------------------------------------- */
+  --surface-base: #ffffff;
+  --surface-alt: #f7f7f8;
+  --surface-card: #ffffff;
+  --surface-ink: #0f0f10;
+  --surface-page: #efede8; /* 종이 — 촬영된 책 페이지 */
+
+  /* --- fill / line ------------------------------------------------------ */
+  --fill-subtle: rgba(112, 115, 124, 0.05);
+  --fill-default: rgba(112, 115, 124, 0.08);
+  --fill-bold: rgba(112, 115, 124, 0.16);
+  --fill-on-ink: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(112, 115, 124, 0.08);
+  --border-default: rgba(112, 115, 124, 0.12);
+  --border-strong: rgba(112, 115, 124, 0.22);
+  --border-on-ink: rgba(255, 255, 255, 0.1);
+
+  /* --- status ----------------------------------------------------------- */
+  --status-positive: var(--green-50);
+  --status-positive-text: var(--green-45);
+  --status-cautionary: var(--orange-50);
+  --status-negative: var(--red-50);
+
+  /* --- elevation -------------------------------------------------------- */
+  --shadow-sm: 0 1px 3px rgba(23, 23, 23, 0.07), 0 1px 2px rgba(23, 23, 23, 0.06);
+  --shadow-md: 0 4px 12px rgba(23, 23, 23, 0.08);
+  --shadow-lg: 0 8px 28px rgba(23, 23, 23, 0.1);
+  --shadow-cover: 0 12px 24px rgba(23, 23, 23, 0.18);
+  --shadow-primary: 0 8px 20px rgba(0, 102, 255, 0.24);
+
+  /* --- radius ----------------------------------------------------------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+}
+
+@theme inline {
+  /* 한국어·UI는 Pretendard */
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+  /* 책에서 온 영어 원문만 세리프 — Reread의 타이포 규칙 */
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, serif;
+}
+
+/* ============================================================================
+   Wanted 타입 램프 — 크기·행간·자간이 한 벌로 묶여 있다.
+   ========================================================================== */
+@layer components {
+  .wds-title-1 { font: 700 32px/44px var(--font-sans); letter-spacing: -0.0253em; }
+  .wds-title-2 { font: 700 28px/38px var(--font-sans); letter-spacing: -0.0236em; }
+  .wds-title-3 { font: 700 24px/32px var(--font-sans); letter-spacing: -0.023em; }
+  .wds-heading-1 { font: 600 22px/30px var(--font-sans); letter-spacing: -0.0194em; }
+  .wds-heading-2 { font: 600 20px/28px var(--font-sans); letter-spacing: -0.012em; }
+  .wds-headline-1 { font: 600 18px/26px var(--font-sans); letter-spacing: -0.002em; }
+  .wds-headline-2 { font: 600 17px/24px var(--font-sans); letter-spacing: 0; }
+  .wds-body-1 { font: 500 16px/24px var(--font-sans); letter-spacing: 0.0057em; }
+  .wds-body-1-reading { font: 500 16px/26px var(--font-sans); letter-spacing: 0.0057em; }
+  .wds-body-2 { font: 500 15px/22px var(--font-sans); letter-spacing: 0.0096em; }
+  .wds-body-2-reading { font: 500 15px/24px var(--font-sans); letter-spacing: 0.0096em; }
+  .wds-label-1 { font: 500 14px/20px var(--font-sans); letter-spacing: 0.0145em; }
+  .wds-label-2 { font: 500 13px/18px var(--font-sans); letter-spacing: 0.0194em; }
+  .wds-caption-1 { font: 500 12px/16px var(--font-sans); letter-spacing: 0.0252em; }
+  .wds-caption-2 { font: 500 11px/14px var(--font-sans); letter-spacing: 0.0311em; }
+}
+
+/* ============================================================================
+   원문(quote) — 책에서 그대로 옮겨온 영어. 앱이 하는 말과 구별된다.
+   ========================================================================== */
+@layer components {
+  .quote {
+    font-family: var(--font-serif);
+    font-feature-settings: "liga" 1, "kern" 1;
+    text-wrap: pretty;
+  }
+}
+
+body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.0057em;
+}
+
+::selection {
+  background: rgba(0, 102, 255, 0.16);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
