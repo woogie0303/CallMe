@@ -3,6 +3,8 @@ export type ReadingProgress = {
   currentPage: number;
   totalPages: number;
   chapter: string;
+  /** 이 책을 펴기 시작한 날 */
+  startedLabel: string;
   lastReadLabel: string;
 };
 
@@ -11,6 +13,7 @@ export const CURRENT_READING: ReadingProgress = {
   currentPage: 132,
   totalPages: 303,
   chapter: 'Chapter 12',
+  startedLabel: '2026. 2. 1. 부터',
   lastReadLabel: '어제 읽었어요',
 };
 

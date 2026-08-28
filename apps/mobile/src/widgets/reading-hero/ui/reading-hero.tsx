@@ -1,104 +1,130 @@
 import { StyleSheet, View } from 'react-native';
 
-import { BookCover } from '@/entities/book/ui/book-cover';
 import type { Book } from '@/entities/book/model/types';
+import { BookCover } from '@/entities/book/ui/book-cover';
+import { SpineRibbon } from '@/entities/book/ui/spine-ribbon';
 import type { ReadingProgress } from '@/entities/reading/model/mock';
 import { color, type } from '@/shared/config';
-import { AppText, Icon, InkPanel, ProgressBar, Tap , CameraIcon } from '@/shared/ui';
+import { AppText, CameraIcon, Icon, InkPanel, ProgressBar, Quote, Tap } from '@/shared/ui';
 
 /**
- * 홈에서 가장 먼저 보이는 것. 지금 읽는 책 하나와,
- * 그 책에 대고 바로 말을 걸 수 있는 입력 한 줄.
+ * 홈에서 가장 먼저 보이는 것 — 지금 읽는 책 한 권.
+ *
+ * 짜임새는 북모리의 '읽고 있는 책' 카드에서 가져왔다: 위쪽에 꽂힌 책갈피,
+ * 왼쪽 표지, 오른쪽에 언제부터 어디까지, 그리고 모서리에 지금 할 수 있는 일.
+ * 다만 표면은 잉크다 — 이 앱에서 잉크 판은 '지금 집중할 것 하나'의 자리이고,
+ * 홈에는 그런 게 이 카드뿐이다.
  */
 export function ReadingHero({
   book,
   progress,
-  onWriteMemo,
-  onCapture,
+  savedCount,
   onPressBook,
+  onAsk,
+  onCapture,
 }: {
   book: Book;
   progress: ReadingProgress;
-  onWriteMemo?: () => void;
-  onCapture?: () => void;
+  /** 이 책에서 담아둔 어휘 항목 수 */
+  savedCount: number;
   onPressBook?: () => void;
+  onAsk?: () => void;
+  onCapture?: () => void;
 }) {
   const ratio = progress.currentPage / progress.totalPages;
-  const percent = Math.round(ratio * 100);
 
   return (
     <InkPanel style={styles.panel}>
-      <View style={styles.top}>
+      <View style={styles.ribbon}>
+        <SpineRibbon book={book} />
+      </View>
+
+      <Tap onPress={onPressBook} style={styles.titleBlock}>
+        <Quote style={styles.title}>{book.title}</Quote>
+        <AppText style={styles.author}>{book.author}</AppText>
+      </Tap>
+
+      <View style={styles.row}>
         <Tap onPress={onPressBook}>
-          <BookCover book={book} width={76} height={104} radius={10} />
+          <BookCover book={book} width={78} height={108} radius={10} showTitle={false} />
         </Tap>
+
         <View style={styles.meta}>
-          <AppText style={styles.eyebrow}>읽고 있는 책</AppText>
-          <AppText style={styles.title}>{book.title}</AppText>
-          <AppText style={styles.author}>{book.author}</AppText>
+          <View style={styles.when}>
+            <AppText style={styles.started}>{progress.startedLabel}</AppText>
+            <AppText style={styles.status}>{progress.lastReadLabel}</AppText>
+          </View>
+
           <View style={styles.progress}>
             <ProgressBar value={ratio} track={color.fill.onInk} />
             <AppText style={styles.progressLabel}>
-              p.{progress.currentPage} / {progress.totalPages} · {percent}% ·{' '}
-              {progress.lastReadLabel}
+              p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}%
+            </AppText>
+          </View>
+
+          <View style={styles.saved}>
+            <Icon name="bookmark" size={13} color={color.text.onInkMeta} />
+            <AppText style={styles.savedLabel}>
+              {savedCount > 0 ? `담아둔 표현 ${savedCount}개` : '아직 담은 표현 없음'}
             </AppText>
           </View>
         </View>
       </View>
 
-      <Tap style={styles.composer} onPress={onWriteMemo}>
-        <AppText style={styles.placeholder}>이 책에 대한 메모를 남겨보세요</AppText>
-        <Tap style={styles.ghostButton} onPress={onCapture} hitSlop={6}>
-          <CameraIcon size={17} color={color.text.onInkBody} />
+      {/* 이 책에 대고 지금 할 수 있는 일 둘 — 찍어서 묻기, 적어서 묻기 */}
+      <View style={styles.actions}>
+        <Tap style={styles.action} onPress={onCapture} accessibilityLabel="페이지 촬영">
+          <CameraIcon size={19} color={color.text.onInk} />
         </Tap>
-        <View style={styles.sendButton}>
-          <Icon name="send" size={15} color={color.text.onInk} />
-        </View>
-      </Tap>
+        <View style={styles.divider} />
+        <Tap style={styles.action} onPress={onAsk} accessibilityLabel="문장 물어보기">
+          <Icon name="write" size={18} color={color.text.onInk} />
+        </Tap>
+      </View>
     </InkPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  panel: { padding: 20, gap: 14, borderRadius: 28 },
-  top: { flexDirection: 'row', gap: 16 },
-  meta: { flex: 1, gap: 8, minWidth: 0, paddingTop: 2 },
-  eyebrow: { ...type.caption2, fontWeight: '600', color: color.text.onInkMeta },
-  title: {
-    ...type.headline1,
-    fontWeight: '700',
-    color: color.text.onInk,
-    letterSpacing: -0.36,
-    lineHeight: 23,
+  panel: {
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 20,
+    borderRadius: 28,
   },
-  author: { ...type.caption1, color: color.text.onInkSecondary },
-  progress: { gap: 5, marginTop: 'auto' },
+  /** 카드 윗변에 걸치도록 위쪽 패딩 없이 흘려 넣는다 */
+  ribbon: { marginBottom: 14 },
+
+  titleBlock: { gap: 4, marginBottom: 16 },
+  title: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '600',
+    color: color.text.onInk,
+    letterSpacing: -0.2,
+  },
+  author: { ...type.caption1, color: color.text.onInkMeta },
+
+  row: { flexDirection: 'row', gap: 16 },
+  meta: { flex: 1, minWidth: 0, gap: 12, paddingTop: 2 },
+  when: { gap: 3 },
+  started: { ...type.caption1, color: color.text.onInkMeta },
+  status: { ...type.label2, fontWeight: '600', color: color.text.onInkBody },
+  progress: { gap: 6 },
   progressLabel: { ...type.caption2, color: color.text.onInkMeta },
-  composer: {
+  saved: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  savedLabel: { ...type.caption2, color: color.text.onInkMeta },
+
+  actions: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: color.fill.onInk,
-    paddingLeft: 16,
-    paddingRight: 8,
-  },
-  placeholder: { flex: 1, ...type.label2, color: color.text.onInkAssistive },
-  ghostButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    borderRadius: 16,
     backgroundColor: color.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
+  action: { width: 48, height: 44, alignItems: 'center', justifyContent: 'center' },
+  divider: { width: StyleSheet.hairlineWidth, height: 22, backgroundColor: 'rgba(255,255,255,0.28)' },
 });

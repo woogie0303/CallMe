@@ -58,6 +58,3 @@ export const BOOKS: Book[] = [
 ];
 
 export const bookById = (id: string) => BOOKS.find((b) => b.id === id);
-
-/** 다음에 읽어볼 만한 책 — 지금 읽는 책은 뺀다. */
-export const NEXT_BOOKS = BOOKS.filter((b) => b.id !== 'klara');
