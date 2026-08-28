@@ -54,12 +54,7 @@ export function BookDetail({
       </View>
 
       {items.length ? (
-        <ItemShelf
-          items={items}
-          total={items.length}
-          title="이 책에서 담은 표현"
-          onPressItem={onOpenItem}
-        />
+        <ItemShelf items={items} onPressItem={onOpenItem} />
       ) : null}
 
       {liked.length ? (
