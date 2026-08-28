@@ -6,6 +6,7 @@ export { CameraIcon, Icon, MicIcon, type FilledIconName } from './icon';
 export { Tap } from './pressable-row';
 export { PageThumb } from './page-thumb';
 export { ProgressBar } from './progress-bar';
+export { SearchField } from './search-field';
 export { HeaderAction, ScreenHeader } from './screen-header';
 export { SectionHeader } from './section-header';
 export { AppText, Quote, emphasis } from './text';
