@@ -1,32 +1,33 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from "react-native";
 
-import type { Book } from '@/entities/book/model/types';
-import { BookCover } from '@/entities/book/ui/book-cover';
-import { SpineRibbon } from '@/entities/book/ui/spine-ribbon';
-import type { ReadingProgress } from '@/entities/reading/model/mock';
-import { color, type } from '@/shared/config';
-import { AppText, CameraIcon, Icon, InkPanel, ProgressBar, Quote, Tap } from '@/shared/ui';
+import type { Book } from "@/entities/book/model/types";
+import { BookCover } from "@/entities/book/ui/book-cover";
+import type { ReadingProgress } from "@/entities/reading/model/mock";
+import { color, type } from "@/shared/config";
+import {
+  AppText,
+  CameraIcon,
+  Icon,
+  ProgressBar,
+  Quote,
+  Tap,
+} from "@/shared/ui";
 
 /**
  * 홈에서 가장 먼저 보이는 것 — 지금 읽는 책 한 권.
  *
- * 짜임새는 북모리의 '읽고 있는 책' 카드에서 가져왔다: 위쪽에 꽂힌 책갈피,
- * 왼쪽 표지, 오른쪽에 언제부터 어디까지, 그리고 모서리에 지금 할 수 있는 일.
- * 다만 표면은 잉크다 — 이 앱에서 잉크 판은 '지금 집중할 것 하나'의 자리이고,
- * 홈에는 그런 게 이 카드뿐이다.
+ * 화면 높이에 억지로 맞추지 않는다. 채울 내용이 없는데 판만 늘리면
+ * 그만큼이 빈자리로 남는다 — 내용이 정하는 높이가 곧 이 판의 높이다.
  */
 export function ReadingHero({
   book,
   progress,
-  savedCount,
   onPressBook,
   onAsk,
   onCapture,
 }: {
   book: Book;
   progress: ReadingProgress;
-  /** 이 책에서 담아둔 어휘 항목 수 */
-  savedCount: number;
   onPressBook?: () => void;
   onAsk?: () => void;
   onCapture?: () => void;
@@ -34,97 +35,102 @@ export function ReadingHero({
   const ratio = progress.currentPage / progress.totalPages;
 
   return (
-    <InkPanel style={styles.panel}>
-      <View style={styles.ribbon}>
-        <SpineRibbon book={book} />
-      </View>
-
-      <Tap onPress={onPressBook} style={styles.titleBlock}>
-        <Quote style={styles.title}>{book.title}</Quote>
-        <AppText style={styles.author}>{book.author}</AppText>
-      </Tap>
-
+    <View style={styles.panel}>
       <View style={styles.row}>
-        <Tap onPress={onPressBook}>
-          <BookCover book={book} width={78} height={108} radius={10} showTitle={false} />
-        </Tap>
+        <View style={styles.left}>
+          <Tap onPress={onPressBook} style={styles.titleBlock}>
+            <Quote style={styles.title}>{book.title}</Quote>
+            <AppText style={styles.author}>{book.author}</AppText>
+          </Tap>
 
-        <View style={styles.meta}>
-          <View style={styles.when}>
-            <AppText style={styles.started}>{progress.startedLabel}</AppText>
-            <AppText style={styles.status}>{progress.lastReadLabel}</AppText>
-          </View>
-
-          <View style={styles.progress}>
-            <ProgressBar value={ratio} track={color.fill.onInk} />
-            <AppText style={styles.progressLabel}>
-              p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}%
-            </AppText>
-          </View>
-
-          <View style={styles.saved}>
-            <Icon name="bookmark" size={13} color={color.text.onInkMeta} />
-            <AppText style={styles.savedLabel}>
-              {savedCount > 0 ? `담아둔 표현 ${savedCount}개` : '아직 담은 표현 없음'}
-            </AppText>
+          {/* 이 책에 대고 지금 할 수 있는 일 둘 — 찍어서 묻기, 적어서 묻기 */}
+          <View style={styles.actions}>
+            <Tap
+              style={styles.action}
+              onPress={onCapture}
+              accessibilityLabel="페이지 촬영"
+            >
+              <CameraIcon size={19} color={color.text.onInk} />
+            </Tap>
+            <View style={styles.divider} />
+            <Tap
+              style={styles.action}
+              onPress={onAsk}
+              accessibilityLabel="문장 물어보기"
+            >
+              <Icon name="write" size={18} color={color.text.onInk} />
+            </Tap>
           </View>
         </View>
+
+        <Tap onPress={onPressBook} style={styles.coverTap}>
+          <BookCover
+            book={book}
+            width={130}
+            height={200}
+            radius={10}
+            showTitle={false}
+          />
+        </Tap>
       </View>
 
-      {/* 이 책에 대고 지금 할 수 있는 일 둘 — 찍어서 묻기, 적어서 묻기 */}
-      <View style={styles.actions}>
-        <Tap style={styles.action} onPress={onCapture} accessibilityLabel="페이지 촬영">
-          <CameraIcon size={19} color={color.text.onInk} />
-        </Tap>
-        <View style={styles.divider} />
-        <Tap style={styles.action} onPress={onAsk} accessibilityLabel="문장 물어보기">
-          <Icon name="write" size={18} color={color.text.onInk} />
-        </Tap>
+      <View style={styles.progress}>
+        <ProgressBar value={ratio} />
+        <AppText style={styles.progressLabel}>
+          p.{progress.currentPage} / {progress.totalPages} ·{" "}
+          {Math.round(ratio * 100)}% · {progress.lastReadLabel}
+        </AppText>
       </View>
-    </InkPanel>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  /** 화면 높이에 맞추지 않는다 — 내용만큼만 쓴다 */
   panel: {
     paddingHorizontal: 20,
-    paddingTop: 0,
-    paddingBottom: 20,
-    borderRadius: 28,
+    gap: 20,
+    marginBottom: 10,
   },
-  /** 카드 윗변에 걸치도록 위쪽 패딩 없이 흘려 넣는다 */
-  ribbon: { marginBottom: 14 },
 
-  titleBlock: { gap: 4, marginBottom: 16 },
+  /**
+   * 왼쪽 칸을 표지 높이만큼 늘리고, 그 안에서 제목은 위·버튼은 아래로 벌린다.
+   * 표지의 윗변·밑변과 글이 같은 선에서 만나 네모 하나로 읽힌다.
+   */
+  row: { flexDirection: "row", gap: 16, alignItems: "stretch" },
+  left: { flex: 1, minWidth: 0, alignSelf: "flex-end", gap: 16 },
+  /** 표지는 제 높이(200)만 쓴다 — stretch에 딸려 늘어나지 않게 못 박는다 */
+  coverTap: { alignSelf: "flex-start" },
+  titleBlock: { gap: 4 },
   title: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '600',
-    color: color.text.onInk,
-    letterSpacing: -0.2,
+    fontSize: 24,
+    lineHeight: 31,
+    fontWeight: "600",
+    color: color.text.primary,
+    letterSpacing: -0.3,
   },
-  author: { ...type.caption1, color: color.text.onInkMeta },
-
-  row: { flexDirection: 'row', gap: 16 },
-  meta: { flex: 1, minWidth: 0, gap: 12, paddingTop: 2 },
-  when: { gap: 3 },
-  started: { ...type.caption1, color: color.text.onInkMeta },
-  status: { ...type.label2, fontWeight: '600', color: color.text.onInkBody },
-  progress: { gap: 6 },
-  progressLabel: { ...type.caption2, color: color.text.onInkMeta },
-  saved: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  savedLabel: { ...type.caption2, color: color.text.onInkMeta },
+  author: { ...type.label2, color: color.text.secondary },
 
   actions: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderRadius: 14,
     backgroundColor: color.primary,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  action: { width: 48, height: 44, alignItems: 'center', justifyContent: 'center' },
-  divider: { width: StyleSheet.hairlineWidth, height: 22, backgroundColor: 'rgba(255,255,255,0.28)' },
+  action: {
+    width: 52,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  divider: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
+    backgroundColor: "rgba(255,255,255,0.28)",
+  },
+
+  progress: { gap: 6 },
+  progressLabel: { ...type.caption2, color: color.text.meta },
 });
