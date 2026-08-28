@@ -10,6 +10,11 @@ export type Book = {
    * 문장·표현 카드가 이 색을 물려받아 라벨 없이 어느 책인지 알려준다.
    */
   spine: readonly [string, string];
+  /**
+   * 실제 표지 이미지. 못 받아오면 책등 그라디언트가 그대로 남는다 —
+   * 표지는 있으면 좋은 것이고, 출처를 말하는 일은 여전히 책등 색이 한다.
+   */
+  cover?: string;
   genre?: string;
   level?: '쉬움' | '보통' | '어려움';
   rating?: number;
