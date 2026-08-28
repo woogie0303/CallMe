@@ -6,7 +6,7 @@ import { ASK_QUOTA, PENDING_ASKS, remaining } from '@/entities/ask/model/mock';
 import { isReencountered } from '@/entities/lexical-item/lib/select';
 import { ITEMS } from '@/entities/lexical-item/model/mock';
 import { READER } from '@/entities/reader/model/mock';
-import { READING_QUARTER } from '@/entities/reading/model/mock';
+import { READING_WEEK } from '@/entities/reading/model/mock';
 import { color, type } from '@/shared/config';
 import { AltPanel, AppText, Icon, ProgressBar, Tap } from '@/shared/ui';
 
@@ -72,7 +72,7 @@ export default function MyScreen() {
           <Row label="담아둔 표현" value={`${ITEMS.length}개`} />
           <Row label="아직 헷갈리는 표현" value={`${confused}개`} />
           <Row label="다시 만난 표현" value={`${again}개`} />
-          <Row label="이번 분기에 읽은 날" value={`${READING_QUARTER.days}일`} />
+          <Row label="이번 주에 읽은 날" value={`${READING_WEEK.days}일`} />
         </AltPanel>
       </ScrollView>
     </View>
