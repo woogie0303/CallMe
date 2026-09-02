@@ -7,7 +7,7 @@ import { latestEncounter, todayItem } from '@/entities/lexical-item/lib/select';
 import { CURRENT_READING, READING_WEEK } from '@/entities/reading/model/mock';
 import { color } from '@/shared/config';
 import { SearchTile } from '@/shared/ui';
-import { ReadingHero } from '@/widgets/reading-hero/ui/reading-hero';
+import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ReadingWeekChart } from '@/widgets/reading-week/ui/reading-week';
 import { TodayItem } from '@/widgets/today-item/ui/today-item';
 
@@ -37,7 +37,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 6 }]}>
       <View style={styles.stack}>
-        <ReadingHero
+        <BookHero
           book={book}
           progress={CURRENT_READING}
           onPressBook={openBook}

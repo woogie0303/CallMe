@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { Book } from '@/entities/book/model/types';
-import { BookCover } from '@/entities/book/ui/book-cover';
 import { itemsFromBook, likedSentencesOf } from '@/entities/lexical-item/lib/select';
 import type { ReadingProgress } from '@/entities/reading/model/mock';
 import { RETELL_SESSION } from '@/entities/retell/model/mock';
-import { color, shadow, type } from '@/shared/config';
-import { AppText, ProgressBar } from '@/shared/ui';
+import { color, type } from '@/shared/config';
+import { AppText } from '@/shared/ui';
+import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ItemShelf } from '@/widgets/item-shelf/ui/item-shelf';
 import { SentenceShelf } from '@/widgets/sentence-shelf/ui/sentence-shelf';
 import { BookRetell } from './book-retell';
@@ -22,50 +22,35 @@ import { BookTabs, type BookTab } from './book-tabs';
  * 것이라, 위아래로 이어 붙이면 어느 쪽도 제대로 읽히지 않는다.
  * 리텔링이 탭 바에서 내려온 것도 이 때문이다 — 옮겨 적는 일에는 언제나
  * 책과 챕터가 딸려 있고, 그 자리는 여기다.
+ *
+ * 머리는 홈의 '읽고 있는 책'과 같은 판(`widgets/book-hero`)을 쓴다. 홈에서
+ * 누르고 들어온 그 책이 여기서 다른 모양으로 서 있으면, 같은 책에 도착했다는
+ * 느낌이 끊긴다.
  */
 export function BookDetail({
   book,
   progress,
   onOpenItem,
   onOpenRetell,
+  onAsk,
+  onCapture,
 }: {
   book: Book;
   progress?: ReadingProgress;
   onOpenItem?: (id: string) => void;
   onOpenRetell?: () => void;
+  /** 지금 읽고 있는 책일 때만 넘어온다 — 아닌 책에 대고 물을 일이 없다 */
+  onAsk?: () => void;
+  onCapture?: () => void;
 }) {
   const [tab, setTab] = useState<BookTab>('liked');
   const items = itemsFromBook(book.id);
   const liked = likedSentencesOf(book.id);
   const session = RETELL_SESSION.bookId === book.id ? RETELL_SESSION : undefined;
-  const ratio = progress ? progress.currentPage / progress.totalPages : 0;
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.head}>
-        <BookCover
-          book={book}
-          width={96}
-          height={136}
-          radius={12}
-          titleSize={13}
-          style={shadow.cover}
-        />
-        <View style={styles.meta}>
-          <AppText style={styles.title}>{book.title}</AppText>
-          <AppText style={styles.author}>{book.author}</AppText>
-          {progress ? (
-            <View style={styles.progress}>
-              <ProgressBar value={ratio} track={color.fill.bold} />
-              <AppText style={styles.progressLabel}>
-                p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}%
-              </AppText>
-            </View>
-          ) : (
-            <AppText style={styles.progressLabel}>{book.pages}p</AppText>
-          )}
-        </View>
-      </View>
+      <BookHero book={book} progress={progress} inset={0} onAsk={onAsk} onCapture={onCapture} />
 
       {items.length ? (
         <ItemShelf items={items} onPressItem={onOpenItem} />
@@ -94,11 +79,5 @@ export function BookDetail({
 const styles = StyleSheet.create({
   wrap: { gap: 22 },
   tabs: { gap: 16 },
-  head: { flexDirection: 'row', gap: 16 },
-  meta: { flex: 1, gap: 6, paddingTop: 4, minWidth: 0 },
-  title: { ...type.heading2, fontWeight: '700', color: color.text.primary, letterSpacing: -0.4 },
-  author: { ...type.label2, color: color.text.secondary },
-  progress: { gap: 6, marginTop: 'auto' },
-  progressLabel: { ...type.caption2, color: color.text.meta },
   empty: { ...type.label2, color: color.text.assistive },
 });
