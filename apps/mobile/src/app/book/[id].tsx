@@ -27,6 +27,7 @@ export default function BookScreen() {
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })
             }
+            onOpenRetell={() => router.push('/retell')}
           />
         ) : (
           <AppText style={styles.missing}>그 책을 찾지 못했어요.</AppText>

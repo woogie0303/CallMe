@@ -3,22 +3,18 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { color, type } from '@/shared/config';
-import { AppText, Icon, MicIcon, Tap, type FilledIconName } from '@/shared/ui';
+import { AppText, Icon, Tap, type FilledIconName } from '@/shared/ui';
 
 /** 지금 보고 있는 곳만 검다. 나머지는 배경으로 물러난다. */
-const TABS: Record<string, { label: string; icon: FilledIconName | 'mic' }> = {
+const TABS: Record<string, { label: string; icon: FilledIconName }> = {
   index: { label: '홈', icon: 'home' },
   drawer: { label: '서랍', icon: 'bookmark' },
-  retell: { label: '리텔링', icon: 'mic' },
   quiz: { label: '퀴즈', icon: 'graduation' },
   my: { label: '마이', icon: 'person' },
 };
 
-/**
- * 리텔링과 퀴즈는 말하고 고르는 일에 화면을 통째로 쓴다 —
- * 그 두 곳에서는 탭 바가 스스로 물러난다.
- */
-const IMMERSIVE = new Set(['retell', 'quiz']);
+/** 퀴즈는 고르는 일에 화면을 통째로 쓴다 — 그곳에서는 탭 바가 스스로 물러난다. */
+const IMMERSIVE = new Set(['quiz']);
 
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -47,11 +43,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
               });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
             }}>
-            {tab.icon === 'mic' ? (
-              <MicIcon size={22} color={tint} />
-            ) : (
-              <Icon name={tab.icon} size={22} color={tint} />
-            )}
+            <Icon name={tab.icon} size={22} color={tint} />
             <AppText style={[styles.label, { color: tint, fontWeight: focused ? '600' : '500' }]}>
               {tab.label}
             </AppText>

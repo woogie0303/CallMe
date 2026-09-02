@@ -18,13 +18,14 @@ export function SentenceShelf({
   onPressSentence,
 }: {
   sentences: Sentence[];
-  title?: string;
+  /** null이면 제목을 그리지 않는다 — 탭 라벨이 이미 이름을 대고 있을 때 */
+  title?: string | null;
   aside?: string;
   onPressSentence?: (id: string) => void;
 }) {
   return (
     <View style={styles.wrap}>
-      <SectionHeader title={title} aside={aside} />
+      {title !== null ? <SectionHeader title={title} aside={aside} /> : null}
       {sentences.map((s) => {
         const book = bookById(s.bookId);
         if (!book) return null;
