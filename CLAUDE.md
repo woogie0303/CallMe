@@ -34,6 +34,9 @@ pnpm 워크스페이스 + Turborepo.
 
 ## 현재 상태
 
-프로토타입 UI만 있다. DB·인증·AI 연동은 없고, 웹 데이터는 전부 목업이다
-(`apps/web/src/entities/*/model/mock.ts`). 모바일은 Expo 초기 설정만 되어 있고
-화면은 아직 없다 — 웹을 먼저 만든다.
+웹과 모바일은 화면이 다 있고 데이터는 전부 목업이다
+(`apps/*/src/entities/*/model/mock.ts`). 아직 API를 부르지 않는다.
+
+백엔드는 몽고(Mongoose)와 소셜 로그인, 그리고 책·문장·어휘 항목 CRUD까지 있다
+(`apps/backend/AGENTS.md`). 로그인은 카카오·네이버·구글 셋뿐이고 비밀번호는 맡지
+않는다. AI 연동과 대기 중인 질문·월 할당량, 퀴즈·리텔링은 아직 없다.
