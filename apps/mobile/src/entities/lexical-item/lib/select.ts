@@ -65,3 +65,20 @@ export function likedSentencesOf(bookId: string): Sentence[] {
   const claimed = new Set(ITEMS.flatMap((i) => i.encounters.map((e) => e.sentenceId)));
   return SENTENCES.filter((s) => s.bookId === bookId && !claimed.has(s.id));
 }
+
+/**
+ * 오늘 다시 볼 표현 하나. 아직 헷갈린다고 둔 것 중에서 처음과 마지막 사이가
+ * 가장 벌어진 항목을 고른다 — 오래 잊고 지내다 또 걸린 표현일수록 오늘 다시
+ * 꺼낼 이유가 크다. 재회한 항목이 아직 없으면 가장 최근에 담은 것을 준다.
+ */
+export function todayItem(): LexicalItem | undefined {
+  const confused = ITEMS.filter((i) => i.status === '헷갈려요');
+  if (!confused.length) return undefined;
+  const span = (item: LexicalItem) => {
+    const days = item.encounters.map((e) => new Date(e.savedOn).getTime());
+    return Math.max(...days) - Math.min(...days);
+  };
+  const latest = (item: LexicalItem) =>
+    Math.max(...item.encounters.map((e) => new Date(e.savedOn).getTime()));
+  return [...confused].sort((a, b) => span(b) - span(a) || latest(b) - latest(a))[0];
+}

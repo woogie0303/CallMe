@@ -86,11 +86,10 @@ export function ReadingHero({
 }
 
 const styles = StyleSheet.create({
-  /** 화면 높이에 맞추지 않는다 — 내용만큼만 쓴다 */
+  /** 화면 높이에 맞추지 않는다 — 내용만큼만 쓴다. 아래 여백은 홈이 정한다. */
   panel: {
     paddingHorizontal: 20,
     gap: 20,
-    marginBottom: 10,
   },
 
   /**
