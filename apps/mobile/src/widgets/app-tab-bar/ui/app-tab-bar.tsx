@@ -13,13 +13,8 @@ const TABS: Record<string, { label: string; icon: FilledIconName }> = {
   my: { label: '마이', icon: 'person' },
 };
 
-/** 퀴즈는 고르는 일에 화면을 통째로 쓴다 — 그곳에서는 탭 바가 스스로 물러난다. */
-const IMMERSIVE = new Set(['quiz']);
-
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const current = state.routes[state.index]?.name;
-  if (IMMERSIVE.has(current)) return null;
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + 10 }]}>
