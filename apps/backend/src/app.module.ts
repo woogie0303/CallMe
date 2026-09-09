@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AsksModule } from './asks/asks.module';
 import { AuthModule } from './auth/auth.module';
 import { BooksModule } from './books/books.module';
 import { ItemsModule } from './items/items.module';
@@ -20,6 +21,7 @@ import { SentencesModule } from './sentences/sentences.module';
     }),
     AuthModule,
     ReadersModule,
+    AsksModule,
     BooksModule,
     SentencesModule,
     ItemsModule,

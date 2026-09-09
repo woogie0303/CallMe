@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Ask } from '../asks/ask.schema';
 import { Book } from '../books/book.schema';
 import { LexicalItem } from '../items/lexical-item.schema';
 import { Sentence, type SentenceDocument } from './sentence.schema';
@@ -16,6 +17,7 @@ export class SentencesService {
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(Book.name) private readonly books: Model<Book>,
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
+    @InjectModel(Ask.name) private readonly asks: Model<Ask>,
   ) {}
 
   async create(readerId: string, dto: CreateSentenceDto): Promise<SentenceDocument> {
@@ -31,9 +33,12 @@ export class SentencesService {
   }
 
   /**
-   * liked=true는 '어휘 항목이 딸리지 않은 문장'을 뜻한다. 문장에 표시해 두지
-   * 않고 만남 쪽에서 물어보는 이유는, 표현을 나중에 담거나 지우면 같은 문장이
+   * liked=true는 '그냥 좋아서 담아둔 문장'을 뜻한다. 문장에 표시해 두지 않고
+   * 만남 쪽에서 물어보는 이유는, 표현을 나중에 담거나 지우면 같은 문장이
    * 이쪽에서 저쪽으로 옮겨가기 때문이다 — 문장에 적어두면 그때마다 어긋난다.
+   *
+   * 물어본 문장도 뺀다. 몰라서 물어놓고 아직 아무것도 안 고른 문장은 '좋아서
+   * 담아둔 줄'이 아니라 답을 기다리는 줄이다.
    */
   async list(readerId: string, query: ListSentencesQuery): Promise<SentenceDocument[]> {
     const owner = new Types.ObjectId(readerId);
@@ -42,7 +47,8 @@ export class SentencesService {
 
     if (query.liked) {
       const claimed = await this.items.distinct('encounters.sentenceId', { readerId: owner });
-      filter._id = { $nin: claimed };
+      const asked = await this.asks.distinct('sentenceId', { readerId: owner });
+      filter._id = { $nin: [...claimed, ...asked] };
     }
 
     return this.sentences.find(filter).sort({ createdAt: -1 }).exec();
