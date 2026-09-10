@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCurrentBook } from "@/entities/book/api/book.api";
 import { useTodayItem } from "@/entities/lexical-item/api/item.api";
-import { READING_WEEK } from "@/entities/reading/model/mock";
+import { useReadingWeek } from "@/entities/reading/api/reading.api";
 import { color } from "@/shared/config";
 import { AddButton } from "@/shared/ui";
 import { BookHero } from "@/widgets/book-hero/ui/book-hero";
@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: reading, isPending } = useCurrentBook();
+  const { data: week } = useReadingWeek();
   const { today } = useTodayItem();
   const book = reading?.book;
 
@@ -54,6 +55,9 @@ export default function HomeScreen() {
                 : "아직 펴지 않았어요",
             }}
             onPressBook={openBook}
+            onPressProgress={() =>
+              router.push({ pathname: "/progress", params: { bookId: book.id } })
+            }
             onAsk={() => router.push("/ask")}
             onCapture={() => router.push("/scan")}
           />
@@ -63,7 +67,7 @@ export default function HomeScreen() {
           style={styles.add}
           onPress={() => router.push("/book-add")}
         />
-        <ReadingWeekChart week={READING_WEEK} />
+        {week ? <ReadingWeekChart week={week} /> : null}
         {today ? (
           <TodayItem
             style={styles.add2}

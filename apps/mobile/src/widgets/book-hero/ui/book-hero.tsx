@@ -21,6 +21,7 @@ export function BookHero({
   progress,
   inset = 20,
   onPressBook,
+  onPressProgress,
   onAsk,
   onCapture,
 }: {
@@ -29,6 +30,8 @@ export function BookHero({
   /** 좌우 여백. 이미 여백을 가진 화면 안에 놓일 때는 0을 준다. */
   inset?: number;
   onPressBook?: () => void;
+  /** 읽은 데까지 표시를 옮기는 자리 — 진도 줄 자체가 그 버튼이다 */
+  onPressProgress?: () => void;
   onAsk?: () => void;
   onCapture?: () => void;
 }) {
@@ -63,7 +66,7 @@ export function BookHero({
         </Tap>
       </View>
 
-      <View style={styles.progress}>
+      <Tap style={styles.progress} onPress={onPressProgress} disabled={!onPressProgress}>
         {progress ? (
           <>
             <ProgressBar value={ratio} />
@@ -75,7 +78,7 @@ export function BookHero({
         ) : (
           <AppText style={styles.progressLabel}>{book.pages}p</AppText>
         )}
-      </View>
+      </Tap>
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { LexicalItem } from '../items/lexical-item.schema';
+import { ReadingService } from '../reading/reading.service';
 import { Sentence } from '../sentences/sentence.schema';
 import { Book, type BookDocument } from './book.schema';
 import type { CreateBookDto, UpdateBookDto } from './dto/book.dto';
@@ -12,6 +13,7 @@ export class BooksService {
     @InjectModel(Book.name) private readonly books: Model<Book>,
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
+    private readonly reading: ReadingService,
   ) {}
 
   create(readerId: string, dto: CreateBookDto): Promise<BookDocument> {
@@ -32,13 +34,29 @@ export class BooksService {
     return book;
   }
 
+  /**
+   * 읽은 데까지 표시를 옮기면 그 차이가 곧 오늘 읽은 양이다. 따로 적게 하지
+   * 않는 이유는, 읽고 나서 한 번 더 적게 만들면 아무도 적지 않기 때문이다.
+   *
+   * 진도를 옮겼는데 마지막으로 읽은 날을 주지 않았으면 오늘로 찍는다 —
+   * 방금 읽었다는 뜻이니까.
+   */
   async update(readerId: string, id: string, dto: UpdateBookDto): Promise<BookDocument> {
+    const before = await this.find(readerId, id);
+    const advanced =
+      dto.currentPage !== undefined ? dto.currentPage - before.currentPage : 0;
+
+    const patch: Record<string, unknown> = { ...dto };
+    if (advanced > 0 && !dto.lastReadAt) patch.lastReadAt = new Date();
+
     const book = await this.books.findOneAndUpdate(
       { _id: id, readerId: new Types.ObjectId(readerId) },
-      dto,
+      patch,
       { new: true },
     );
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
+
+    await this.reading.record(readerId, id, advanced);
     return book;
   }
 

@@ -9,6 +9,7 @@ import { BooksModule } from './books/books.module';
 import { ItemsModule } from './items/items.module';
 import { QuizModule } from './quiz/quiz.module';
 import { ReadersModule } from './readers/readers.module';
+import { ReadingModule } from './reading/reading.module';
 import { RetellsModule } from './retells/retells.module';
 import { SentencesModule } from './sentences/sentences.module';
 
@@ -28,6 +29,7 @@ import { SentencesModule } from './sentences/sentences.module';
     SentencesModule,
     ItemsModule,
     QuizModule,
+    ReadingModule,
     RetellsModule,
   ],
   controllers: [AppController],

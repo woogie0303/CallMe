@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
 import { LexicalItem, LexicalItemSchema } from '../items/lexical-item.schema';
+import { ReadingModule } from '../reading/reading.module';
 import { Sentence, SentenceSchema } from '../sentences/sentence.schema';
 import { Book, BookSchema } from './book.schema';
 import { BooksController } from './books.controller';
@@ -15,6 +16,7 @@ import { BooksService } from './books.service';
       { name: LexicalItem.name, schema: LexicalItemSchema },
     ]),
     AuthModule,
+    ReadingModule,
   ],
   controllers: [BooksController],
   providers: [BooksService],

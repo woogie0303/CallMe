@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAskQuota, usePendingAsks } from '@/entities/ask/api/ask.api';
 import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useReader } from '@/entities/reader/api/reader.api';
-import { READING_WEEK } from '@/entities/reading/model/mock';
+import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
 import { ActionButton, AltPanel, AppText, Icon, ProgressBar, Tap } from '@/shared/ui';
@@ -19,6 +19,7 @@ export default function MyScreen() {
   const { data: items = [] } = useItems();
   const { data: quota } = useAskQuota();
   const { data: pending = [] } = usePendingAsks();
+  const { data: week } = useReadingWeek();
   const confused = items.filter((i) => i.status === '헷갈려요').length;
   const again = items.filter((i) => i.met > 1).length;
   const left = quota?.remaining ?? 0;
@@ -77,7 +78,7 @@ export default function MyScreen() {
           <Row label="담아둔 표현" value={`${items.length}개`} />
           <Row label="아직 헷갈리는 표현" value={`${confused}개`} />
           <Row label="다시 만난 표현" value={`${again}개`} />
-          <Row label="이번 주에 읽은 날" value={`${READING_WEEK.days}일`} />
+          <Row label="이번 주에 읽은 날" value={`${week?.days ?? 0}일`} />
         </AltPanel>
 
         <ActionButton label="로그아웃" variant="subtle" onPress={signOut} />
