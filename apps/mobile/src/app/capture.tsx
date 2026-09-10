@@ -25,8 +25,21 @@ export default function CaptureScreen() {
     () => (sentence ? askForSentence(sentence) : undefined) ?? ASKS[1],
     [sentence],
   );
+  /**
+   * 촬영 흐름은 아직 목업이다 — OCR이 없어서 서버에 보낼 사진도, 끊어낸 문장도
+   * 없다. 답을 그리는 조각(AskResult)만 서버 모양을 쓰므로 여기서 맞춰 넘긴다.
+   */
+  const candidates = useMemo(
+    () =>
+      ask.candidates.map((candidate) => ({
+        term: candidate.term,
+        meaning: candidate.meaning,
+        register: candidate.register,
+      })),
+    [ask],
+  );
   const [picked, setPicked] = useState<Set<string>>(
-    () => new Set(ask.candidates.map((c) => c.id)),
+    () => new Set(ask.candidates.map((c) => c.term)),
   );
 
   const book = bookById(ask.bookId ?? SCANNED_PAGE.bookId);
@@ -74,7 +87,12 @@ export default function CaptureScreen() {
             </AltPanel>
           </>
         ) : (
-          <AskResult ask={ask} picked={picked} onTogglePick={togglePick} />
+          <AskResult
+            translation={ask.translation}
+            candidates={candidates}
+            picked={picked}
+            onTogglePick={togglePick}
+          />
         )}
       </ScrollView>
 

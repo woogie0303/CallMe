@@ -3,21 +3,22 @@ import { StyleSheet, View } from 'react-native';
 import { SpineDot, SpineEdge } from '@/entities/book/ui/spine-edge';
 import { color, type } from '@/shared/config';
 import { AppText, CountBadge, Quote, Tap } from '@/shared/ui';
-import { booksOf, latestEncounter } from '../lib/select';
-import type { LexicalItem } from '../model/types';
+import type { ItemSummary } from '../api/item.api';
 
 /**
  * 서랍의 한 줄. 항목이 주인이고 문장은 그 아래 딸린다 —
  * 왼쪽 4px 엣지는 가장 최근에 만난 책의 색이다.
+ *
+ * 문장과 책을 스스로 찾지 않고 받아만 쓴다. 줄마다 찾아 나서면 스무 줄짜리
+ * 서랍이 스물한 번을 부르게 되어, 목록 응답이 이미 함께 실어 보낸다.
  */
-export function ItemRow({ item, onPress }: { item: LexicalItem; onPress?: () => void }) {
-  const latest = latestEncounter(item);
-  const books = booksOf(item);
-  const met = item.encounters.length;
+export function ItemRow({ item, onPress }: { item: ItemSummary; onPress?: () => void }) {
+  const { books, latest, met } = item;
+  const edge = books[books.length - 1];
 
   return (
     <Tap style={styles.row} onPress={onPress}>
-      {latest ? <SpineEdge book={latest.book} /> : null}
+      {edge ? <SpineEdge book={edge} /> : null}
       <View style={styles.body}>
         <View style={styles.head}>
           <Quote style={styles.term}>{item.term}</Quote>

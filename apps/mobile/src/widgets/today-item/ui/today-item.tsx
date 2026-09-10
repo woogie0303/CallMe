@@ -1,10 +1,9 @@
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
-import type { Book } from "@/entities/book/model/types";
 import { SpineEdge } from "@/entities/book/ui/spine-edge";
-import { gapLabel } from "@/entities/lexical-item/lib/select";
-import type { LexicalItem } from "@/entities/lexical-item/model/types";
+import type { ItemSummary } from "@/entities/lexical-item/api/item.api";
 import { color, type } from "@/shared/config";
+import { gapLabel } from "@/shared/lib/date";
 import { AppText, Quote, Tap, emphasis } from "@/shared/ui";
 
 /**
@@ -16,17 +15,16 @@ import { AppText, Quote, Tap, emphasis } from "@/shared/ui";
  */
 export function TodayItem({
   item,
-  book,
   style,
   onPress,
 }: {
-  item: LexicalItem;
-  book?: Book;
+  item: ItemSummary;
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
 }) {
-  const gap = gapLabel(item);
-  const last = item.encounters[item.encounters.length - 1];
+  const gap = item.gapDays === undefined ? undefined : gapLabel(item.gapDays);
+  /** 카드 왼쪽 엣지는 가장 최근에 만난 책의 색이다 */
+  const book = item.books[item.books.length - 1];
 
   return (
     <Tap style={[styles.card, style]} onPress={onPress}>
@@ -46,7 +44,7 @@ export function TodayItem({
               헷갈렸어요
             </>
           ) : (
-            `${last.savedLabel}에 담아뒀어요`
+            `${item.latest?.savedLabel ?? '언젠가'}에 담아뒀어요`
           )}
         </AppText>
       </View>

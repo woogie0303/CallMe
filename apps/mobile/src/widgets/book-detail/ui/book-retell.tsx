@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import type { RetellSession } from '@/entities/retell/model/mock';
+import type { ApiRetell } from '@/entities/retell/api/retell.api';
 import { color, type } from '@/shared/config';
 import { ActionButton, AltPanel, AppText, Quote } from '@/shared/ui';
 
@@ -15,7 +15,7 @@ export function BookRetell({
   session,
   onOpen,
 }: {
-  session?: RetellSession;
+  session?: ApiRetell;
   onOpen?: () => void;
 }) {
   if (!session) {
@@ -38,8 +38,9 @@ export function BookRetell({
           {session.draft}
         </Quote>
         <AppText style={styles.meta}>
-          고쳐준 곳 {session.revisions.length}군데 · 쓸 수 있었던 표현{' '}
-          {session.missedItemIds.length}개
+          {session.status === 'pending'
+            ? `아직 답을 기다리는 중이에요 · ${session.pendingReason ?? ''}`
+            : `고쳐준 곳 ${session.revisions.length}군데 · 쓸 수 있었던 표현 ${session.missedItemIds.length}개`}
         </AppText>
       </AltPanel>
       <ActionButton label="고친 문장 다시 보기" variant="subtle" onPress={onOpen} />

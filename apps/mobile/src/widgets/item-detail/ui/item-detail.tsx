@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
+import { toBook } from '@/entities/book/api/book.api';
 import { SpineEdge } from '@/entities/book/ui/spine-edge';
-import { booksOf, encountersOf, gapLabel } from '@/entities/lexical-item/lib/select';
-import { itemById } from '@/entities/lexical-item/model/mock';
-import type { LexicalItem } from '@/entities/lexical-item/model/types';
+import type { ApiItemDetail } from '@/shared/api/types';
 import { color, type } from '@/shared/config';
+import { daysBetween, gapLabel, savedLabel } from '@/shared/lib/date';
 import { AltPanel, AppText, Chip, Icon, InkPanel, Quote, Tap, emphasis } from '@/shared/ui';
 
 /**
@@ -12,16 +12,25 @@ import { AltPanel, AppText, Chip, Icon, InkPanel, Quote, Tap, emphasis } from '@
  * 두 번 이상 만난 항목에서는 그 사이의 간격이 화면의 주인공이다.
  */
 export function ItemDetail({
-  item,
+  detail,
+  twinTerm,
   onOpenItem,
 }: {
-  item: LexicalItem;
+  detail: ApiItemDetail;
+  /** 헷갈리는 짝의 표제형. 짝이 있을 때만 따로 받아온다. */
+  twinTerm?: string;
   onOpenItem?: (id: string) => void;
 }) {
-  const encounters = encountersOf(item);
-  const books = booksOf(item);
-  const gap = gapLabel(item);
-  const twin = item.confusedWith ? itemById(item.confusedWith.itemId) : undefined;
+  const { item } = detail;
+  /** 문장을 못 찾은 만남은 그릴 것이 없다 */
+  const encounters = detail.encounters.flatMap((met) =>
+    met.sentence && met.book ? [{ ...met, sentence: met.sentence, book: met.book }] : [],
+  );
+  const books = uniqueBooks(encounters.map((met) => met.book));
+  const gap =
+    encounters.length > 1
+      ? gapLabel(daysBetween(encounters[0].savedAt, encounters[encounters.length - 1].savedAt))
+      : undefined;
 
   return (
     <View style={styles.wrap}>
@@ -38,7 +47,7 @@ export function ItemDetail({
             <Icon name="clock" size={14} color={color.primary} />
             <AppText style={styles.gapText}>
               {books.length > 1 ? `${books.length}권에서 ` : ''}
-              {item.encounters.length}번 만났어요 —{' '}
+              {encounters.length}번 만났어요 —{' '}
               <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 또 헷갈렸어요
             </AppText>
           </View>
@@ -49,11 +58,11 @@ export function ItemDetail({
         <AppText style={styles.sectionTitle}>만난 문장</AppText>
         {encounters.map((encounter, i) => (
           <View key={encounter.sentenceId} style={styles.card}>
-            <SpineEdge book={encounter.book} />
+            <SpineEdge book={toBook(encounter.book)} />
             <View style={styles.cardBody}>
               <View style={styles.cardHead}>
                 <AppText style={styles.ordinal}>{i === 0 ? '처음' : '재회'}</AppText>
-                <AppText style={styles.when}>{encounter.savedLabel}</AppText>
+                <AppText style={styles.when}>{savedLabel(encounter.savedAt)}</AppText>
               </View>
               <Quote style={styles.sentence}>{encounter.sentence.text}</Quote>
               <AppText style={styles.source}>
@@ -67,11 +76,11 @@ export function ItemDetail({
         ))}
       </View>
 
-      {twin && item.confusedWith ? (
-        <Tap onPress={() => onOpenItem?.(twin.id)}>
+      {twinTerm && item.confusedWith ? (
+        <Tap onPress={() => onOpenItem?.(item.confusedWith!.itemId)}>
           <AltPanel style={styles.twin}>
             <View style={styles.twinHead}>
-              <Quote style={styles.twinTerm}>{twin.term}</Quote>
+              <Quote style={styles.twinTerm}>{twinTerm}</Quote>
               <AppText style={styles.twinLabel}>와는 이렇게 달라요</AppText>
               <Icon name="chevronRight" size={14} color={color.text.assistive} />
             </View>
@@ -88,6 +97,13 @@ export function ItemDetail({
       </View>
     </View>
   );
+}
+
+/** 같은 책을 두 번 그리지 않는다 */
+function uniqueBooks<T extends { _id: string }>(books: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const book of books) seen.set(book._id, book);
+  return [...seen.values()];
 }
 
 const styles = StyleSheet.create({

@@ -1,94 +1,133 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import type { Book } from '@/entities/book/model/types';
+import { draftBook } from '@/entities/book/lib/spine';
 import { BookCover } from '@/entities/book/ui/book-cover';
 import { color, shadow, type } from '@/shared/config';
-import { AltPanel, AppText, Chip, Icon } from '@/shared/ui';
+import { AppText } from '@/shared/ui';
+
+export type BookDraft = {
+  title: string;
+  author: string;
+  pages: string;
+  currentPage: string;
+};
 
 /**
- * 검색 결과 한 권을 확인하는 화면.
- * 여기서 "맞다"고 하면 이 책에서 모은 문장이 한곳에 쌓이기 시작한다.
+ * 읽고 있는 책을 손으로 들인다.
+ *
+ * 검색으로 찾아 주지 않는다 — 원서는 국내 서지 검색에 잘 걸리지 않고, 안 걸릴
+ * 때마다 등록이 막히면 읽던 흐름이 끊긴다. 제목과 지은이만 있으면 시작할 수
+ * 있고, 나머지는 나중에 채워도 된다.
+ *
+ * 표지는 없어도 된다. 제목에서 정한 책등 색이 그 자리를 대신하고, 앞으로 담을
+ * 문장 카드들이 그 색을 물려받아 라벨 없이 출처를 말한다.
  */
-export function BookConfirm({ book }: { book: Book }) {
+export function BookAdd({
+  draft,
+  onChange,
+}: {
+  draft: BookDraft;
+  onChange: (next: BookDraft) => void;
+}) {
+  const preview = draftBook(draft.title, draft.author, Number(draft.pages) || undefined);
+  const set = (key: keyof BookDraft) => (value: string) => onChange({ ...draft, [key]: value });
+
   return (
     <View style={styles.wrap}>
-      <View>
-        <AppText style={styles.question}>이 책이 맞나요?</AppText>
+      <View style={styles.head}>
+        <AppText style={styles.question}>어떤 책을 읽고 계세요?</AppText>
         <AppText style={styles.sub}>등록하면 이 책에서 모은 문장이 한곳에 쌓여요</AppText>
       </View>
 
       <View style={styles.row}>
         <BookCover
-          book={book}
-          width={112}
-          height={158}
+          book={preview}
+          width={96}
+          height={140}
           radius={12}
-          titleSize={15}
+          titleSize={13}
           showAuthor
           style={shadow.cover}
         />
-        <View style={styles.meta}>
-          <AppText style={styles.title}>{book.title}</AppText>
-          <AppText style={styles.byline}>
-            {[book.author, book.publisher && `${book.publisher}, ${book.year}`]
-              .filter(Boolean)
-              .join(' · ')}
-          </AppText>
-          {book.rating ? (
-            <View style={styles.rating}>
-              <Icon name="starFill" size={14} color={color.status.cautionary} />
-              <AppText style={styles.ratingValue}>{book.rating}</AppText>
-              <AppText style={styles.raters}>· {book.raters?.toLocaleString()}명</AppText>
-            </View>
-          ) : null}
-          <View style={styles.chips}>
-            <Chip label={`${book.pages}p`} />
-            {book.genre ? <Chip label={book.genre} /> : null}
-            {book.level ? <Chip label={`난이도 ${LEVEL_LABEL[book.level]}`} tone="primary" /> : null}
-          </View>
+
+        <View style={styles.fields}>
+          <Field label="제목" value={draft.title} onChangeText={set('title')} autoFocus />
+          <Field label="지은이" value={draft.author} onChangeText={set('author')} />
         </View>
       </View>
 
-      {book.summary ? (
-        <View style={styles.block}>
-          <AppText style={styles.blockTitle}>줄거리</AppText>
-          <AppText style={styles.blockBody}>{book.summary}</AppText>
-        </View>
-      ) : null}
-
-      {book.primer ? (
-        <AltPanel style={styles.primer}>
-          <View style={styles.primerHead}>
-            <Icon name="bulb" size={15} color={color.primary} />
-            <AppText style={styles.primerTitle}>읽기 전에</AppText>
-          </View>
-          <AppText style={styles.primerBody}>{book.primer}</AppText>
-        </AltPanel>
-      ) : null}
+      <View style={styles.pages}>
+        <Field
+          label="전체 쪽수"
+          value={draft.pages}
+          onChangeText={set('pages')}
+          keyboard
+          optional
+        />
+        <Field
+          label="지금 몇 쪽"
+          value={draft.currentPage}
+          onChangeText={set('currentPage')}
+          keyboard
+          optional
+        />
+      </View>
     </View>
   );
 }
 
-/** 칩은 짧아야 한다 — "보통"은 "중"으로 줄인다. */
-const LEVEL_LABEL = { 쉬움: '하', 보통: '중', 어려움: '상' } as const;
+function Field({
+  label,
+  value,
+  onChangeText,
+  keyboard,
+  optional,
+  autoFocus,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  keyboard?: boolean;
+  optional?: boolean;
+  autoFocus?: boolean;
+}) {
+  return (
+    <View style={styles.field}>
+      <AppText style={styles.label}>
+        {label}
+        {optional ? <AppText style={styles.optional}> · 없어도 돼요</AppText> : null}
+      </AppText>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        autoFocus={autoFocus}
+        keyboardType={keyboard ? 'number-pad' : 'default'}
+        placeholderTextColor={color.text.assistive}
+        style={styles.input}
+      />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  wrap: { gap: 24 },
-  question: { ...type.title3, color: color.text.primary, letterSpacing: -0.69, lineHeight: 32 },
-  sub: { ...type.label1, color: color.text.meta, marginTop: 4 },
-  row: { flexDirection: 'row', gap: 18 },
-  meta: { flex: 1, gap: 8, paddingTop: 4, minWidth: 0 },
-  title: { ...type.heading2, fontWeight: '700', fontSize: 19, letterSpacing: -0.38, lineHeight: 25 },
-  byline: { ...type.label2, color: color.text.secondary },
-  rating: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
-  ratingValue: { ...type.label2, fontWeight: '600', color: color.text.primary },
-  raters: { ...type.caption1, color: color.text.meta },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-  block: { gap: 8 },
-  blockTitle: { ...type.label1, fontWeight: '700', color: color.text.primary },
-  blockBody: { ...type.label1, lineHeight: 23, color: color.text.secondary },
-  primer: { padding: 16, gap: 10 },
-  primerHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  primerTitle: { ...type.label2, fontWeight: '700', color: color.text.primary },
-  primerBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
+  wrap: { gap: 22 },
+  head: { gap: 6 },
+  question: { ...type.title3, color: color.text.primary },
+  sub: { ...type.label2, color: color.text.secondary },
+
+  row: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
+  fields: { flex: 1, gap: 14, minWidth: 0 },
+  pages: { flexDirection: 'row', gap: 12 },
+
+  field: { flex: 1, gap: 5 },
+  label: { ...type.caption1, color: color.text.meta },
+  optional: { ...type.caption2, color: color.text.assistive },
+  /** 줄 하나로 받는다 — 상자를 두르면 폼이 화면의 주인공이 된다 */
+  input: {
+    ...type.body2,
+    color: color.text.primary,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border.default,
+  },
 });

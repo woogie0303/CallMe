@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { bookById } from "@/entities/book/model/mock";
-import { latestEncounter, todayItem } from "@/entities/lexical-item/lib/select";
-import { CURRENT_READING, READING_WEEK } from "@/entities/reading/model/mock";
+import { useCurrentBook } from "@/entities/book/api/book.api";
+import { useTodayItem } from "@/entities/lexical-item/api/item.api";
+import { READING_WEEK } from "@/entities/reading/model/mock";
 import { color } from "@/shared/config";
 import { AddButton } from "@/shared/ui";
 import { BookHero } from "@/widgets/book-hero/ui/book-hero";
@@ -27,36 +27,47 @@ import { TodayItem } from "@/widgets/today-item/ui/today-item";
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const book = bookById(CURRENT_READING.bookId);
-  const today = todayItem();
-  /** 그 표현을 마지막으로 만난 책 — 카드 왼쪽 엣지가 이 색을 물려받는다 */
-  const todayBook = today ? latestEncounter(today)?.book : undefined;
-  if (!book) return null;
+  const { data: reading, isPending } = useCurrentBook();
+  const { today } = useTodayItem();
+  const book = reading?.book;
 
-  const openBook = () =>
-    router.push({ pathname: "/book/[id]", params: { id: book.id } });
+  const openBook = () => {
+    if (book) router.push({ pathname: "/book/[id]", params: { id: book.id } });
+  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 6 }]}>
       <View style={styles.stack}>
-        <BookHero
-          book={book}
-          progress={CURRENT_READING}
-          onPressBook={openBook}
-          onAsk={() => router.push("/ask")}
-          onCapture={() => router.push("/scan")}
-        />
+        {isPending ? (
+          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+        ) : book && reading ? (
+          <BookHero
+            book={book}
+            progress={{
+              bookId: book.id,
+              currentPage: reading.progress.currentPage,
+              totalPages: reading.progress.pages ?? 0,
+              chapter: "",
+              startedLabel: "",
+              lastReadLabel: reading.progress.lastReadAt
+                ? "최근에 읽었어요"
+                : "아직 펴지 않았어요",
+            }}
+            onPressBook={openBook}
+            onAsk={() => router.push("/ask")}
+            onCapture={() => router.push("/scan")}
+          />
+        ) : null}
         <AddButton
           label="읽고 있는 책 추가"
           style={styles.add}
-          onPress={() => router.push("/book-confirm")}
+          onPress={() => router.push("/book-add")}
         />
         <ReadingWeekChart week={READING_WEEK} />
         {today ? (
           <TodayItem
             style={styles.add2}
             item={today}
-            book={todayBook}
             onPress={() =>
               router.push({ pathname: "/item/[id]", params: { id: today.id } })
             }
@@ -73,6 +84,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface.base,
     paddingHorizontal: 12,
   },
+  spinner: { paddingVertical: 60 },
   /** 위에서부터 좁게 붙여 쌓는다. 남는 높이는 '책 추가'가 받는다. */
   stack: { flex: 1, gap: 14, paddingBottom: 12 },
   /**

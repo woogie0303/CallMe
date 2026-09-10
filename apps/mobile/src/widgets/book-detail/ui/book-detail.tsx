@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { toBook } from '@/entities/book/api/book.api';
 import type { Book } from '@/entities/book/model/types';
-import { itemsFromBook, likedSentencesOf } from '@/entities/lexical-item/lib/select';
+import { useItems } from '@/entities/lexical-item/api/item.api';
 import type { ReadingProgress } from '@/entities/reading/model/mock';
-import { RETELL_SESSION } from '@/entities/retell/model/mock';
+import { useRetells } from '@/entities/retell/api/retell.api';
+import { useLikedSentences } from '@/entities/sentence/api/sentence.api';
 import { color, type } from '@/shared/config';
 import { AppText } from '@/shared/ui';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
@@ -44,9 +46,17 @@ export function BookDetail({
   onCapture?: () => void;
 }) {
   const [tab, setTab] = useState<BookTab>('liked');
-  const items = itemsFromBook(book.id);
-  const liked = likedSentencesOf(book.id);
-  const session = RETELL_SESSION.bookId === book.id ? RETELL_SESSION : undefined;
+  const { data: items = [] } = useItems({ bookId: book.id });
+  const { data: sentences = [] } = useLikedSentences(book.id);
+  const { data: retells = [] } = useRetells(book.id);
+  /** 가장 최근에 옮겨 적은 챕터 하나만 보여준다 — 목록은 리텔링 화면의 일이다 */
+  const session = retells[0];
+  const liked = sentences.map((sentence) => ({
+    id: sentence._id,
+    text: sentence.text,
+    page: sentence.page,
+    book,
+  }));
 
   return (
     <View style={styles.wrap}>

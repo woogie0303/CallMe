@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { color, type } from '@/shared/config';
 import { AppText, CountBadge, Quote, Tap } from '@/shared/ui';
-import type { LexicalItem } from '../model/types';
+import type { ItemSummary } from '../api/item.api';
 
 /**
  * 한 책 안에서 쓰는 카드 — 표현과 뜻, 그리고 몇 번 만났는지.
@@ -14,8 +14,8 @@ import type { LexicalItem } from '../model/types';
  * 만난 횟수는 남긴다. 출처와 달리 이건 이 화면에서 알 수 없는 사실이고,
  * 두 번 만났다는 것 자체가 이 앱이 하려는 말이기 때문이다.
  */
-export function ItemCard({ item, onPress }: { item: LexicalItem; onPress?: () => void }) {
-  const met = item.encounters.length;
+export function ItemCard({ item, onPress }: { item: ItemSummary; onPress?: () => void }) {
+  const met = item.met;
 
   return (
     <Tap style={styles.card} onPress={onPress}>

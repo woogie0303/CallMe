@@ -1,9 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
-import type { Candidate } from '@/entities/ask/model/types';
-import { latestEncounter } from '@/entities/lexical-item/lib/select';
-import { itemById } from '@/entities/lexical-item/model/mock';
+import type { ApiCandidate } from '@/shared/api/types';
 import { color, type } from '@/shared/config';
+import { savedLabel } from '@/shared/lib/date';
 import { AppText, Chip, Icon, Quote, Tap, emphasis } from '@/shared/ui';
 
 /**
@@ -15,12 +14,12 @@ export function CandidateCard({
   picked,
   onToggle,
 }: {
-  candidate: Candidate;
+  candidate: ApiCandidate;
   picked: boolean;
   onToggle?: () => void;
 }) {
-  const existing = candidate.existingItemId ? itemById(candidate.existingItemId) : undefined;
-  const met = existing ? latestEncounter(existing) : undefined;
+  /** 재회 줄에 필요한 것은 질문의 답이 이미 함께 실어 보낸다 */
+  const existing = candidate.existing;
 
   return (
     <Tap style={[styles.card, picked ? styles.cardPicked : null]} onPress={onToggle}>
@@ -37,12 +36,15 @@ export function CandidateCard({
 
       <AppText style={styles.meaning}>{candidate.meaning}</AppText>
 
-      {existing && met ? (
+      {existing ? (
         <View style={styles.echo}>
           <Icon name="clock" size={15} color={color.primary} />
           <AppText style={styles.echoText}>
-            <AppText style={emphasis(color.primary)}>{met.savedLabel}</AppText> {met.book.title}
-            에서 담으셨어요 — 담으면 {existing.encounters.length + 1}번째 만남이에요
+            <AppText style={emphasis(color.primary)}>
+              {existing.lastSavedAt ? savedLabel(existing.lastSavedAt) : '예전'}
+            </AppText>{' '}
+            {existing.lastBookTitle ?? '어딘가'}
+            에서 담으셨어요 — 담으면 {existing.met + 1}번째 만남이에요
           </AppText>
         </View>
       ) : null}

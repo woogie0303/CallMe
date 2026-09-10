@@ -2,21 +2,26 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ASK_QUOTA, PENDING_ASKS, remaining } from '@/entities/ask/model/mock';
-import { isReencountered } from '@/entities/lexical-item/lib/select';
-import { ITEMS } from '@/entities/lexical-item/model/mock';
-import { READER } from '@/entities/reader/model/mock';
+import { useAskQuota, usePendingAsks } from '@/entities/ask/api/ask.api';
+import { useItems } from '@/entities/lexical-item/api/item.api';
+import { useReader } from '@/entities/reader/api/reader.api';
 import { READING_WEEK } from '@/entities/reading/model/mock';
 import { color, type } from '@/shared/config';
-import { AltPanel, AppText, Icon, ProgressBar, Tap } from '@/shared/ui';
+import { useSession } from '@/shared/session/session';
+import { ActionButton, AltPanel, AppText, Icon, ProgressBar, Tap } from '@/shared/ui';
 
 /** 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들. */
 export default function MyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const confused = ITEMS.filter((i) => i.status === '헷갈려요').length;
-  const again = ITEMS.filter(isReencountered).length;
-  const left = remaining(ASK_QUOTA);
+  const { signOut } = useSession();
+  const { data: reader } = useReader();
+  const { data: items = [] } = useItems();
+  const { data: quota } = useAskQuota();
+  const { data: pending = [] } = usePendingAsks();
+  const confused = items.filter((i) => i.status === '헷갈려요').length;
+  const again = items.filter((i) => i.met > 1).length;
+  const left = quota?.remaining ?? 0;
 
   return (
     <View style={styles.screen}>
@@ -32,9 +37,9 @@ export default function MyScreen() {
           <AltPanel style={styles.levelPanel}>
             <View style={styles.levelText}>
               <AppText style={styles.levelLabel}>내 레벨</AppText>
-              <AppText style={styles.levelValue}>{READER.level}</AppText>
+              <AppText style={styles.levelValue}>{reader?.level ?? '—'}</AppText>
               <AppText style={styles.levelHint}>
-                책을 한 권 끝낼 때마다 다시 물어봐요 · 지금까지 {READER.booksFinished}권
+                책을 한 권 끝낼 때마다 다시 물어봐요 · 지금까지 {reader?.booksFinished ?? 0}권
               </AppText>
             </View>
             <Icon name="chevronRight" size={16} color={color.text.assistive} />
@@ -45,10 +50,10 @@ export default function MyScreen() {
           <View style={styles.quotaHead}>
             <AppText style={styles.quotaLabel}>이번 달 질문</AppText>
             <AppText style={styles.quotaValue}>
-              {ASK_QUOTA.used} / {ASK_QUOTA.limit}
+              {quota?.used ?? 0} / {quota?.limit ?? 0}
             </AppText>
           </View>
-          <ProgressBar value={ASK_QUOTA.used / ASK_QUOTA.limit} />
+          <ProgressBar value={quota ? quota.used / Math.max(1, quota.limit) : 0} />
           <AppText style={styles.quotaHint}>
             {left > 0
               ? `${left}번 남았어요. 다 써도 문장은 그대로 담겨요.`
@@ -56,12 +61,12 @@ export default function MyScreen() {
           </AppText>
         </AltPanel>
 
-        {PENDING_ASKS.length ? (
+        {pending.length ? (
           <Tap onPress={() => router.push('/pending')}>
             <AltPanel style={styles.pendingPanel}>
               <View style={styles.levelText}>
                 <AppText style={styles.levelLabel}>기다리는 문장</AppText>
-                <AppText style={styles.levelValue}>{PENDING_ASKS.length}개</AppText>
+                <AppText style={styles.levelValue}>{pending.length}개</AppText>
               </View>
               <Icon name="chevronRight" size={16} color={color.text.assistive} />
             </AltPanel>
@@ -69,11 +74,13 @@ export default function MyScreen() {
         ) : null}
 
         <AltPanel style={styles.statsPanel}>
-          <Row label="담아둔 표현" value={`${ITEMS.length}개`} />
+          <Row label="담아둔 표현" value={`${items.length}개`} />
           <Row label="아직 헷갈리는 표현" value={`${confused}개`} />
           <Row label="다시 만난 표현" value={`${again}개`} />
           <Row label="이번 주에 읽은 날" value={`${READING_WEEK.days}일`} />
         </AltPanel>
+
+        <ActionButton label="로그아웃" variant="subtle" onPress={signOut} />
       </ScrollView>
     </View>
   );

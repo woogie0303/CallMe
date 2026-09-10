@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import type { LexicalItem } from '@/entities/lexical-item/model/types';
+import type { ItemSummary } from '@/entities/lexical-item/api/item.api';
 import { ItemCard } from '@/entities/lexical-item/ui/item-card';
 import { SectionHeader } from '@/shared/ui';
 
@@ -16,7 +16,7 @@ export function ItemShelf({
   /** 부모의 좌우 여백 — 카드가 화면 오른쪽으로 흘러나가게 상쇄한다 */
   bleed = 20,
 }: {
-  items: LexicalItem[];
+  items: ItemSummary[];
   title?: string;
   onPressItem?: (id: string) => void;
   bleed?: number;

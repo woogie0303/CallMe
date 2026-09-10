@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { isReencountered } from '@/entities/lexical-item/lib/select';
-import { ITEMS } from '@/entities/lexical-item/model/mock';
+import { useItems } from '@/entities/lexical-item/api/item.api';
 import { color, type } from '@/shared/config';
 import { AppText, Icon, Tap, emphasis } from '@/shared/ui';
 import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
@@ -12,8 +11,9 @@ import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
 export default function DrawerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const confused = ITEMS.filter((i) => i.status === '헷갈려요').length;
-  const again = ITEMS.filter(isReencountered).length;
+  const { data: items = [] } = useItems();
+  const confused = items.filter((i) => i.status === '헷갈려요').length;
+  const again = items.filter((i) => i.met > 1).length;
 
   return (
     <View style={styles.screen}>
@@ -21,7 +21,7 @@ export default function DrawerScreen() {
         <View style={styles.headText}>
           <AppText style={styles.title}>서랍</AppText>
           <AppText style={styles.summary}>
-            표현 {ITEMS.length}개 · 아직 헷갈리는 건 {confused}개
+            표현 {items.length}개 · 아직 헷갈리는 건 {confused}개
             {again > 0 ? (
               <AppText style={emphasis(color.primary)}> · 다시 만난 건 {again}개</AppText>
             ) : null}

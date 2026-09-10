@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { bookById } from '@/entities/book/model/mock';
-import { itemById } from '@/entities/lexical-item/model/mock';
-import { choiceIdsOf, type QuizQuestion } from '@/entities/quiz/model/mock';
+import type { ApiQuizQuestion, ApiQuizResult } from '@/entities/quiz/api/quiz.api';
 import { color, type } from '@/shared/config';
+import { savedLabel } from '@/shared/lib/date';
 import { AppText, Icon, Quote, Tap } from '@/shared/ui';
 
 /**
@@ -12,68 +11,70 @@ import { AppText, Icon, Quote, Tap } from '@/shared/ui';
  * 원래 문장이 돌아온다.
  *
  * 화면에 상자를 겹치지 않는다. 문장 하나와 보기 몇 줄, 그게 전부다 —
- * 고르는 동안 읽을 것이 둘(문장과 보기)뿐이어야 하고, 잉크 판이나 설명
- * 상자가 더 서 있으면 그만큼 눈이 갈 데가 늘어난다. 답을 고른 뒤에야
+ * 고르는 동안 읽을 것이 둘(문장과 보기)뿐이어야 한다. 답을 고른 뒤에야
  * 뜻과 헷갈리던 짝이 글줄로 따라 나온다.
+ *
+ * 정답은 화면이 모른다. 서버가 판정해서 돌려주기 전까지는 어느 보기가
+ * 답인지 앱에 오지 않는다 — 답이 손에 있으면 그건 시험이 아니다.
  */
 export function QuizRunner({
   question,
-  onAnswered,
+  onAnswer,
 }: {
-  question: QuizQuestion;
-  onAnswered?: (correct: boolean) => void;
+  question: ApiQuizQuestion;
+  onAnswer: (choiceItemId: string) => Promise<ApiQuizResult>;
 }) {
   const [picked, setPicked] = useState<string | null>(null);
-  const book = bookById(question.bookId);
-  const answer = itemById(question.itemId);
-  const choiceIds = useMemo(() => choiceIdsOf(question), [question]);
-  const settled = picked !== null;
+  const [result, setResult] = useState<ApiQuizResult | null>(null);
 
-  if (!answer) return null;
-
-  const confused = answer.confusedWith ? itemById(answer.confusedWith.itemId) : undefined;
+  const choose = async (choiceItemId: string) => {
+    if (picked) return;
+    setPicked(choiceItemId);
+    try {
+      setResult(await onAnswer(choiceItemId));
+    } catch {
+      /** 판정을 못 받으면 다시 고를 수 있게 되돌린다 */
+      setPicked(null);
+    }
+  };
 
   return (
     <View style={styles.wrap}>
       <View style={styles.asked}>
         <Icon name="clock" size={13} color={color.text.assistive} />
-        <AppText style={styles.askedLabel}>{question.askedLabel}</AppText>
+        <AppText style={styles.askedLabel}>
+          {savedLabel(question.savedAt)}에 담아둔 문장이에요
+        </AppText>
       </View>
 
       <View style={styles.stem}>
         <Quote style={styles.quote}>
           {question.before}
-          {settled ? (
-            <Quote style={styles.filled}>{question.surface}</Quote>
+          {result ? (
+            <Quote style={styles.filled}>{result.surface}</Quote>
           ) : (
             <View style={styles.blank} />
           )}
           {question.after}
         </Quote>
-        {book ? (
+        {question.bookTitle ? (
           <AppText style={styles.source}>
-            {book.title} · p.{question.page}
+            {question.bookTitle}
+            {question.page ? ` · p.${question.page}` : ''}
           </AppText>
         ) : null}
       </View>
 
       <View style={styles.choices}>
-        {choiceIds.map((id) => {
-          const choice = itemById(id);
-          if (!choice) return null;
-          const isAnswer = id === question.itemId;
-          const chosen = picked === id;
-          const correct = settled && isAnswer;
-          const wrong = settled && chosen && !isAnswer;
+        {question.choices.map((choice) => {
+          const correct = result?.answer.itemId === choice.itemId;
+          const wrong = Boolean(result) && picked === choice.itemId && !correct;
 
           return (
             <Tap
-              key={id}
-              disabled={settled}
-              onPress={() => {
-                setPicked(id);
-                onAnswered?.(isAnswer);
-              }}
+              key={choice.itemId}
+              disabled={Boolean(picked)}
+              onPress={() => choose(choice.itemId)}
               style={[
                 styles.choice,
                 correct ? styles.choiceCorrect : null,
@@ -90,19 +91,19 @@ export function QuizRunner({
         })}
       </View>
 
-      {settled ? (
+      {result ? (
         <View style={styles.after}>
           <AppText style={styles.meaning}>
-            <Quote style={styles.meaningTerm}>{answer.term}</Quote>
+            <Quote style={styles.meaningTerm}>{result.answer.term}</Quote>
             {'  '}
-            {answer.meaning}
+            {result.answer.meaning}
           </AppText>
 
-          {answer.confusedWith && confused ? (
+          {result.confusedWith ? (
             <AppText style={styles.contrast}>
-              <Quote style={styles.contrastTerm}>{confused.term}</Quote>
+              <Quote style={styles.contrastTerm}>{result.confusedWith.term}</Quote>
               {'  '}
-              {answer.confusedWith.note}
+              {result.confusedWith.note}
             </AppText>
           ) : null}
         </View>
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
   /** 문장은 상자에 담지 않는다 — 종이 위에 놓인 한 줄로 둔다 */
   stem: { gap: 10, paddingVertical: 6 },
   quote: { fontSize: 21, lineHeight: 33, color: color.text.primary },
-  /** 아직 비어 있는 자리 — 표현 하나가 통째로 빠져 있어서 낱말보다 넓다 */
   blank: {
     width: 132,
     height: 22,
@@ -145,9 +145,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border.strong,
   },
-  /** 맞은 보기만 테두리가 진해진다. 채우지는 않는다. */
   choiceCorrect: { borderWidth: 1.5, borderColor: color.status.positive },
-  /** 틀리게 고른 보기는 종이 뒤로 물러난다 */
   choiceWrong: { backgroundColor: color.surface.alt, borderColor: 'transparent' },
   choiceText: { fontSize: 17, lineHeight: 23, textAlign: 'center', color: color.text.primary },
   choiceTextCorrect: { fontWeight: '600' },

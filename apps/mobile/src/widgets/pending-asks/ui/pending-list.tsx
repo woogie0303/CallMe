@@ -1,23 +1,33 @@
 import { StyleSheet, View } from 'react-native';
 
-import type { PendingAsk } from '@/entities/ask/model/types';
-import { bookById } from '@/entities/book/model/mock';
+import type { Book } from '@/entities/book/model/types';
 import { SpineEdge } from '@/entities/book/ui/spine-edge';
 import { color, type } from '@/shared/config';
 import { AppText, Quote, Tap } from '@/shared/ui';
+
+/** 한 줄에 필요한 것 전부. 책은 찾아 나서지 않고 받아 쓴다. */
+export type PendingRow = {
+  id: string;
+  text: string;
+  page?: number;
+  capturedLabel: string;
+  /** 왜 기다리는지 — 서버가 준 말을 그대로 보여준다 */
+  reason: string;
+  book?: Book;
+};
 
 /** 답을 기다리는 문장들. 실패가 아니라 대기라서 오류처럼 보이지 않게 둔다. */
 export function PendingList({
   asks,
   onPressAsk,
 }: {
-  asks: PendingAsk[];
+  asks: PendingRow[];
   onPressAsk?: (id: string) => void;
 }) {
   return (
     <View style={styles.list}>
       {asks.map((ask) => {
-        const book = ask.bookId ? bookById(ask.bookId) : undefined;
+        const book = ask.book;
         return (
           <Tap key={ask.id} style={styles.card} onPress={() => onPressAsk?.(ask.id)}>
             {book ? <SpineEdge book={book} /> : null}

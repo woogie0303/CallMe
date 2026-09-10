@@ -1,8 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
-import { bookById } from '@/entities/book/model/mock';
-import { CURRENT_READING } from '@/entities/reading/model/mock';
+import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { color, type } from '@/shared/config';
 import { AppText, ScreenHeader } from '@/shared/ui';
 import { BookDetail } from '@/widgets/book-detail/ui/book-detail';
@@ -11,7 +10,9 @@ import { BookDetail } from '@/widgets/book-detail/ui/book-detail';
 export default function BookScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const book = bookById(id);
+  const { data: book, isPending } = useBook(id);
+  const { data: reading } = useCurrentBook();
+  const current = reading?.book.id === id ? reading : undefined;
 
   return (
     <View style={styles.screen}>
@@ -20,16 +21,33 @@ export default function BookScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}>
-        {book ? (
+        {isPending ? (
+          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+        ) : book ? (
           <BookDetail
             book={book}
-            progress={book.id === CURRENT_READING.bookId ? CURRENT_READING : undefined}
+            progress={
+              current
+                ? {
+                    bookId: book.id,
+                    currentPage: current.progress.currentPage,
+                    totalPages: current.progress.pages ?? 0,
+                    chapter: '',
+                    startedLabel: '',
+                    lastReadLabel: '',
+                  }
+                : undefined
+            }
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })
             }
             onOpenRetell={() => router.push('/retell')}
-            {...(book.id === CURRENT_READING.bookId
-              ? { onAsk: () => router.push('/ask'), onCapture: () => router.push('/scan') }
+            {...(current
+              ? {
+                  onAsk: () =>
+                    router.push({ pathname: '/ask', params: { bookId: book.id } }),
+                  onCapture: () => router.push('/scan'),
+                }
               : null)}
           />
         ) : (
@@ -44,5 +62,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 32 },
+  spinner: { paddingTop: 40 },
   missing: { ...type.label1, color: color.text.assistive, paddingTop: 40, textAlign: 'center' },
 });

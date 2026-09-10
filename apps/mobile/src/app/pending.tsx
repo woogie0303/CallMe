@@ -2,8 +2,10 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ASK_QUOTA, PENDING_ASKS, remaining } from '@/entities/ask/model/mock';
+import { usePendingAsks, useAskQuota, useResolveAsk } from '@/entities/ask/api/ask.api';
+import { toBook } from '@/entities/book/api/book.api';
 import { color, type } from '@/shared/config';
+import { savedLabel } from '@/shared/lib/date';
 import { ActionButton, AltPanel, AppText, Icon, InkPanel, ScreenHeader } from '@/shared/ui';
 import { PendingList } from '@/widgets/pending-asks/ui/pending-list';
 
@@ -16,7 +18,11 @@ import { PendingList } from '@/widgets/pending-asks/ui/pending-list';
 export default function PendingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const left = remaining(ASK_QUOTA);
+  const { data: pending = [] } = usePendingAsks();
+  const { data: quota } = useAskQuota();
+  const resolve = useResolveAsk();
+  const left = quota?.remaining ?? 0;
+  const oldest = pending[pending.length - 1];
 
   return (
     <View style={styles.screen}>
@@ -28,7 +34,7 @@ export default function PendingScreen() {
         style={styles.scroll}>
         <InkPanel style={styles.hero}>
           <AppText style={styles.heroTitle}>
-            문장 {PENDING_ASKS.length}개가{'\n'}답을 기다리고 있어요
+            문장 {pending.length}개가{'\n'}답을 기다리고 있어요
           </AppText>
           <AppText style={styles.heroBody}>
             {left > 0
@@ -37,7 +43,17 @@ export default function PendingScreen() {
           </AppText>
         </InkPanel>
 
-        <PendingList asks={PENDING_ASKS} onPressAsk={() => router.push('/ask')} />
+        <PendingList
+          asks={pending.map((view) => ({
+            id: view.ask._id,
+            text: view.sentence?.text ?? '',
+            page: view.sentence?.page,
+            capturedLabel: savedLabel(view.ask.createdAt),
+            reason: view.ask.pendingReason ?? '기다리는 중',
+            book: view.book ? toBook(view.book) : undefined,
+          }))}
+          onPressAsk={(id) => resolve.mutate(id)}
+        />
 
         <AltPanel style={styles.rewarded}>
           <View style={styles.rewardedHead}>
@@ -53,9 +69,18 @@ export default function PendingScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         <ActionButton
-          label={left > 0 ? '가장 오래 기다린 문장부터' : '다음 달까지 그대로 둘게요'}
+          label={
+            resolve.isPending
+              ? '물어보는 중…'
+              : left > 0
+                ? '가장 오래 기다린 문장부터'
+                : '다음 달까지 그대로 둘게요'
+          }
           variant={left > 0 ? 'primary' : 'ink'}
-          onPress={() => (left > 0 ? router.push('/ask') : router.back())}
+          onPress={() => {
+            if (left > 0 && oldest) resolve.mutate(oldest.ask._id);
+            else if (left <= 0) router.back();
+          }}
         />
       </View>
     </View>
