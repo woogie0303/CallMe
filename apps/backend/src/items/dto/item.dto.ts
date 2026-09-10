@@ -1,4 +1,5 @@
 import { Type } from 'class-transformer';
+import { ToBoolean } from '../../common/to-boolean';
 import {
   IsBoolean,
   IsIn,
@@ -39,6 +40,11 @@ export class SaveItemDto {
   /** 이 표현을 만난 문장 */
   @IsMongoId()
   sentenceId!: string;
+
+  /** 그 문장에 있던 꼴. 질문의 후보가 그대로 알려준다 — 퀴즈의 빈칸이 이걸 쓴다. */
+  @IsOptional()
+  @IsString()
+  surface?: string;
 }
 
 export class UpdateItemDto {
@@ -64,6 +70,10 @@ export class UpdateItemDto {
 export class AddEncounterDto {
   @IsMongoId()
   sentenceId!: string;
+
+  @IsOptional()
+  @IsString()
+  surface?: string;
 }
 
 export class ListItemsQuery {
@@ -71,9 +81,17 @@ export class ListItemsQuery {
   @IsIn(STATUSES)
   status?: ItemStatus;
 
+  /**
+   * 이 책에서 건져 올린 것만. 항목은 책에 속하지 않으므로(여러 책을 건너다니는
+   * 것이 항목이다) 그 항목이 만난 문장이 이 책의 것인지를 거쳐서 찾는다.
+   */
+  @IsOptional()
+  @IsMongoId()
+  bookId?: string;
+
   /** true면 두 번 이상 만난 것만 — 서랍이 보여주려는 사실이 이것뿐이다 */
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   reencountered?: boolean;
 }

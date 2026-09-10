@@ -18,6 +18,10 @@ export class Candidate {
   @Prop({ required: true })
   term!: string;
 
+  /** 이 문장에 있던 꼴 — 담을 때 만남에 함께 적힌다 */
+  @Prop()
+  surface?: string;
+
   @Prop({ required: true })
   meaning!: string;
 
@@ -27,6 +31,14 @@ export class Candidate {
   /** 이미 서랍에 있는 표현이면 그 항목 — 담는 순간 재회가 된다 */
   @Prop({ type: Types.ObjectId, ref: 'LexicalItem' })
   existingItemId?: Types.ObjectId;
+
+  /**
+   * 그 항목을 마지막으로 만난 자리. '3월에 Klara에서 담으셨어요' 한 줄을
+   * 화면이 쓰려면 이만큼이 필요하고, 이 줄이 붙은 카드가 이 앱이 있는 이유다.
+   * 화면이 항목마다 다시 물어보게 두지 않는다.
+   */
+  @Prop({ type: Object })
+  existing?: { met: number; lastSavedAt?: Date; lastBookTitle?: string };
 }
 
 export const CandidateSchema = SchemaFactory.createForClass(Candidate);

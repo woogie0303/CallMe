@@ -7,7 +7,9 @@ import { AsksModule } from './asks/asks.module';
 import { AuthModule } from './auth/auth.module';
 import { BooksModule } from './books/books.module';
 import { ItemsModule } from './items/items.module';
+import { QuizModule } from './quiz/quiz.module';
 import { ReadersModule } from './readers/readers.module';
+import { RetellsModule } from './retells/retells.module';
 import { SentencesModule } from './sentences/sentences.module';
 
 @Module({
@@ -25,6 +27,8 @@ import { SentencesModule } from './sentences/sentences.module';
     BooksModule,
     SentencesModule,
     ItemsModule,
+    QuizModule,
+    RetellsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

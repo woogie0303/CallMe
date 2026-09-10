@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { ToBoolean } from '../../common/to-boolean';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -72,7 +72,7 @@ export class UpdateBookDto extends CreateBookDto {
 
 export class ListBooksQuery {
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   finished?: boolean;
 }

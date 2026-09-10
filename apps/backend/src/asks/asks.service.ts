@@ -7,7 +7,8 @@ import { LexicalItem } from '../items/lexical-item.schema';
 import { Reader } from '../readers/reader.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
 import { Ask, type AskDocument, type Candidate } from './ask.schema';
-import { AnswerService, AnswerUnavailable, type Answer } from './anthropic/answer.service';
+import { ModelUnavailable } from '../common/claude';
+import { AnswerService, type Answer } from './anthropic/answer.service';
 import type { CreateAskDto, ListAsksQuery } from './dto/ask.dto';
 
 /** 이번 달에 몇 번 남았는지. 다 써도 담는 일은 실패하지 않는다. */
@@ -153,7 +154,7 @@ export class AsksService {
       ask.answeredBy = this.answer.modelName;
       ask.pendingReason = undefined;
     } catch (error) {
-      if (!(error instanceof AnswerUnavailable)) throw error;
+      if (!(error instanceof ModelUnavailable)) throw error;
       ask.status = 'pending';
       ask.pendingReason = '연결 실패';
     }
@@ -171,19 +172,43 @@ export class AsksService {
   ): Promise<Candidate[]> {
     if (!candidates.length) return [];
 
+    const owner = new Types.ObjectId(readerId);
     const terms = candidates.map((candidate) => candidate.term);
-    const existing = await this.items.find({
-      readerId: new Types.ObjectId(readerId),
-      term: { $in: terms },
-    });
-    const idByTerm = new Map(existing.map((item) => [item.term, item._id]));
+    const existing = await this.items.find({ readerId: owner, term: { $in: terms } });
+    const byTerm = new Map(existing.map((item) => [item.term, item]));
 
-    return candidates.map((candidate) => ({
-      term: candidate.term,
-      meaning: candidate.meaning,
-      register: candidate.register,
-      existingItemId: idByTerm.get(candidate.term),
-    }));
+    /** 마지막으로 만난 문장이 어느 책이었는지까지 한 번에 붙인다 */
+    const lastSentenceIds = existing.flatMap((item) => {
+      const last = item.encounters[item.encounters.length - 1];
+      return last ? [last.sentenceId] : [];
+    });
+    const sentences = await this.sentences.find({ _id: { $in: lastSentenceIds } });
+    const books = await this.books.find({
+      _id: { $in: sentences.map((sentence) => sentence.bookId) },
+    });
+    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
+    const titleById = new Map(books.map((b) => [b.id as string, b.title]));
+
+    return candidates.map((candidate) => {
+      const item = byTerm.get(candidate.term);
+      const last = item?.encounters[item.encounters.length - 1];
+      const sentence = last ? sentenceById.get(last.sentenceId.toString()) : undefined;
+
+      return {
+        term: candidate.term,
+        surface: candidate.surface,
+        meaning: candidate.meaning,
+        register: candidate.register,
+        existingItemId: item?._id,
+        existing: item
+          ? {
+              met: item.encounters.length,
+              lastSavedAt: last?.savedAt,
+              lastBookTitle: sentence ? titleById.get(sentence.bookId.toString()) : undefined,
+            }
+          : undefined,
+      };
+    });
   }
 
   /** 질문 목록에 문장과 책을 붙인다 — 기다리는 문장 화면이 그리는 것이 그것이다 */

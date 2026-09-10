@@ -24,6 +24,20 @@ export type SaveResult = {
   previousSentenceId?: Types.ObjectId;
 };
 
+/**
+ * 목록 한 줄. 항목만으로는 서랍을 그릴 수 없다 — 어느 책들을 건너왔는지와
+ * 가장 최근에 만난 문장 한 줄이 함께 보여야 한다. 그걸 클라이언트가 항목마다
+ * 다시 물어보게 두면 스무 줄짜리 서랍이 스물한 번을 부른다.
+ */
+export type ItemSummary = {
+  item: LexicalItemDocument;
+  /** 이 항목이 건너온 책들, 중복 없이 — 왼쪽 점들이 이 색을 쓴다 */
+  books: BookDocument[];
+  latest: { sentence: SentenceDocument; book: BookDocument | null } | null;
+  /** 처음과 마지막 만남 사이의 날수. 한 번만 만났으면 없다. */
+  gapDays?: number;
+};
+
 export type ResolvedEncounter = {
   sentenceId: Types.ObjectId;
   savedAt: Date;
@@ -60,7 +74,7 @@ export class ItemsService {
         term,
         meaning: dto.meaning,
         register: dto.register,
-        encounters: [{ sentenceId: sentence._id, savedAt: new Date() }],
+        encounters: [{ sentenceId: sentence._id, surface: dto.surface, savedAt: new Date() }],
       });
       return { item: created, reencountered: false };
     }
@@ -74,7 +88,7 @@ export class ItemsService {
     const first = existing.encounters[0];
     const savedAt = new Date();
 
-    existing.encounters.push({ sentenceId: sentence._id, savedAt });
+    existing.encounters.push({ sentenceId: sentence._id, surface: dto.surface, savedAt });
     existing.status = '헷갈려요';
     await existing.save();
 
@@ -87,13 +101,57 @@ export class ItemsService {
     };
   }
 
-  list(readerId: string, query: ListItemsQuery): Promise<LexicalItemDocument[]> {
-    const filter: Record<string, unknown> = { readerId: new Types.ObjectId(readerId) };
+  async list(readerId: string, query: ListItemsQuery): Promise<ItemSummary[]> {
+    const owner = new Types.ObjectId(readerId);
+    const filter: Record<string, unknown> = { readerId: owner };
     if (query.status) filter.status = query.status;
     /** 두 번째 만남이 있는지만 보면 된다 */
     if (query.reencountered) filter['encounters.1'] = { $exists: true };
+    if (query.bookId) {
+      const inBook = await this.sentences
+        .find({ readerId: owner, bookId: new Types.ObjectId(query.bookId) })
+        .distinct('_id');
+      filter['encounters.sentenceId'] = { $in: inBook };
+    }
 
-    return this.items.find(filter).sort({ updatedAt: -1 }).exec();
+    const items = await this.items.find(filter).sort({ updatedAt: -1 });
+    if (!items.length) return [];
+
+    const sentences = await this.sentences.find({
+      _id: { $in: items.flatMap((item) => item.encounters.map((e) => e.sentenceId)) },
+    });
+    const books = await this.books.find({
+      _id: { $in: sentences.map((sentence) => sentence.bookId) },
+    });
+
+    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
+    const bookById = new Map(books.map((b) => [b.id as string, b]));
+
+    return items.map((item) => {
+      const met = item.encounters.flatMap((encounter) => {
+        const sentence = sentenceById.get(encounter.sentenceId.toString());
+        return sentence ? [sentence] : [];
+      });
+      const crossed = new Map<string, BookDocument>();
+      for (const sentence of met) {
+        const book = bookById.get(sentence.bookId.toString());
+        if (book) crossed.set(book.id as string, book);
+      }
+      const last = met[met.length - 1];
+
+      const encounters = item.encounters;
+      return {
+        item,
+        books: [...crossed.values()],
+        latest: last
+          ? { sentence: last, book: bookById.get(last.bookId.toString()) ?? null }
+          : null,
+        gapDays:
+          encounters.length > 1
+            ? daysBetween(encounters[0].savedAt, encounters[encounters.length - 1].savedAt)
+            : undefined,
+      };
+    });
   }
 
   async find(readerId: string, id: string): Promise<LexicalItemDocument> {
@@ -163,7 +221,11 @@ export class ItemsService {
       throw new ConflictException('이미 이 문장에서 담아둔 표현이에요.');
     }
 
-    item.encounters.push({ sentenceId: sentence._id, savedAt: new Date() });
+    item.encounters.push({
+      sentenceId: sentence._id,
+      surface: dto.surface,
+      savedAt: new Date(),
+    });
     item.status = '헷갈려요';
     return item.save();
   }

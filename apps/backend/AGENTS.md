@@ -26,6 +26,9 @@ src/
   sentences/  책에서 옮겨 적은 줄
   items/      어휘 항목과 만남 — 재회가 일어나는 곳
   asks/       문장을 통째로 묻는 일 (anthropic/ 안에 모델 호출 하나)
+  quiz/       빈칸 문제와 푼 기록 — 무엇을 언제 다시 낼지 정하는 곳
+  retells/    챕터를 제 말로 옮겨 적은 것과 고쳐준 문장
+  reading/    하루에 몇 쪽 읽었는지 — 진도가 앞으로 갈 때 저절로 쌓인다
 ```
 
 ## 지켜야 할 것
@@ -48,6 +51,11 @@ src/
   먼저 저장되고, 답 없는 질문은 pending으로 기다린다. 이건 오류가 아니라 상태다.
 - **월 할당량은 세기만 한다.** 남은 횟수를 어딘가에 적어두고 매달 0으로 되돌리지
   않는다. 이번 달에 답을 받은 질문을 셀 뿐이라, 되돌리다 실패할 일이 없다.
+- **퀴즈의 빈칸은 `surface`가 있어야 뚫린다.** 표제형은 `brush it off`인데 문장에는
+  `brushed it off`로 있어서, 문장에서 그 자리를 다시 찾는 일은 ADR-0002가 걷어낸
+  파싱이다. 물어볼 때 모델이 알려준 꼴을 만남에 적어두고, 없는 만남은 퀴즈에서 뺀다.
+- **읽은 양을 따로 적게 하지 않는다.** 진도를 옮기면 그 차이가 그날 읽은 양이다.
+  읽고 나서 한 번 더 적게 만들면 아무도 적지 않는다.
 - **프롬프트의 붙박이 부분만 캐시에 올린다.** 레벨·책·문장처럼 요청마다 달라지는
   것은 system이 아니라 user 메시지에 싣는다 — 캐시는 앞에서 한 글자만 달라도 깨진다.
 
@@ -83,8 +91,20 @@ GET    /api/asks/:id
 POST   /api/asks/:id/resolve      기다리던 질문을 다시 물어본다
 DELETE /api/asks/:id              질문만 지운다. 문장은 남는다
 
+GET    /api/reading/week          이레치 날짜와 쪽수 · 읽은 날 · 연속 일수
+
+GET    /api/quiz ?size=            오늘 낼 문제. 빈 배열이면 낼 것이 없다는 뜻
+POST   /api/quiz/answers           판정은 서버가 한다 — 정답은 문제와 함께 가지 않는다
+
+GET    /api/retells/quota          질문과 따로 센다
+POST   /api/retells                옮겨 적은 글은 답을 못 받아도 남는다
+GET    /api/retells ?bookId=
+GET    /api/retells/:id
+POST   /api/retells/:id/resolve
+DELETE /api/retells/:id
+
 POST   /api/items                 담기 — 이미 있으면 재회로 돌아온다
-GET    /api/items ?status= &reencountered=
+GET    /api/items ?status= &reencountered= &bookId=
 GET    /api/items/:id             만난 문장과 그 책까지 이어서
 PATCH  /api/items/:id             뜻 · 상태 · 헷갈리는 짝
 POST   /api/items/:id/encounters
@@ -98,8 +118,18 @@ DELETE /api/items/:id
 `POST /api/asks`의 답에는 문장과 책이 함께 실린다. 후보 중 이미 서랍에 있는 것에는
 `existingItemId`가 붙어 오고, 그걸 `POST /api/items`로 담는 순간이 재회다.
 
+목록 응답(`GET /api/items`)은 항목마다 건너온 책들과 가장 최근 문장을 함께 싣는다.
+클라이언트가 줄마다 다시 물어보게 두면 스무 줄짜리 서랍이 스물한 번을 부른다.
+같은 이유로 질문의 후보에는 이미 서랍에 있는 표현의 재회 정보가 붙어 온다.
+
+## 개발용 문
+
+`POST /api/dev/login`은 소셜 로그인 앱이 등록되기 전까지만 여는 임시 문이다.
+`ALLOW_DEV_LOGIN=true`일 때만 열리고 `NODE_ENV=production`이면 거부하며, 열려
+있는 동안 부팅 로그가 매번 그 사실을 말한다. 검증이 끝나면
+`src/auth/dev-login.controller.ts`와 환경 변수를 함께 지운다.
+
 ## 아직 없는 것
 
-퀴즈와 리텔링. 클라이언트는 아직 목업으로 그려져 있고 이 API를 부르지 않는다.
-소셜 로그인 셋은 실제 제공자와 한 번도 통신해 본 적이 없다 — 앱 등록과 검증이
-남아 있다.
+촬영과 OCR. 소셜 로그인 셋과 모델 호출은 실제로 통신해 본 적이 없다 — 둘 다
+자격 증명이 있어야 검증된다.

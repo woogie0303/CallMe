@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
+import { claudeFor, logUsage, ModelUnavailable, unavailable, type Claude } from '../../common/claude';
 import { REGISTERS } from '../../items/lexical-item.schema';
 
 /**
@@ -22,6 +22,12 @@ const AnswerFormat = z.object({
           .describe(
             '표제형(canonical form). 문장에 있던 활용형이 아니라 사전에 실릴 꼴로 적는다. ' +
               '예: 문장이 "brushed it off"였다면 "brush it off".',
+          ),
+        surface: z
+          .string()
+          .describe(
+            '이 문장에 **실제로 적혀 있는 꼴 그대로**. 문장에서 그대로 잘라낸 조각이어야 한다. ' +
+              '예: 문장이 "She brushed it off"이면 "brushed it off". 나중에 이 자리를 빈칸으로 만든다.',
           ),
         meaning: z
           .string()
@@ -61,15 +67,13 @@ const SYSTEM = `당신은 영어 원서를 읽는 한국어 사용자를 돕습�
 - 뜻은 **그 문장에서의 뜻 하나**만 씁니다. 같은 표현도 문장이 다르면 뜻이 다릅니다.
   make out은 어떤 문장에서는 '겨우 알아보다'이고 다른 문장에서는 그렇지 않습니다.
   사전 뜻을 여러 개 나열하지 않습니다.
-- 표제형으로 적습니다. 문장에 있던 활용형 그대로가 아니라 사전에 실릴 꼴로 적습니다.
+- term은 표제형으로, surface는 문장에 적힌 꼴 그대로 적습니다. 둘은 다를 수 있습니다.
+  surface는 문장에서 그대로 잘라낸 조각이어야 합니다 — 문장에 없는 글자를 만들지 않습니다.
 - 독자의 레벨에 맞춰 설명의 깊이를 정합니다. 입문에게는 쉬운 말로 풀고,
   고급에게는 뉘앙스 차이를 짚습니다.
 - **골라줄 것이 없으면 빈 배열을 돌려줍니다.** 쉬운 문장에서 억지로 표현을 만들어
   내면, 독자의 서랍이 외울 필요 없는 것들로 채워집니다. 빈 배열도 정상적인 답입니다.
 - 아무리 많아도 넷까지만 고릅니다.`;
-
-/** 답을 받지 못했다는 사실 자체. 이유는 로그로 남기고, 부른 쪽은 대기로 돌린다. */
-export class AnswerUnavailable extends Error {}
 
 /**
  * 문장 하나를 묻는 한 번의 호출.
@@ -81,25 +85,18 @@ export class AnswerUnavailable extends Error {}
 @Injectable()
 export class AnswerService {
   private readonly log = new Logger(AnswerService.name);
-  private readonly client?: Anthropic;
-  private readonly model: string;
+  private readonly claude: Claude;
 
   constructor(config: ConfigService) {
-    const apiKey = config.get<string>('ANTHROPIC_API_KEY');
-    this.model = config.get<string>('ASK_MODEL') ?? 'claude-sonnet-5';
-    /** 키가 없으면 조용히 꺼둔다 — 담는 일은 그래도 성공해야 한다 */
-    this.client = apiKey ? new Anthropic({ apiKey }) : undefined;
-    if (!this.client) {
-      this.log.warn('ANTHROPIC_API_KEY가 없어 질문은 전부 대기로 남습니다.');
-    }
+    this.claude = claudeFor(config, 'ASK_MODEL', this.log);
   }
 
   get ready(): boolean {
-    return Boolean(this.client);
+    return Boolean(this.claude.client);
   }
 
   get modelName(): string {
-    return this.model;
+    return this.claude.model;
   }
 
   async answer(input: {
@@ -109,11 +106,12 @@ export class AnswerService {
     author: string;
     page?: number;
   }): Promise<Answer> {
-    if (!this.client) throw new AnswerUnavailable('AI가 설정되지 않았습니다.');
+    const { client, model } = this.claude;
+    if (!client) throw new ModelUnavailable('AI가 설정되지 않았습니다.');
 
     try {
-      const response = await this.client.messages.parse({
-        model: this.model,
+      const response = await client.messages.parse({
+        model,
         max_tokens: 16000,
         /** 붙박이 부분만 캐시에 올린다 */
         system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
@@ -121,35 +119,20 @@ export class AnswerService {
         output_config: { format: zodOutputFormat(AnswerFormat) },
       });
 
-      /** 캐시가 실제로 걸렸는지는 이 값으로만 알 수 있다 */
-      this.log.debug(
-        `ask: in=${response.usage.input_tokens} cached=${response.usage.cache_read_input_tokens ?? 0} out=${response.usage.output_tokens}`,
-      );
+      logUsage(this.log, 'ask', response.usage);
 
       if (response.stop_reason === 'refusal') {
-        throw new AnswerUnavailable(
+        throw new ModelUnavailable(
           `모델이 답을 거절했습니다: ${response.stop_details?.category ?? '이유 없음'}`,
         );
       }
 
       const parsed = response.parsed_output;
-      if (!parsed) throw new AnswerUnavailable('모델의 답을 읽지 못했습니다.');
+      if (!parsed) throw new ModelUnavailable('모델의 답을 읽지 못했습니다.');
 
       return parsed;
     } catch (error) {
-      if (error instanceof AnswerUnavailable) throw error;
-
-      if (error instanceof Anthropic.RateLimitError) {
-        this.log.warn('요청이 몰려 잠시 답할 수 없습니다.');
-      } else if (error instanceof Anthropic.AuthenticationError) {
-        this.log.error('ANTHROPIC_API_KEY가 올바르지 않습니다.');
-      } else if (error instanceof Anthropic.APIError) {
-        this.log.error(`Anthropic API ${error.status}: ${error.message}`);
-      } else {
-        this.log.error(`질문에 실패했습니다: ${String(error)}`);
-      }
-
-      throw new AnswerUnavailable('지금은 답을 받지 못했어요.');
+      throw unavailable(error, this.log);
     }
   }
 }

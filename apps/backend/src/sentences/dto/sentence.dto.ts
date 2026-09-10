@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { ToBoolean } from '../../common/to-boolean';
 import {
   IsBoolean,
   IsInt,
@@ -50,7 +50,7 @@ export class ListSentencesQuery {
 
   /** true면 어휘 항목이 딸리지 않은 문장만 — 그냥 좋아서 담아둔 줄 */
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   liked?: boolean;
 }
