@@ -117,14 +117,11 @@ export class RetellsService {
         draft: retell.draft,
         level: reader?.level ?? '중급',
         bookTitle: book.title,
-        savedTerms: [...saved.keys()],
+        savedTerms: [...saved],
       });
 
       retell.revisions = revised.revisions;
-      retell.missedItemIds = revised.missedTerms.flatMap((term) => {
-        const id = saved.get(term);
-        return id ? [id] : [];
-      });
+      retell.missedTerms = revised.missedTerms;
       retell.status = 'answered';
       retell.answeredAt = new Date();
       retell.answeredBy = this.revise.modelName;
@@ -139,19 +136,18 @@ export class RetellsService {
   }
 
   /**
-   * 이 책에서 담아둔 표현들. 어휘 항목은 책에 속하지 않으므로, 그 항목이 만난
-   * 문장이 이 책의 것인지를 거쳐서 찾는다.
+   * 이 책에서 담아둔 표현들의 표제형. 어휘 항목은 책에 속하지 않으므로, 그
+   * 항목이 만난 문장이 이 책의 것인지를 거쳐서 찾는다. 모델에게 '이 중에서
+   * 골라라'고 줄 목록이면서, 답이 돌아온 뒤 그 목록에 없는 표현을 한 번 더
+   * 걸러내는 허용 목록이기도 하다.
    */
-  private async savedInBook(
-    readerId: Types.ObjectId,
-    bookId: Types.ObjectId,
-  ): Promise<Map<string, Types.ObjectId>> {
+  private async savedInBook(readerId: Types.ObjectId, bookId: Types.ObjectId): Promise<Set<string>> {
     const sentenceIds = await this.sentences.find({ readerId, bookId }).distinct('_id');
     const items = await this.items.find({
       readerId,
       'encounters.sentenceId': { $in: sentenceIds },
     });
 
-    return new Map(items.map((item) => [item.term, item._id as Types.ObjectId]));
+    return new Set(items.map((item) => item.term));
   }
 }

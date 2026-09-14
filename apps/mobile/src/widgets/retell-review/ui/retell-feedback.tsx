@@ -1,8 +1,6 @@
 import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { itemById } from '@/entities/lexical-item/model/mock';
-import type { RetellRevision } from '@/entities/retell/model/mock';
 import { color, type } from '@/shared/config';
 import { AltPanel, AppText, Card, Icon, Quote, TermChip, emphasis } from '@/shared/ui';
 
@@ -12,12 +10,19 @@ import { AltPanel, AppText, Card, Icon, Quote, TermChip, emphasis } from '@/shar
  */
 export function RetellFeedback({
   revisions,
-  missedItemIds,
+  missedTerms,
 }: {
-  revisions: RetellRevision[];
-  missedItemIds: string[];
+  revisions: { mine: string; better: string; note: string; highlights: string[] }[];
+  missedTerms: string[];
 }) {
-  const missed = missedItemIds.map(itemById).filter(Boolean);
+  if (!revisions.length && !missedTerms.length) {
+    return (
+      <View style={styles.head}>
+        <Icon name="sparkle" size={15} color={color.primary} />
+        <AppText style={styles.headTitle}>고칠 곳을 찾지 못했어요 — 잘 쓰셨어요</AppText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrap}>
@@ -26,20 +31,20 @@ export function RetellFeedback({
         <AppText style={styles.headTitle}>이렇게 쓰면 더 자연스러워요</AppText>
       </View>
 
-      {revisions.map((revision) => (
-        <Card key={revision.id} style={styles.card}>
+      {revisions.map((revision, i) => (
+        <Card key={i} style={styles.card}>
           <Quote style={styles.mine}>{revision.mine}</Quote>
           <Quote style={styles.better}>{revision.better}</Quote>
           <AppText style={styles.note}>{highlight(revision.note, revision.highlights)}</AppText>
         </Card>
       ))}
 
-      {missed.length ? (
+      {missedTerms.length ? (
         <AltPanel style={styles.missed}>
           <AppText style={styles.missedTitle}>이 챕터에서 쓸 수 있었던 표현</AppText>
           <View style={styles.missedRow}>
-            {missed.map((e) => (
-              <TermChip key={e!.id} term={e!.term} />
+            {missedTerms.map((term) => (
+              <TermChip key={term} term={term} />
             ))}
           </View>
         </AltPanel>

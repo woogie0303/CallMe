@@ -30,4 +30,13 @@ export function useCreateRetell() {
   });
 }
 
+/** 기다리던 리텔링을 다시 시도한다 — 연결이 돌아왔을 때 */
+export function useResolveRetell() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<ApiRetell>(`/retells/${id}/resolve`, { method: 'POST' }),
+    onSuccess: () => client.invalidateQueries({ queryKey: retellsKey }),
+  });
+}
+
 export type { ApiRetell };

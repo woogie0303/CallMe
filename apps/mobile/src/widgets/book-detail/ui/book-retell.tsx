@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { ApiRetell } from '@/entities/retell/api/retell.api';
 import { color, type } from '@/shared/config';
-import { ActionButton, AltPanel, AppText, Quote } from '@/shared/ui';
+import { ActionButton, AltPanel, AppText, EmptyState, Quote } from '@/shared/ui';
 
 /**
  * 책 화면 안의 리텔링 자리.
@@ -21,9 +21,11 @@ export function BookRetell({
   if (!session) {
     return (
       <View style={styles.empty}>
-        <AppText style={styles.emptyText}>
-          아직 이 책을 제 말로 옮겨 적은 적이 없어요.
-        </AppText>
+        <EmptyState
+          mark="sentence"
+          compact
+          title="아직 이 책을 제 말로 옮겨 적은 적이 없어요"
+        />
         <ActionButton label="리텔링 시작하기" variant="subtle" onPress={onOpen} />
       </View>
     );
@@ -40,7 +42,7 @@ export function BookRetell({
         <AppText style={styles.meta}>
           {session.status === 'pending'
             ? `아직 답을 기다리는 중이에요 · ${session.pendingReason ?? ''}`
-            : `고쳐준 곳 ${session.revisions.length}군데 · 쓸 수 있었던 표현 ${session.missedItemIds.length}개`}
+            : `고쳐준 곳 ${session.revisions.length}군데 · 쓸 수 있었던 표현 ${session.missedTerms.length}개`}
         </AppText>
       </AltPanel>
       <ActionButton label="고친 문장 다시 보기" variant="subtle" onPress={onOpen} />
@@ -54,6 +56,5 @@ const styles = StyleSheet.create({
   chapter: { ...type.caption1, color: color.text.meta },
   draft: { fontSize: 14, lineHeight: 21, color: color.text.body },
   meta: { ...type.caption2, color: color.text.meta },
-  empty: { gap: 12, paddingTop: 2 },
-  emptyText: { ...type.label2, color: color.text.assistive },
+  empty: { gap: 4 },
 });

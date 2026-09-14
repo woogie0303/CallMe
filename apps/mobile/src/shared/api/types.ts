@@ -136,7 +136,7 @@ export type ApiRetell = {
   chapter: string;
   draft: string;
   revisions: { mine: string; better: string; note: string; highlights: string[] }[];
-  missedItemIds: string[];
+  missedTerms: string[];
   status: 'answered' | 'pending';
   pendingReason?: '횟수 소진' | '연결 실패';
   createdAt: string;

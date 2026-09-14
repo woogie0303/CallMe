@@ -51,11 +51,15 @@ export class Retell {
   revisions!: Revision[];
 
   /**
-   * 이 챕터를 쓰면서 쓸 수 있었는데 안 쓴, 내가 담아둔 표현들.
+   * 이 챕터를 쓰면서 쓸 수 있었는데 안 쓴, 내가 담아둔 표현들 — 표제형 그대로.
    * 리텔링이 서랍과 이어지는 자리가 여기 하나다.
+   *
+   * id가 아니라 문자열로 둔다. 화면이 하는 일은 칩 몇 개를 보여주는 것뿐이라
+   * 항목을 다시 찾아 열 일이 없고, id로 두면 화면에 보여주기 전에 그 id들을
+   * 표제형으로 되돌리는 조회를 한 번 더 해야 한다 — 필요 없는 조회다.
    */
-  @Prop({ type: [Types.ObjectId], ref: 'LexicalItem', default: [] })
-  missedItemIds!: Types.ObjectId[];
+  @Prop({ type: [String], default: [] })
+  missedTerms!: string[];
 
   @Prop({ type: String, enum: RETELL_STATUSES, default: 'pending', index: true })
   status!: RetellStatus;

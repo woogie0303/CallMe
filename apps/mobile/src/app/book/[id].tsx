@@ -34,14 +34,14 @@ export default function BookScreen() {
                     totalPages: current.progress.pages ?? 0,
                     chapter: '',
                     startedLabel: '',
-                    lastReadLabel: '',
+                    lastReadLabel: undefined,
                   }
                 : undefined
             }
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })
             }
-            onOpenRetell={() => router.push('/retell')}
+            onOpenRetell={() => router.push({ pathname: '/retell', params: { bookId: book.id } })}
             {...(current
               ? {
                   onAsk: () =>
