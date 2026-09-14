@@ -34,8 +34,9 @@ pnpm 워크스페이스 + Turborepo.
 
 ## 현재 상태
 
-모바일은 API에 붙어 있다. 로그인·서랍·홈·책·질문·퀴즈·마이가 서버에서 온 것을
-그린다. 웹은 아직 목업이다(`apps/web/src/entities/*/model/mock.ts`).
+모바일은 API에 완전히 붙어 있다 — 목업 파일이 하나도 없다. 로그인부터 리텔링까지
+모든 화면이 서버에서 온 것을 그린다. 웹은 아직 목업이다
+(`apps/web/src/entities/*/model/mock.ts`).
 
 백엔드는 몽고(Mongoose)와 소셜 로그인, 책·문장·어휘 항목 CRUD, 문장을 통째로 묻는
 질문, 퀴즈, 리텔링, 읽기 기록까지 있다(`apps/backend/AGENTS.md`). 로그인은
@@ -51,3 +52,7 @@ pnpm 워크스페이스 + Turborepo.
 읽던 쪽을 찍으면 기기가 글자를 읽고(Apple Vision / ML Kit) 서버가 그 줄들을
 문장으로 잇는다. 사진은 기기 밖으로 나가지 않는다. 네이티브 모듈이라 이 흐름은
 개발 빌드(EAS)에서만 돈다 — Expo Go에서는 촬영 화면이 '직접 적기'로 물러난다.
+
+책 추가는 구글 북스 API로 검색한다(원서를 검색하는 앱이라 국내 서점 API보다
+적중률이 높다). 검색이 나중에 알라딘 Open API로 바뀌어도 화면은 모른다 —
+`apps/backend/src/books/book-search.service.ts` 하나만 갈아 끼우면 된다.
