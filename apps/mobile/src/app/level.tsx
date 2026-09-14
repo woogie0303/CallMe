@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LEVELS, READER, type Level } from '@/entities/reader/model/mock';
+import { LEVELS } from '@/entities/reader/model/levels';
+import { useReader, useUpdateReader } from '@/entities/reader/api/reader.api';
+import type { Level } from '@/shared/api/types';
 import { color, type } from '@/shared/config';
 import { ActionButton, AppText, Icon, ScreenHeader, Tap } from '@/shared/ui';
 
@@ -14,7 +16,11 @@ import { ActionButton, AppText, Icon, ScreenHeader, Tap } from '@/shared/ui';
 export default function LevelScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [level, setLevel] = useState<Level>(READER.level);
+  const { data: reader } = useReader();
+  const update = useUpdateReader();
+  const [level, setLevel] = useState<Level | null>(null);
+  /** 서버 값이 도착하기 전엔 고른 적이 없다는 뜻이다 — 그 값을 그대로 시작점으로 쓴다 */
+  const current = level ?? reader?.level;
 
   return (
     <View style={styles.screen}>
@@ -34,12 +40,13 @@ export default function LevelScreen() {
 
         <View style={styles.options}>
           {LEVELS.map((option) => {
-            const on = option.value === level;
+            const on = option.value === current;
             return (
               <Tap
                 key={option.value}
                 style={[styles.option, on ? styles.optionOn : null]}
-                onPress={() => setLevel(option.value)}>
+                onPress={() => setLevel(option.value)}
+                disabled={update.isPending}>
                 <View style={styles.optionText}>
                   <AppText style={[styles.optionTitle, on ? styles.optionTitleOn : null]}>
                     {option.value}
@@ -56,7 +63,15 @@ export default function LevelScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <ActionButton label="이걸로 할게요" onPress={() => router.back()} />
+        <ActionButton
+          label={update.isPending ? '저장하는 중…' : '이걸로 할게요'}
+          variant={current ? 'primary' : 'subtle'}
+          onPress={async () => {
+            if (!current) return;
+            await update.mutateAsync({ level: current });
+            router.back();
+          }}
+        />
       </View>
     </View>
   );
