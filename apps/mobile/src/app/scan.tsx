@@ -1,6 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { extractTextFromImage, isSupported } from 'expo-text-extractor';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +8,7 @@ import { useSplitLines } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { BookSpine } from '@/entities/book/ui/book-spine';
 import { color, type } from '@/shared/config';
+import { available, extractText } from '@/shared/ocr/text-extractor';
 import { ActionButton, AppText, HeaderAction, ScreenHeader, Tap } from '@/shared/ui';
 import { ScannedPage } from '@/widgets/scan/ui/scanned-page';
 
@@ -47,7 +47,7 @@ export default function ScanScreen() {
       const photo = await camera.current.takePictureAsync({ quality: 0.8 });
       if (!photo?.uri) throw new Error('사진을 찍지 못했어요.');
 
-      const lines = await extractTextFromImage(photo.uri);
+      const lines = await extractText(photo.uri);
       if (!lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
       const result = await split.mutateAsync(lines);
@@ -72,11 +72,11 @@ export default function ScanScreen() {
       params: { text: selected, ...(book ? { bookId: book.id } : {}) },
     });
 
-  if (!isSupported) {
+  if (!available) {
     return (
       <Notice
-        title="이 기기에서는 글자를 읽지 못해요"
-        body="대신 문장을 직접 적어서 물어볼 수 있어요."
+        title="이 빌드에서는 글자를 읽지 못해요"
+        body="글자 인식기는 개발 빌드에서만 돌아요 — Expo Go에서는 안 돼요. 지금은 문장을 직접 적어서 물어볼 수 있어요."
         action="문장 적어서 묻기"
         onPress={() => router.replace('/ask')}
         onBack={() => router.back()}

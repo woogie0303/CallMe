@@ -20,7 +20,7 @@ const PROVIDERS: { name: ProviderName; label: string }[] = [
  */
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const { signIn, signInAsDeveloper } = useSession();
+  const { signIn, signInAsDeveloper, problem } = useSession();
   const [busy, setBusy] = useState<string | null>(null);
 
   const attempt = async (label: string, run: () => Promise<void>) => {
@@ -50,6 +50,9 @@ export default function SignInScreen() {
       </View>
 
       <View style={styles.buttons}>
+        {/* 자동으로 들어가려다 막혔으면 왜인지 그대로 보여준다 — 대개 백엔드가 꺼져 있다 */}
+        {problem ? <AppText style={styles.problem}>{problem}</AppText> : null}
+
         {PROVIDERS.map((provider) => (
           <ActionButton
             key={provider.name}
@@ -86,4 +89,5 @@ const styles = StyleSheet.create({
   line: { fontSize: 22, lineHeight: 33, color: color.text.primary },
   blurb: { ...type.label1, lineHeight: 23, color: color.text.secondary },
   buttons: { gap: 10 },
+  problem: { ...type.caption1, lineHeight: 18, color: color.status.cautionary },
 });
