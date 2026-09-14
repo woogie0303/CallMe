@@ -9,6 +9,7 @@ import { AnswerService } from './anthropic/answer.service';
 import { Ask, AskSchema } from './ask.schema';
 import { AsksController } from './asks.controller';
 import { AsksService } from './asks.service';
+import { SplitService } from './anthropic/split.service';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { AsksService } from './asks.service';
     AuthModule,
   ],
   controllers: [AsksController],
-  providers: [AsksService, AnswerService],
+  providers: [AsksService, AnswerService, SplitService],
 })
 export class AsksModule {}

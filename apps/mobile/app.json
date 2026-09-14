@@ -34,6 +34,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "읽던 쪽을 찍어 문장을 옮겨 적으려면 카메라가 필요해요.",
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

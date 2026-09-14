@@ -48,4 +48,6 @@ pnpm 워크스페이스 + Turborepo.
 그동안은 `POST /api/dev/login`으로 들어간다. 소셜 로그인이 도는 것을 확인하면
 그 문과 `ALLOW_DEV_LOGIN`을 함께 지운다.
 
-촬영과 OCR은 아직 없다(`scan`·`capture` 화면은 목업이다).
+읽던 쪽을 찍으면 기기가 글자를 읽고(Apple Vision / ML Kit) 서버가 그 줄들을
+문장으로 잇는다. 사진은 기기 밖으로 나가지 않는다. 네이티브 모듈이라 이 흐름은
+개발 빌드(EAS)에서만 돈다 — Expo Go에서는 촬영 화면이 '직접 적기'로 물러난다.

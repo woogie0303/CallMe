@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsMongoId, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { ASK_STATUSES, type AskStatus } from '../ask.schema';
 
 /**
@@ -30,4 +40,15 @@ export class ListAsksQuery {
   @IsInt()
   @Min(1)
   limit?: number;
+}
+
+/**
+ * 글자 인식기가 읽어낸 줄들. 문장으로 잇는 일은 서버가 한다 —
+ * 앱에서 정규식으로 자르면 답을 내는 모델과 다르게 자르게 된다.
+ */
+export class SplitLinesDto {
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(400)
+  lines!: string[];
 }

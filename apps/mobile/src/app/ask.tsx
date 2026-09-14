@@ -29,7 +29,7 @@ import { SentenceField } from "@/widgets/ask/ui/sentence-field";
  * 어느 책에 대고 묻는지는 들어온 길이 정한다. 홈의 ✎에서 오면 지금 읽는 책이고,
  * 책 화면에서 오면 그 책이다.
  */
-type Params = { bookId?: string; page?: string };
+type Params = { bookId?: string; page?: string; text?: string };
 
 /**
  * 03 질문 — 막힌 문장을 통째로 묻는다.
@@ -42,7 +42,8 @@ export default function AskScreen() {
   const router = useRouter();
 
   const params = useLocalSearchParams<Params>();
-  const [sentence, setSentence] = useState("");
+  /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
+  const [sentence, setSentence] = useState(params.text ?? "");
   const [answer, setAnswer] = useState<ApiAskView | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
