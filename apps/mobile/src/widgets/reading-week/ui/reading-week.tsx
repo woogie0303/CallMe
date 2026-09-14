@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import type { ReadingWeek } from '@/entities/reading/model/mock';
+import type { ReadingWeek } from '@/entities/reading/model/types';
 import { blue, color, type } from '@/shared/config';
 import { AltPanel, AppText, emphasis } from '@/shared/ui';
 

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAnswerQuiz, useQuizSession } from '@/entities/quiz/api/quiz.api';
-import { color, type } from '@/shared/config';
-import { ActionButton, AppText } from '@/shared/ui';
+import { color } from '@/shared/config';
+import { ActionButton, EmptyState } from '@/shared/ui';
 import { QuizProgress } from '@/widgets/quiz-runner/ui/quiz-progress';
 import { QuizRunner } from '@/widgets/quiz-runner/ui/quiz-runner';
 
@@ -46,7 +46,7 @@ export default function QuizScreen() {
         {isPending ? (
           <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
         ) : error ? (
-          <AppText style={styles.empty}>{error.message}</AppText>
+          <EmptyState mark="quiet" title="문제를 불러오지 못했어요" body={error.message} />
         ) : question ? (
           /* key를 바꿔 다음 문장에서 고른 답을 지운다 */
           <QuizRunner
@@ -62,12 +62,14 @@ export default function QuizScreen() {
               return result;
             }}
           />
+        ) : done ? (
+          <EmptyState mark="quiz" title="오늘 낼 문제를 다 풀었어요" body="내일 다시 만나요." />
         ) : (
-          <AppText style={styles.empty}>
-            {done
-              ? '오늘 낼 문제를 다 풀었어요.'
-              : '아직 낼 문제가 없어요.\n표현을 조금 더 담아두면 여기서 다시 만나요.'}
-          </AppText>
+          <EmptyState
+            mark="quiz"
+            title="아직 낼 문제가 없어요"
+            body="표현을 조금 더 담아두면 여기서 다시 만나요."
+          />
         )}
       </ScrollView>
 
@@ -90,13 +92,6 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
   spinner: { paddingTop: 40 },
-  empty: {
-    ...type.label2,
-    color: color.text.assistive,
-    textAlign: 'center',
-    lineHeight: 21,
-    paddingTop: 60,
-  },
   /** 아래 안전 영역은 탭 바가 맡는다 — 여기서 또 주면 버튼이 붕 뜬다 */
   footer: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12 },
 });

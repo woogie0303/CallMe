@@ -54,9 +54,7 @@ export default function HomeScreen() {
               totalPages: reading.progress.pages ?? 0,
               chapter: "",
               startedLabel: "",
-              lastReadLabel: reading.progress.lastReadAt
-                ? "최근에 읽었어요"
-                : "아직 펴지 않았어요",
+              lastReadLabel: reading.progress.lastReadAt ? "최근에 읽었어요" : undefined,
             }}
             onPressBook={openBook}
             onPressProgress={() =>
@@ -69,7 +67,7 @@ export default function HomeScreen() {
         <ReadingShelf
           books={others}
           onPressBook={(id) => router.push({ pathname: "/book/[id]", params: { id } })}
-          onAdd={() => router.push("/book-add")}
+          onAdd={() => router.push("/book-pick")}
         />
         {week ? <ReadingWeekChart week={week} /> : null}
         {today ? (

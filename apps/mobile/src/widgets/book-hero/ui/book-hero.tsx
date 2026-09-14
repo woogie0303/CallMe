@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { Book } from '@/entities/book/model/types';
 import { BookCover } from '@/entities/book/ui/book-cover';
-import type { ReadingProgress } from '@/entities/reading/model/mock';
+import type { ReadingProgress } from '@/entities/reading/model/types';
 import { color, type } from '@/shared/config';
 import { AppText, CameraIcon, Icon, ProgressBar, Quote, Tap } from '@/shared/ui';
 
@@ -71,8 +71,8 @@ export function BookHero({
           <>
             <ProgressBar value={ratio} />
             <AppText style={styles.progressLabel}>
-              p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}% ·{' '}
-              {progress.lastReadLabel}
+              p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}%
+              {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ''}
             </AppText>
           </>
         ) : (

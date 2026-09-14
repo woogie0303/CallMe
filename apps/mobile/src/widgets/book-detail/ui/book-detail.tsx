@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { toBook } from '@/entities/book/api/book.api';
 import type { Book } from '@/entities/book/model/types';
 import { useItems } from '@/entities/lexical-item/api/item.api';
-import type { ReadingProgress } from '@/entities/reading/model/mock';
+import type { ReadingProgress } from '@/entities/reading/model/types';
 import { useRetells } from '@/entities/retell/api/retell.api';
 import { useLikedSentences } from '@/entities/sentence/api/sentence.api';
-import { color, type } from '@/shared/config';
-import { AppText } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ItemShelf } from '@/widgets/item-shelf/ui/item-shelf';
 import { SentenceShelf } from '@/widgets/sentence-shelf/ui/sentence-shelf';
@@ -65,7 +63,11 @@ export function BookDetail({
       {items.length ? (
         <ItemShelf items={items} onPressItem={onOpenItem} />
       ) : (
-        <AppText style={styles.empty}>아직 이 책에서 담은 표현이 없어요.</AppText>
+        <EmptyState
+          mark="drawer"
+          compact
+          title="아직 이 책에서 담은 표현이 없어요"
+        />
       )}
 
       <View style={styles.tabs}>
@@ -74,9 +76,12 @@ export function BookDetail({
           liked.length ? (
             <SentenceShelf sentences={liked} title={null} />
           ) : (
-            <AppText style={styles.empty}>
-              뜻을 몰라서가 아니라 그냥 좋아서 담아둔 문장이 여기 모여요.
-            </AppText>
+            <EmptyState
+              mark="sentence"
+              compact
+              title="아직 마음에 든 문장이 없어요"
+              body="뜻을 몰라서가 아니라 그냥 좋아서 담아둔 문장이 여기 모여요."
+            />
           )
         ) : (
           <BookRetell session={session} onOpen={onOpenRetell} />
@@ -89,5 +94,4 @@ export function BookDetail({
 const styles = StyleSheet.create({
   wrap: { gap: 22 },
   tabs: { gap: 16 },
-  empty: { ...type.label2, color: color.text.assistive },
 });

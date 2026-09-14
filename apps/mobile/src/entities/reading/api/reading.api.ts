@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
 import type { ApiBook } from '@/shared/api/types';
-import type { ReadingWeek } from '../model/mock';
+import type { ReadingWeek } from '../model/types';
 
 type ApiWeek = {
   days: { date: string; pages: number }[];
