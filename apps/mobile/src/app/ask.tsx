@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAskQuota, useCreateAsk } from "@/entities/ask/api/ask.api";
 import { useBook, useCurrentBook } from "@/entities/book/api/book.api";
 import { useSaveItem } from "@/entities/lexical-item/api/item.api";
+import { useCreateSentence } from "@/entities/sentence/api/sentence.api";
 import type { ApiAskView } from "@/shared/api/types";
 import { color, type } from "@/shared/config";
 import {
@@ -55,6 +57,7 @@ export default function AskScreen() {
 
   const createAsk = useCreateAsk();
   const saveItem = useSaveItem();
+  const keepSentence = useCreateSentence();
 
   const left = quota?.remaining ?? 0;
   const phase = !answer ? "writing" : answer.ask.status === "answered" ? "answered" : "pending";
@@ -105,8 +108,19 @@ export default function AskScreen() {
     setSentence("");
   };
 
-  /** 뜻을 묻지 않고 문장만 남긴다. 어휘 항목이 없으니 서랍이 아니라 책으로 간다. */
-  const keepOnly = () => router.back();
+  /**
+   * 뜻을 묻지 않고 문장만 남긴다. 어휘 항목이 없으니 서랍이 아니라 책으로 간다.
+   * 질문 횟수도 쓰지 않는다 — 모델을 부르지 않으니까.
+   */
+  const keepOnly = async () => {
+    if (!book || !sentence.trim()) return;
+    try {
+      await keepSentence.mutateAsync({ bookId: book.id, text: sentence.trim(), page });
+      router.replace({ pathname: "/book/[id]", params: { id: book.id } });
+    } catch (error) {
+      Alert.alert("담지 못했어요", error instanceof Error ? error.message : "");
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -184,7 +198,7 @@ export default function AskScreen() {
             />
             {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다 */}
             <ActionButton
-              label="그냥 마음에 든 문장이에요"
+              label={keepSentence.isPending ? "담는 중…" : "그냥 마음에 든 문장이에요"}
               variant="subtle"
               onPress={keepOnly}
             />

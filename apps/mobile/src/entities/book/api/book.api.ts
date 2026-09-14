@@ -41,16 +41,26 @@ export function useBook(id?: string) {
   });
 }
 
-/** 지금 읽고 있는 책 — 다 읽지 않은 것 중 가장 최근에 편 것 */
-export function useCurrentBook() {
+/** 읽고 있는 책들 — 가장 최근에 편 것이 앞에 선다 */
+export function useReadingBooks() {
   return useQuery({
-    queryKey: [...booksKey, 'current'],
+    queryKey: [...booksKey, 'reading'],
     queryFn: async () => {
       const books = await api<ApiBook[]>('/books?finished=false');
-      const [first] = [...books].sort(byLastRead);
-      return first ? { book: toBook(first), progress: first } : null;
+      return [...books].sort(byLastRead).map((raw) => ({ book: toBook(raw), progress: raw }));
     },
   });
+}
+
+/**
+ * 맨 위에 크게 서는 한 권 — 가장 최근에 읽은 책이다.
+ *
+ * 이 자리는 책을 새로 들인다고 바뀌지 않는다. 진도를 옮길 때 바뀐다 —
+ * 등록만으로 밀려나면 어제까지 읽던 쪽이 어디로 갔는지 알 수 없어진다.
+ */
+export function useCurrentBook() {
+  const query = useReadingBooks();
+  return { ...query, data: query.data ? (query.data[0] ?? null) : undefined };
 }
 
 function byLastRead(a: ApiBook, b: ApiBook): number {
