@@ -70,8 +70,9 @@ function byLastRead(a: ApiBook, b: ApiBook): number {
 }
 
 /**
- * 책을 서가에 들인다. 책등 색은 제목에서 정해 함께 보낸다 — 표지가 없어도
- * 문장 카드가 물려받을 색이 있어야 한다.
+ * 책을 서가에 들인다. 책등 색은 제목에서 정해 함께 보낸다 — 검색으로 찾아
+ * 표지가 있어도 색은 함께 보낸다. 표지를 못 받아오는 순간에도(주소가 죽거나
+ * 오프라인이거나) 출처를 말하는 일을 이 색이 대신해야 하기 때문이다.
  */
 export function useCreateBook() {
   const client = useQueryClient();
@@ -81,6 +82,7 @@ export function useCreateBook() {
       author: string;
       pages?: number;
       currentPage?: number;
+      cover?: string;
     }) => {
       const [from, to] = spineFor(input.title);
       return api<ApiBook>('/books', {
@@ -89,5 +91,27 @@ export function useCreateBook() {
       });
     },
     onSuccess: () => client.invalidateQueries({ queryKey: booksKey }),
+  });
+}
+
+export type BookSearchResult = {
+  title: string;
+  author: string;
+  pages?: number;
+  cover?: string;
+  publisher?: string;
+};
+
+/**
+ * 책을 검색한다. 서버가 외부 API를 대신 불러준다 — 키를 앱에 박지 않고,
+ * CORS도 앱이 신경 쓸 일이 아니게 된다.
+ */
+export function useBookSearch(query: string) {
+  return useQuery({
+    queryKey: ['books', 'search', query],
+    enabled: query.trim().length > 1,
+    queryFn: () => api<BookSearchResult[]>(`/books/search?q=${encodeURIComponent(query.trim())}`),
+    /** 같은 말을 다시 치면 캐시로 즉시 보여준다 — 검색은 왔다 갔다 하는 화면이다 */
+    staleTime: 60_000,
   });
 }

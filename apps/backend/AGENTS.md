@@ -72,6 +72,7 @@ GET    /api/auth/me               지금 로그인한 독자
 GET    /api/readers/me            프로필
 PATCH  /api/readers/me            레벨 · 닉네임 · 끝낸 권수
 
+GET    /api/books/search ?q=       책 검색(구글 북스) — :id보다 먼저 선언돼 있어야 한다
 GET    /api/books ?finished=      내 책장
 POST   /api/books
 GET    /api/books/:id

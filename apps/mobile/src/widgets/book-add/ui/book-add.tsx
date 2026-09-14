@@ -10,17 +10,18 @@ export type BookDraft = {
   author: string;
   pages: string;
   currentPage: string;
+  /** 검색에서 골랐을 때만 있다. 손으로 입력하는 화면에서는 고칠 자리가 없다. */
+  cover?: string;
 };
 
 /**
- * 읽고 있는 책을 손으로 들인다.
+ * 책을 손으로 들인다. 검색에서 골랐으면 값이 이미 채워져 있고, 검색에 없던
+ * 책이면 여기서부터 적는다 — 어느 쪽이든 등록이 막히지 않는다. 제목과
+ * 지은이만 있으면 시작할 수 있고, 나머지는 나중에 채워도 된다.
  *
- * 검색으로 찾아 주지 않는다 — 원서는 국내 서지 검색에 잘 걸리지 않고, 안 걸릴
- * 때마다 등록이 막히면 읽던 흐름이 끊긴다. 제목과 지은이만 있으면 시작할 수
- * 있고, 나머지는 나중에 채워도 된다.
- *
- * 표지는 없어도 된다. 제목에서 정한 책등 색이 그 자리를 대신하고, 앞으로 담을
- * 문장 카드들이 그 색을 물려받아 라벨 없이 출처를 말한다.
+ * 표지는 없어도 된다. 검색에서 온 표지가 없으면 제목에서 정한 책등 색이 그
+ * 자리를 대신하고, 앞으로 담을 문장 카드들이 그 색을 물려받아 라벨 없이
+ * 출처를 말한다.
  */
 export function BookAdd({
   draft,
@@ -29,7 +30,10 @@ export function BookAdd({
   draft: BookDraft;
   onChange: (next: BookDraft) => void;
 }) {
-  const preview = draftBook(draft.title, draft.author, Number(draft.pages) || undefined);
+  const preview = {
+    ...draftBook(draft.title, draft.author, Number(draft.pages) || undefined),
+    cover: draft.cover,
+  };
   const set = (key: keyof BookDraft) => (value: string) => onChange({ ...draft, [key]: value });
 
   return (

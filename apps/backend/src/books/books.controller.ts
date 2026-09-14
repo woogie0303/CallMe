@@ -12,13 +12,23 @@ import {
 import { CurrentReader } from '../common/current-reader.decorator';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { ObjectIdPipe } from '../common/object-id.pipe';
+import { BookSearchService } from './book-search.service';
 import { BooksService } from './books.service';
-import { CreateBookDto, ListBooksQuery, UpdateBookDto } from './dto/book.dto';
+import { CreateBookDto, ListBooksQuery, SearchBooksQuery, UpdateBookDto } from './dto/book.dto';
 
 @Controller('books')
 @UseGuards(JwtAuthGuard)
 export class BooksController {
-  constructor(private readonly books: BooksService) {}
+  constructor(
+    private readonly books: BooksService,
+    private readonly search: BookSearchService,
+  ) {}
+
+  /** :id보다 먼저 선언돼 있어야 한다 — 나중에 두면 'search'가 id로 잡힌다 */
+  @Get('search')
+  searchBooks(@Query() query: SearchBooksQuery) {
+    return this.search.search(query.q);
+  }
 
   @Post()
   create(@CurrentReader() readerId: string, @Body() dto: CreateBookDto) {

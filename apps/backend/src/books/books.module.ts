@@ -5,6 +5,7 @@ import { LexicalItem, LexicalItemSchema } from '../items/lexical-item.schema';
 import { ReadingModule } from '../reading/reading.module';
 import { Sentence, SentenceSchema } from '../sentences/sentence.schema';
 import { Book, BookSchema } from './book.schema';
+import { BookSearchService } from './book-search.service';
 import { BooksController } from './books.controller';
 import { BooksService } from './books.service';
 
@@ -19,6 +20,6 @@ import { BooksService } from './books.service';
     ReadingModule,
   ],
   controllers: [BooksController],
-  providers: [BooksService],
+  providers: [BooksService, BookSearchService],
 })
 export class BooksModule {}

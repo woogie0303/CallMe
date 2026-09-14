@@ -54,7 +54,9 @@ function Gate() {
       }}>
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="book-pick" options={{ presentation: 'modal' }} />
       <Stack.Screen name="book-add" />
+      <Stack.Screen name="book-search" />
       <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
       <Stack.Screen name="scan" />
       <Stack.Screen name="pending" />

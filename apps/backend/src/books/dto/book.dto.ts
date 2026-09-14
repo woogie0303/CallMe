@@ -76,3 +76,9 @@ export class ListBooksQuery {
   @IsBoolean()
   finished?: boolean;
 }
+
+export class SearchBooksQuery {
+  @IsString()
+  @MinLength(1)
+  q!: string;
+}
