@@ -110,26 +110,6 @@ export type ApiQuota = {
   resetsOn: string;
 };
 
-export type ApiQuizQuestion = {
-  itemId: string;
-  sentenceId: string;
-  bookId: string;
-  bookTitle?: string;
-  page?: number;
-  before: string;
-  after: string;
-  savedAt: string;
-  choices: { itemId: string; term: string }[];
-};
-
-export type ApiQuizResult = {
-  correct: boolean;
-  surface: string;
-  answer: { itemId: string; term: string; meaning: string };
-  confusedWith?: { itemId: string; term: string; note: string };
-  status: ItemStatus;
-};
-
 export type ApiRetell = {
   _id: string;
   bookId: string;

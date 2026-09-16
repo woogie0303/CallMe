@@ -92,7 +92,9 @@ export function ItemDetail({
       <View style={styles.statusRow}>
         <Chip label={item.status} tone={item.status === '외웠어요' ? 'positive' : 'primary'} />
         <AppText style={styles.statusHint}>
-          {item.status === '외웠어요' ? '퀴즈에 가끔만 나와요' : '퀴즈에 자주 나와요'}
+          {item.status === '외웠어요'
+            ? '외웠다고 표시해뒀어요'
+            : '아직 헷갈려요 — 다시 만나면 알려드릴게요'}
         </AppText>
       </View>
     </View>

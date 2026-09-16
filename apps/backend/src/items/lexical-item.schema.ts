@@ -15,11 +15,12 @@ export class Encounter {
 
   /**
    * 그 문장에 실제로 있던 꼴. 표제형이 `brush it off`여도 문장에는
-   * `brushed it off`로 있다.
+   * `brushed it off`로 있다. 문장에서 이 자리를 다시 찾아내는 일은 ADR-0002가
+   * 걷어낸 파싱이라, 물어볼 때 모델이 이미 알고 있는 것을 받아 적어둔다.
    *
-   * 퀴즈의 빈칸을 뚫을 수 있는 유일한 근거다. 문장에서 이 자리를 다시 찾아내는
-   * 일은 ADR-0002가 걷어낸 파싱이라, 물어볼 때 모델이 이미 알고 있는 것을
-   * 받아 적어둔다. 예전에 담아 이 값이 없는 만남은 퀴즈에 쓰지 않는다.
+   * 지금은 이 값을 쓰는 화면이 없다(빈칸 퀴즈가 MVP에서 빠졌다). 그래도 받아서
+   * 적어두는 이유는 공짜이기 때문이다 — 모델이 답할 때 이미 알려주는 값이라
+   * 추가 비용이 없고, 나중에 복습 기능을 다시 넣을 때 그때부터 모으지 않아도 된다.
    */
   @Prop()
   surface?: string;
@@ -29,30 +30,6 @@ export class Encounter {
 }
 
 export const EncounterSchema = SchemaFactory.createForClass(Encounter);
-
-/**
- * 퀴즈가 이 항목을 언제 다시 꺼낼지 정하는 데 쓰는 기록.
- *
- * 맞힐수록 뜸해지고 틀리면 곧 돌아온다. 간격 계산을 위한 최소한만 둔다 —
- * 이 앱은 암기 카드가 아니라서 정교한 복습 곡선이 필요하지 않다.
- */
-@Schema({ _id: false })
-export class Review {
-  @Prop()
-  quizzedAt?: Date;
-
-  /** 연속으로 맞힌 횟수. 틀리면 0으로 돌아간다. */
-  @Prop({ default: 0 })
-  streak!: number;
-
-  @Prop({ default: 0 })
-  wrongCount!: number;
-
-  @Prop()
-  lastWrongAt?: Date;
-}
-
-export const ReviewSchema = SchemaFactory.createForClass(Review);
 
 /** 예전에 담아둔, 헷갈리기 쉬운 다른 항목 */
 @Schema({ _id: false })
@@ -98,9 +75,6 @@ export class LexicalItem {
 
   @Prop({ type: ConfusedWithSchema })
   confusedWith?: ConfusedWith;
-
-  @Prop({ type: ReviewSchema, default: () => ({ streak: 0, wrongCount: 0 }) })
-  review!: Review;
 }
 
 export type LexicalItemDocument = HydratedDocument<LexicalItem>;

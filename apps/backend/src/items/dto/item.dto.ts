@@ -41,7 +41,7 @@ export class SaveItemDto {
   @IsMongoId()
   sentenceId!: string;
 
-  /** 그 문장에 있던 꼴. 질문의 후보가 그대로 알려준다 — 퀴즈의 빈칸이 이걸 쓴다. */
+  /** 그 문장에 있던 꼴. 질문의 후보가 그대로 알려준다 — 지금은 읽는 화면이 없다. */
   @IsOptional()
   @IsString()
   surface?: string;

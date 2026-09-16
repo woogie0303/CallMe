@@ -26,7 +26,6 @@ src/
   sentences/  책에서 옮겨 적은 줄
   items/      어휘 항목과 만남 — 재회가 일어나는 곳
   asks/       문장을 통째로 묻는 일 (anthropic/ 안에 모델 호출 하나)
-  quiz/       빈칸 문제와 푼 기록 — 무엇을 언제 다시 낼지 정하는 곳
   retells/    챕터를 제 말로 옮겨 적은 것과 고쳐준 문장
   reading/    하루에 몇 쪽 읽었는지 — 진도가 앞으로 갈 때 저절로 쌓인다
 ```
@@ -51,9 +50,6 @@ src/
   먼저 저장되고, 답 없는 질문은 pending으로 기다린다. 이건 오류가 아니라 상태다.
 - **월 할당량은 세기만 한다.** 남은 횟수를 어딘가에 적어두고 매달 0으로 되돌리지
   않는다. 이번 달에 답을 받은 질문을 셀 뿐이라, 되돌리다 실패할 일이 없다.
-- **퀴즈의 빈칸은 `surface`가 있어야 뚫린다.** 표제형은 `brush it off`인데 문장에는
-  `brushed it off`로 있어서, 문장에서 그 자리를 다시 찾는 일은 ADR-0002가 걷어낸
-  파싱이다. 물어볼 때 모델이 알려준 꼴을 만남에 적어두고, 없는 만남은 퀴즈에서 뺀다.
 - **읽은 양을 따로 적게 하지 않는다.** 진도를 옮기면 그 차이가 그날 읽은 양이다.
   읽고 나서 한 번 더 적게 만들면 아무도 적지 않는다.
 - **프롬프트의 붙박이 부분만 캐시에 올린다.** 레벨·책·문장처럼 요청마다 달라지는
@@ -86,6 +82,7 @@ PATCH  /api/sentences/:id
 DELETE /api/sentences/:id
 
 GET    /api/asks/quota            이번 달 남은 질문
+POST   /api/asks/split            찍은 쪽에서 읽어낸 줄들을 문장으로 잇는다 — 질문 횟수를 쓰지 않는다
 POST   /api/asks                  문장을 통째로 묻는다 — 문장은 먼저 저장된다
 GET    /api/asks ?status= &limit= status=pending이 '기다리는 문장'
 GET    /api/asks/:id
@@ -93,9 +90,6 @@ POST   /api/asks/:id/resolve      기다리던 질문을 다시 물어본다
 DELETE /api/asks/:id              질문만 지운다. 문장은 남는다
 
 GET    /api/reading/week          이레치 날짜와 쪽수 · 읽은 날 · 연속 일수
-
-GET    /api/quiz ?size=            오늘 낼 문제. 빈 배열이면 낼 것이 없다는 뜻
-POST   /api/quiz/answers           판정은 서버가 한다 — 정답은 문제와 함께 가지 않는다
 
 GET    /api/retells/quota          질문과 따로 센다
 POST   /api/retells                옮겨 적은 글은 답을 못 받아도 남는다
@@ -132,5 +126,9 @@ DELETE /api/items/:id
 
 ## 아직 없는 것
 
-촬영과 OCR. 소셜 로그인 셋과 모델 호출은 실제로 통신해 본 적이 없다 — 둘 다
-자격 증명이 있어야 검증된다.
+퀴즈는 MVP에서 뺀다는 결정으로 걷어냈다 — 아직 안 만든 게 아니라 이번 출시엔
+안 낸다는 뜻이다. LexicalItem에 있던 review(streak·wrongCount) 서브스키마도
+그 퀴즈만 읽고 쓰던 값이라 함께 지웠다.
+
+소셜 로그인 셋과 모델 호출은 실제로 통신해 본 적이 없다 — 둘 다 자격 증명이
+있어야 검증된다.

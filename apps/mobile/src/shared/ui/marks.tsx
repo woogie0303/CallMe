@@ -40,27 +40,6 @@ export function DrawerMark({ size }: MarkProps) {
   );
 }
 
-/** 퀴즈로 낼 것이 아직 없을 때 — 표현이 몇 개는 있어야 퀴즈가 된다 */
-export function QuizMark({ size }: MarkProps) {
-  return (
-    <Ring size={size}>
-      <Path
-        d="M19 22.5h18M19 28h13"
-        stroke={color.text.assistive}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M19 33.5h9.5"
-        stroke={color.primary}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-      <Circle cx={34} cy={33.5} r={2.2} fill={color.primary} />
-    </Ring>
-  );
-}
-
 /** 그냥 좋아서 담은 문장이 아직 없을 때 — 인용부호 하나 */
 export function QuoteMark({ size }: MarkProps) {
   return (
@@ -88,14 +67,12 @@ export function QuietMark({ size }: MarkProps) {
   );
 }
 
-export type MarkName = 'drawer' | 'quiz' | 'sentence' | 'quiet';
+export type MarkName = 'drawer' | 'sentence' | 'quiet';
 
 export function Mark({ name, size }: { name: MarkName; size?: number }) {
   switch (name) {
     case 'drawer':
       return <DrawerMark size={size} />;
-    case 'quiz':
-      return <QuizMark size={size} />;
     case 'sentence':
       return <QuoteMark size={size} />;
     case 'quiet':

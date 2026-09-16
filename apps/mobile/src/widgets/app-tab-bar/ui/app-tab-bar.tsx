@@ -9,7 +9,6 @@ import { AppText, Icon, Tap, type FilledIconName } from '@/shared/ui';
 const TABS: Record<string, { label: string; icon: FilledIconName }> = {
   index: { label: '홈', icon: 'home' },
   drawer: { label: '서랍', icon: 'bookmark' },
-  quiz: { label: '퀴즈', icon: 'graduation' },
   my: { label: '마이', icon: 'person' },
 };
 
