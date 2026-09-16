@@ -3,8 +3,11 @@ import { clearTokens, readTokens, saveTokens } from './tokens';
 import type { Tokens } from './types';
 
 /**
- * 개발 중에는 시뮬레이터가 아니라 실제 기기에서도 열려야 하므로, 호스트를
- * Expo가 알려주는 개발 서버 주소에서 가져온다. 배포에서는 EXPO_PUBLIC_API_URL을 쓴다.
+ * EXPO_PUBLIC_API_URL을 우선 쓴다. 없으면 Expo가 알려주는 개발 서버
+ * 주소(hostUri)에서 호스트만 떼어 맥의 LAN IP로 추측하는데, 이건 Metro가
+ * LAN 모드로 떴을 때만 맞는다 — 터널 모드면 hostUri가 Metro 자체의 터널
+ * 주소로 잡히고, 그 주소엔 4000번(이 백엔드)이 없어서 연결이 조용히 실패한다.
+ * 그래서 .env.example이 이 값을 비워두지 말고 채우라고 권한다.
  */
 function baseUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
