@@ -54,7 +54,15 @@ function Gate() {
       }}>
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="book-pick" options={{ presentation: 'modal' }} />
+      {/*
+        책 추가는 화면을 다 차지할 일이 없다 — 고를 것이 둘뿐이라, 꽉 찬 모달로
+        띄우면 아래가 통째로 빈다. 투명 모달로 띄우고 제 높이만 쓰는 시트를
+        직접 그린다(`book-pick`). 뒤가 비치므로 바깥을 눌러 나갈 수 있다.
+      */}
+      <Stack.Screen
+        name="book-pick"
+        options={{ presentation: 'transparentModal', animation: 'fade' }}
+      />
       <Stack.Screen name="book-add" />
       <Stack.Screen name="book-search" />
       <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
