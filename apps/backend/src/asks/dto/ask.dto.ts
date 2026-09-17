@@ -9,20 +9,32 @@ import {
   IsString,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { ASK_STATUSES, type AskStatus } from '../ask.schema';
 
 /**
  * 문장을 통째로 묻는다. 표제형이나 낱말을 보내지 않는다 — 무엇을 외워둘지
  * 고르는 일은 모델이 문장을 읽고 하는 일이다.
+ *
+ * 이미 담아둔 문장을 나중에 물을 때는 `sentenceId`를 보낸다. 그러면 그 문장을
+ * 그대로 쓰고 새로 만들지 않는다 — 없으면 같은 글이 두 줄이 되고, 원본은 영영
+ * 아무것도 딸리지 않은 채 남는다(ADR-0004).
  */
 export class CreateAskDto {
+  /** 담아둔 문장을 물을 때. 이게 오면 `bookId`·`text`·`page`는 그 문장에서 온다. */
+  @IsOptional()
   @IsMongoId()
-  bookId!: string;
+  sentenceId?: string;
 
+  @ValidateIf((dto: CreateAskDto) => !dto.sentenceId)
+  @IsMongoId()
+  bookId?: string;
+
+  @ValidateIf((dto: CreateAskDto) => !dto.sentenceId)
   @IsString()
   @MinLength(1)
-  text!: string;
+  text?: string;
 
   @IsOptional()
   @IsInt()

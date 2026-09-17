@@ -67,9 +67,27 @@ export class AsksService {
    * 질문이 이번 달 몫을 다 썼든 모델이 답하지 않든, 옮겨 적은 문장은 남는다.
    * 담는 일이 실패하는 앱이면 읽다 말고 손이 멈추고, 그러면 이 앱이 하려던
    * 일 자체가 안 된다(ADR-0003). 답이 없는 질문은 pending으로 기다린다.
+   *
+   * `sentenceId`가 오면 이미 담아둔 문장을 묻는 것이라 새로 만들지 않는다 —
+   * 만들면 같은 글이 두 줄이 되고, 원본은 아무것도 딸리지 않은 채 남는다(ADR-0004).
    */
   async create(readerId: string, dto: CreateAskDto): Promise<AskView> {
     const owner = new Types.ObjectId(readerId);
+    const { sentence, book } = dto.sentenceId
+      ? await this.reuse(owner, dto.sentenceId)
+      : await this.capture(owner, dto);
+
+    const ask = await this.asks.create({
+      readerId: owner,
+      sentenceId: sentence._id,
+      status: 'pending',
+    });
+
+    return { ask: await this.attempt(readerId, ask, sentence, book), sentence, book };
+  }
+
+  /** 새로 옮겨 적은 문장 — 묻기 전에 먼저 저장된다 */
+  private async capture(owner: Types.ObjectId, dto: CreateAskDto) {
     const book = await this.books.findOne({ _id: dto.bookId, readerId: owner });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
 
@@ -80,13 +98,18 @@ export class AsksService {
       page: dto.page,
     });
 
-    const ask = await this.asks.create({
-      readerId: owner,
-      sentenceId: sentence._id,
-      status: 'pending',
-    });
+    return { sentence, book };
+  }
 
-    return { ask: await this.attempt(readerId, ask, sentence, book), sentence, book };
+  /** 이미 담아둔 문장 — 책은 그 문장이 알고 있다 */
+  private async reuse(owner: Types.ObjectId, sentenceId: string) {
+    const sentence = await this.sentences.findOne({ _id: sentenceId, readerId: owner });
+    if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
+
+    const book = await this.books.findOne({ _id: sentence.bookId, readerId: owner });
+    if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
+
+    return { sentence, book };
   }
 
   /** 기다리던 질문을 다시 물어본다 — 달이 바뀌었거나 연결이 돌아왔을 때. */
