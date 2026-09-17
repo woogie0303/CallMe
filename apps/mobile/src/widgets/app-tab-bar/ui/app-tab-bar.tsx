@@ -5,7 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, type } from '@/shared/config';
 import { AppText, Icon, Tap, type FilledIconName } from '@/shared/ui';
 
-/** 지금 보고 있는 곳만 검다. 나머지는 배경으로 물러난다. */
+/**
+ * 지금 보고 있는 곳만 포인트 색이다. 나머지는 배경으로 물러난다.
+ *
+ * 잉크가 아니라 포인트 색을 쓴다 — 토큰이 말하는 "지금 보는 것"이 바로 이
+ * 자리다. 세 탭 중 하나만 켜져 있으니 화면마다 두 번 켜질 일도 없다.
+ */
 const TABS: Record<string, { label: string; icon: FilledIconName }> = {
   index: { label: '홈', icon: 'home' },
   drawer: { label: '서랍', icon: 'bookmark' },
@@ -21,7 +26,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         const tab = TABS[route.name];
         if (!tab) return null;
         const focused = state.index === index;
-        const tint = focused ? color.text.primary : color.text.meta;
+        const tint = focused ? color.primary : color.text.meta;
 
         return (
           <Tap
