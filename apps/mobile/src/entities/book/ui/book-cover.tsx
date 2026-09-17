@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { color, spineGradient } from '@/shared/config';
+import { color, onInk, spineGradient } from '@/shared/config';
 import { Quote } from '@/shared/ui';
 import type { Book } from '../model/types';
 
@@ -67,5 +67,5 @@ const styles = StyleSheet.create({
   cover: { justifyContent: 'flex-end', padding: 9, overflow: 'hidden' },
   title: { color: color.text.onInkStrong },
   authorWrap: { marginTop: 6 },
-  author: { fontSize: 9, letterSpacing: 0.54, color: 'rgba(255,255,255,0.7)' },
+  author: { fontSize: 9, letterSpacing: 0.54, color: onInk(0.7) },
 });

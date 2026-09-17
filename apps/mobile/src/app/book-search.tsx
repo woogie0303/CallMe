@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookSearch, type BookSearchResult } from '@/entities/book/api/book.api';
 import { spineFor } from '@/entities/book/lib/spine';
 import { BookCover } from '@/entities/book/ui/book-cover';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { AppText, Icon, ScreenHeader, Tap } from '@/shared/ui';
 
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginHorizontal: 20,
+    marginHorizontal: gutter,
     marginBottom: 8,
     paddingHorizontal: 14,
     height: 46,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface.alt,
   },
   input: { flex: 1, ...type.label1, color: color.text.primary },
-  list: { paddingHorizontal: 20, paddingBottom: 24, gap: 4 },
+  list: { paddingHorizontal: gutter, paddingBottom: 24, gap: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   rowText: { flex: 1, gap: 3, minWidth: 0 },
   rowTitle: { ...type.label1, fontWeight: '600', color: color.text.primary },

@@ -2,8 +2,8 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { color, type } from '@/shared/config';
-import { AppText, Icon, ScreenHeader, Tap } from '@/shared/ui';
+import { color, gutter } from '@/shared/config';
+import { DisclosureRow, ScreenHeader } from '@/shared/ui';
 
 /**
  * 책을 서가에 들이는 첫걸음 — 찾아서 넣을지, 손으로 적어 넣을지.
@@ -21,13 +21,13 @@ export default function BookPickScreen() {
       <ScreenHeader leading="close" onLeadingPress={() => router.back()} title="책 추가" />
 
       <View style={styles.options}>
-        <Option
+        <DisclosureRow
           icon="search"
           title="책 찾아서 넣기"
           body="제목이나 지은이로 찾아요. 표지와 쪽수가 함께 들어와요."
           onPress={() => router.push('/book-search')}
         />
-        <Option
+        <DisclosureRow
           icon="write"
           title="직접 입력하기"
           body="검색에 없는 책이거나, 손으로 적는 게 더 빠를 때예요."
@@ -38,51 +38,7 @@ export default function BookPickScreen() {
   );
 }
 
-function Option({
-  icon,
-  title,
-  body,
-  onPress,
-}: {
-  icon: 'search' | 'write';
-  title: string;
-  body: string;
-  onPress: () => void;
-}) {
-  return (
-    <Tap style={styles.option} onPress={onPress}>
-      <View style={styles.iconWrap}>
-        <Icon name={icon} size={19} color={color.text.primary} />
-      </View>
-      <View style={styles.optionText}>
-        <AppText style={styles.optionTitle}>{title}</AppText>
-        <AppText style={styles.optionBody}>{body}</AppText>
-      </View>
-      <Icon name="chevronRight" size={16} color={color.text.assistive} />
-    </Tap>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
-  options: { paddingHorizontal: 20, paddingTop: 8, gap: 10 },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: color.surface.alt,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: color.surface.base,
-  },
-  optionText: { flex: 1, gap: 3, minWidth: 0 },
-  optionTitle: { ...type.label1, fontWeight: '700', color: color.text.primary },
-  optionBody: { ...type.caption1, lineHeight: 17, color: color.text.meta },
+  options: { paddingHorizontal: gutter, paddingTop: 8, gap: 10 },
 });

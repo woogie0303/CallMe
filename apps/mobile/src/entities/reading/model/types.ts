@@ -7,9 +7,14 @@ export type ReadingProgress = {
   bookId: string;
   currentPage: number;
   totalPages: number;
-  chapter: string;
+  /**
+   * 아직 화면이 쓰지 않는다. 서버가 챕터를 주기 시작하면 그때 그리면 되고,
+   * 그때까지는 없어도 되는 값이라 비워둔다 — 필수로 두면 부르는 쪽이
+   * 빈 문자열을 지어내서 채우게 된다.
+   */
+  chapter?: string;
   /** 이 책을 펴기 시작한 날 */
-  startedLabel: string;
+  startedLabel?: string;
   /** 아직 한 번도 안 폈으면 없다 — 없다는 사실 자체를 화면이 말하지 않는다 */
   lastReadLabel?: string;
 };

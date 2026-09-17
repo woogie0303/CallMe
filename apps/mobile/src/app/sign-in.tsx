@@ -3,7 +3,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProviderName } from '@/shared/api/types';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { configured, SignInCancelled } from '@/shared/session/oauth';
 import { useSession } from '@/shared/session/session';
 import { ActionButton, AppText, Quote } from '@/shared/ui';
@@ -53,21 +53,32 @@ export default function SignInScreen() {
         {/* 자동으로 들어가려다 막혔으면 왜인지 그대로 보여준다 — 대개 백엔드가 꺼져 있다 */}
         {problem ? <AppText style={styles.problem}>{problem}</AppText> : null}
 
-        {PROVIDERS.map((provider) => (
-          <ActionButton
-            key={provider.name}
-            label={provider.label}
-            variant={provider.name === 'kakao' ? 'primary' : 'subtle'}
-            aside={configured(provider.name) ? undefined : '준비 중'}
-            onPress={() => attempt(provider.name, () => signIn(provider.name))}
-          />
-        ))}
+        {/*
+          아직 열쇠가 없는 제공자는 눌러도 실패할 뿐이라 눌리지 않게 둔다 —
+          '준비 중'이라고 적어놓고 누르게 하면, 실패가 내 탓처럼 읽힌다.
+        */}
+        {PROVIDERS.map((provider) => {
+          const ready = configured(provider.name);
+          return (
+            <ActionButton
+              key={provider.name}
+              label={provider.label}
+              variant={provider.name === 'kakao' ? 'primary' : 'subtle'}
+              aside={ready ? undefined : '준비 중'}
+              disabled={!ready || (busy !== null && busy !== provider.name)}
+              loading={busy === provider.name}
+              onPress={() => attempt(provider.name, () => signIn(provider.name))}
+            />
+          );
+        })}
 
         {/* 개발용. 소셜 로그인이 실제로 도는 것을 확인하면 이 버튼을 지운다. */}
         {__DEV__ ? (
           <ActionButton
-            label={busy === 'dev' ? '들어가는 중…' : '개발용으로 들어가기'}
+            label="개발용으로 들어가기"
             variant="ink"
+            disabled={busy !== null && busy !== 'dev'}
+            loading={busy === 'dev'}
             onPress={() => attempt('dev', signInAsDeveloper)}
           />
         ) : null}
@@ -80,7 +91,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: gutter,
     backgroundColor: color.surface.base,
   },
   head: { gap: 18 },

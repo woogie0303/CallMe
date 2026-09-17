@@ -4,7 +4,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } f
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCreateBook } from '@/entities/book/api/book.api';
-import { color } from '@/shared/config';
+import { color, gutter } from '@/shared/config';
 import { ActionButton, ScreenHeader } from '@/shared/ui';
 import { BookAdd, type BookDraft } from '@/widgets/book-add/ui/book-add';
 
@@ -66,8 +66,9 @@ export default function BookAddScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         <ActionButton
-          label={create.isPending ? '들이는 중…' : '이 책 읽고 있어요'}
-          variant={ready ? 'primary' : 'subtle'}
+          label="이 책 읽고 있어요"
+          disabled={!ready}
+          loading={create.isPending}
           onPress={save}
         />
       </View>
@@ -78,6 +79,6 @@ export default function BookAddScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
-  footer: { paddingHorizontal: 24, paddingTop: 12 },
+  content: { paddingHorizontal: gutter, paddingTop: 8, paddingBottom: 24 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });

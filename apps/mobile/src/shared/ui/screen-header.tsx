@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { Icon } from './icon';
 import { Tap } from './pressable-row';
 import { AppText } from './text';
@@ -39,7 +39,14 @@ export function ScreenHeader({
     <View style={[styles.row, { paddingTop: insets.top + 6, paddingBottom: gap }]}>
       <View style={styles.side}>
         {lead ? (
-          <Tap hitSlop={12} onPress={onLeadingPress}>
+          <Tap
+            hitSlop={12}
+            onPress={onLeadingPress}
+            accessibilityRole="button"
+            /* 그림뿐인 단추라 읽어줄 이름을 따로 준다 */
+            accessibilityLabel={
+              leading === 'back' ? '뒤로' : leading === 'close' ? '닫기' : undefined
+            }>
             {lead}
           </Tap>
         ) : null}
@@ -55,7 +62,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: gutter,
   },
   side: { minWidth: 40, justifyContent: 'center' },
   trailing: { alignItems: 'flex-end' },
@@ -73,7 +80,7 @@ export function HeaderAction({
   onPress?: () => void;
 }) {
   return (
-    <Tap hitSlop={12} onPress={onPress}>
+    <Tap hitSlop={12} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
       <AppText style={[type.label2, { fontWeight: '600', color: tone }]}>{label}</AppText>
     </Tap>
   );

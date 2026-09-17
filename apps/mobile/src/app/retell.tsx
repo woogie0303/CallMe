@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBook } from '@/entities/book/api/book.api';
 import { useCreateRetell, useResolveRetell } from '@/entities/retell/api/retell.api';
-import { color, family, type } from '@/shared/config';
+import { color, family, gutter, type } from '@/shared/config';
 import type { ApiRetell } from '@/shared/api/types';
 import { ActionButton, AltPanel, AppText, Icon, ScreenHeader } from '@/shared/ui';
 import { RetellFeedback } from '@/widgets/retell-review/ui/retell-feedback';
@@ -114,14 +114,16 @@ export default function RetellScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         {!result ? (
           <ActionButton
-            label={busy ? '살펴보는 중…' : '고칠 곳 찾아보기'}
-            variant={draft.trim() ? 'primary' : 'subtle'}
+            label="고칠 곳 찾아보기"
+            disabled={!draft.trim()}
+            loading={busy}
             onPress={review}
           />
         ) : result.status === 'pending' ? (
           <ActionButton
-            label={busy ? '다시 시도하는 중…' : '기록 남기고 닫기'}
+            label={result.pendingReason === '연결 실패' ? '다시 시도하기' : '기록 남기고 닫기'}
             variant="ink"
+            loading={busy}
             onPress={result.pendingReason === '연결 실패' ? retry : close}
           />
         ) : (
@@ -135,7 +137,7 @@ export default function RetellScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 24, gap: 18 },
+  content: { paddingHorizontal: gutter, paddingTop: 4, paddingBottom: 24, gap: 18 },
   prompt: { gap: 4 },
   promptTitle: { ...type.heading2, fontWeight: '700', color: color.text.primary },
   promptHint: { ...type.label2, color: color.text.meta },
@@ -166,5 +168,5 @@ const styles = StyleSheet.create({
   pendingHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   pendingTitle: { ...type.label2, fontWeight: '700', color: color.text.primary },
   pendingBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
-  footer: { paddingHorizontal: 20, paddingTop: 12 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });

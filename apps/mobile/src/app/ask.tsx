@@ -1,31 +1,17 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAskQuota, useCreateAsk } from "@/entities/ask/api/ask.api";
-import { useBook, useCurrentBook } from "@/entities/book/api/book.api";
-import { useSaveItem } from "@/entities/lexical-item/api/item.api";
-import { useCreateSentence } from "@/entities/sentence/api/sentence.api";
-import type { ApiAskView } from "@/shared/api/types";
-import { color, type } from "@/shared/config";
-import {
-  ActionButton,
-  AltPanel,
-  AppText,
-  Icon,
-  ScreenHeader,
-  Tap,
-} from "@/shared/ui";
-import { AskResult } from "@/widgets/ask/ui/ask-result";
-import { SentenceField } from "@/widgets/ask/ui/sentence-field";
+import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
+import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
+import { useSaveItem } from '@/entities/lexical-item/api/item.api';
+import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
+import type { ApiAskView } from '@/shared/api/types';
+import { color, gutter, type } from '@/shared/config';
+import { ActionButton, AltPanel, AppText, Icon, Quote, ScreenHeader } from '@/shared/ui';
+import { AskResult } from '@/widgets/ask/ui/ask-result';
+import { SentenceField } from '@/widgets/ask/ui/sentence-field';
 
 /**
  * 어느 책에 대고 묻는지는 들어온 길이 정한다. 홈의 ✎에서 오면 지금 읽는 책이고,
@@ -45,7 +31,7 @@ export default function AskScreen() {
 
   const params = useLocalSearchParams<Params>();
   /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
-  const [sentence, setSentence] = useState(params.text ?? "");
+  const [sentence, setSentence] = useState(params.text ?? '');
   const [answer, setAnswer] = useState<ApiAskView | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
@@ -60,7 +46,7 @@ export default function AskScreen() {
   const keepSentence = useCreateSentence();
 
   const left = quota?.remaining ?? 0;
-  const phase = !answer ? "writing" : answer.ask.status === "answered" ? "answered" : "pending";
+  const phase = !answer ? 'writing' : answer.ask.status === 'answered' ? 'answered' : 'pending';
 
   const togglePick = (term: string) =>
     setPicked((prev) => {
@@ -99,13 +85,13 @@ export default function AskScreen() {
         sentenceId: answer.sentence._id,
       });
     }
-    router.replace("/drawer");
+    router.replace('/drawer');
   };
 
   const reset = () => {
     setAnswer(null);
     setPicked(new Set());
-    setSentence("");
+    setSentence('');
   };
 
   /**
@@ -116,17 +102,16 @@ export default function AskScreen() {
     if (!book || !sentence.trim()) return;
     try {
       await keepSentence.mutateAsync({ bookId: book.id, text: sentence.trim(), page });
-      router.replace({ pathname: "/book/[id]", params: { id: book.id } });
+      router.replace({ pathname: '/book/[id]', params: { id: book.id } });
     } catch (error) {
-      Alert.alert("담지 못했어요", error instanceof Error ? error.message : "");
+      Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScreenHeader
         leading="close"
         onLeadingPress={() => router.back()}
@@ -142,19 +127,23 @@ export default function AskScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <SentenceField
-          value={sentence}
-          onChangeText={setSentence}
-          editable={phase === "writing"}
-          book={book}
-          page={page}
-          onCapture={() => router.replace("/scan")}
-        />
+        keyboardShouldPersistTaps="handled">
+        {/*
+          답이 오면 입력칸은 물러난다. 같은 문장을 입력칸과 답에 두 번 세우면
+          어느 쪽이 지금 보고 있는 것인지 흐려진다 — 답에 선 문장은 밑줄이
+          그어져 있어서, 이미 그 문장이자 고를 거리다.
+        */}
+        {phase === 'writing' ? (
+          <SentenceField
+            value={sentence}
+            onChangeText={setSentence}
+            onCapture={() => router.replace('/scan')}
+          />
+        ) : null}
 
-        {phase === "answered" && answer ? (
+        {phase === 'answered' && answer ? (
           <AskResult
+            sentence={answer.sentence?.text ?? sentence}
             translation={answer.ask.translation}
             candidates={answer.ask.candidates}
             picked={picked}
@@ -162,70 +151,60 @@ export default function AskScreen() {
           />
         ) : null}
 
-        {phase === "pending" ? (
-          <AltPanel style={styles.pending}>
-            <View style={styles.pendingHead}>
-              <Icon name="clock" size={15} color={color.text.meta} />
-              <AppText style={styles.pendingTitle}>문장은 담아뒀어요</AppText>
-            </View>
-            <AppText style={styles.pendingBody}>
-              {answer?.ask.pendingReason === "질문 소진"
-                ? "이번 달 질문을 다 쓰셨어요. 담아둔 문장은 다음 달에 자동으로 풀려요 — 읽던 데까지 계속 읽으셔도 돼요."
-                : "지금은 답을 받지 못했어요. 문장은 담아뒀으니 나중에 다시 풀어드릴게요."}
-            </AppText>
-            <Tap style={styles.rewarded}>
-              <AppText style={styles.rewardedLabel}>
-                광고 보고 3번 더 물어보기
+        {phase === 'pending' ? (
+          <>
+            <Quote style={styles.kept}>{answer?.sentence?.text ?? sentence}</Quote>
+            <AltPanel style={styles.pending}>
+              <View style={styles.pendingHead}>
+                <Icon name="clock" size={15} color={color.text.meta} />
+                <AppText style={styles.pendingTitle}>문장은 담아뒀어요</AppText>
+              </View>
+              <AppText style={styles.pendingBody}>
+                {answer?.ask.pendingReason === '질문 소진'
+                  ? '이번 달 질문을 다 쓰셨어요. 담아둔 문장은 다음 달에 자동으로 풀려요 — 읽던 데까지 계속 읽으셔도 돼요.'
+                  : '지금은 답을 받지 못했어요. 문장은 담아뒀으니 나중에 다시 풀어드릴게요.'}
               </AppText>
-            </Tap>
-          </AltPanel>
+            </AltPanel>
+          </>
         ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        {phase === "writing" ? (
+        {phase === 'writing' ? (
           <>
             <ActionButton
-              label={
-                createAsk.isPending
-                  ? "물어보는 중…"
-                  : left > 0
-                    ? "이 문장 물어보기"
-                    : "문장만 담아두기"
-              }
-              variant={left > 0 ? "primary" : "ink"}
+              label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
+              variant={left > 0 ? 'primary' : 'ink'}
+              disabled={!book || !sentence.trim()}
+              loading={createAsk.isPending}
               onPress={ask}
             />
             {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다 */}
             <ActionButton
-              label={keepSentence.isPending ? "담는 중…" : "그냥 마음에 든 문장이에요"}
+              label="그냥 마음에 든 문장이에요"
               variant="subtle"
+              disabled={!book || !sentence.trim()}
+              loading={keepSentence.isPending}
               onPress={keepOnly}
             />
           </>
         ) : null}
 
-        {phase === "answered" ? (
+        {phase === 'answered' ? (
           <>
             <ActionButton
-              label={saveItem.isPending ? "담는 중…" : "서랍에 담기"}
+              label="서랍에 담기"
               aside={`${picked.size}개`}
+              disabled={picked.size === 0}
+              loading={saveItem.isPending}
               onPress={keep}
             />
-            <ActionButton
-              label="다른 문장 물어보기"
-              variant="subtle"
-              onPress={reset}
-            />
+            <ActionButton label="다른 문장 물어보기" variant="subtle" onPress={reset} />
           </>
         ) : null}
 
-        {phase === "pending" ? (
-          <ActionButton
-            label="다른 문장 담아두기"
-            variant="ink"
-            onPress={reset}
-          />
+        {phase === 'pending' ? (
+          <ActionButton label="다른 문장 담아두기" variant="ink" onPress={reset} />
         ) : null}
       </View>
     </KeyboardAvoidingView>
@@ -234,33 +213,20 @@ export default function AskScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
-  quota: { ...type.caption1, fontWeight: "600", color: color.text.meta },
+  quota: { ...type.caption1, fontWeight: '600', color: color.text.meta },
   quotaOut: { color: color.status.cautionary },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 24, gap: 18 },
+  content: { paddingHorizontal: gutter, paddingTop: 4, paddingBottom: 24, gap: 18 },
 
   pending: { padding: 16, gap: 10 },
-  pendingHead: { flexDirection: "row", alignItems: "center", gap: 7 },
+  pendingHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   pendingTitle: {
     ...type.label2,
-    fontWeight: "700",
+    fontWeight: '700',
     color: color.text.primary,
   },
   pendingBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
-  rewarded: {
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: color.surface.base,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border.default,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rewardedLabel: {
-    ...type.label2,
-    fontWeight: "600",
-    color: color.text.primary,
-  },
+  kept: { fontSize: 17, lineHeight: 27, color: color.text.primary },
 
-  footer: { paddingHorizontal: 20, paddingTop: 12, gap: 10 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
 });

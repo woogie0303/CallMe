@@ -2,6 +2,7 @@ export { ActionButton } from './button';
 export { AddButton } from './add-button';
 export { Card, AltPanel, InkPanel } from './card';
 export { CountBadge } from './count-badge';
+export { DisclosureRow } from './disclosure-row';
 export { Chip, TermChip } from './chip';
 export { CameraIcon, Icon, MicIcon, type FilledIconName } from './icon';
 export { Tap } from './pressable-row';

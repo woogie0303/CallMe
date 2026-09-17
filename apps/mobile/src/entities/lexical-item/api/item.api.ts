@@ -21,6 +21,11 @@ export type ItemSummary = {
   /** 몇 번 만났는지. 둘 이상이면 재회다. */
   met: number;
   books: Book[];
+  /**
+   * 이 항목을 만난 문장들. 문장 피드가 밑줄을 놓을 자리를 여기서 찾는다 —
+   * 문장→항목 방향 API가 없어서, 목록을 받아 앱에서 뒤집어 쓴다.
+   */
+  encounters: { sentenceId: string; surface?: string }[];
   latest?: { text: string; page?: number; bookTitle?: string; savedLabel: string };
   /** 처음과 마지막 사이의 날수 — '2개월 만에'로 옮기는 일은 화면이 한다 */
   gapDays?: number;
@@ -40,6 +45,7 @@ function toSummary(row: ApiItemSummary): ItemSummary {
     meaning: row.item.meaning,
     status: row.item.status,
     met: row.item.encounters.length,
+    encounters: row.item.encounters.map((e) => ({ sentenceId: e.sentenceId, surface: e.surface })),
     gapDays: row.gapDays,
     books: row.books.map(toBook),
     latest: row.latest

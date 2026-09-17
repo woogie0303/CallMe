@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useItem } from '@/entities/lexical-item/api/item.api';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { AppText, ScreenHeader } from '@/shared/ui';
 import { ItemDetail } from '@/widgets/item-detail/ui/item-detail';
 
@@ -42,7 +42,7 @@ export default function ItemScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingBottom: 32 },
+  content: { paddingHorizontal: gutter, paddingBottom: 32 },
   spinner: { paddingTop: 40 },
-  missing: { ...type.label1, color: color.text.assistive, paddingTop: 40, textAlign: 'center' },
+  missing: { ...type.label1, color: color.text.secondary, paddingTop: 40, textAlign: 'center' },
 });

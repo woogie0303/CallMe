@@ -1,25 +1,33 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useSplitLines } from '@/entities/ask/api/ask.api';
+import { useAskQuota, useCreateAsk, useSplitLines } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
-import { BookSpine } from '@/entities/book/ui/book-spine';
-import { color, type } from '@/shared/config';
-import { available, extractText } from '@/shared/ocr/text-extractor';
+import { useSaveItem } from '@/entities/lexical-item/api/item.api';
+import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
+import type { ApiAskView } from '@/shared/api/types';
+import { color, gutter, ink, type } from '@/shared/config';
+import { alignSentences, type SentencePlacement } from '@/shared/ocr/align';
+import { available, readLines, type OcrLine } from '@/shared/ocr/text-extractor';
 import { ActionButton, AppText, HeaderAction, ScreenHeader, Tap } from '@/shared/ui';
-import { ScannedPage } from '@/widgets/scan/ui/scanned-page';
+import { AskSheet, type SheetPhase } from '@/widgets/capture/ui/ask-sheet';
+import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
 
 type Params = { bookId?: string };
 
 /**
- * 04 페이지 촬영 — 찍은 쪽에서 물어볼 문장 하나를 고른다.
+ * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서** 막힌 문장을 짚어 묻는다.
+ *
+ * 한 화면이다. 예전에는 촬영 → 문장 고르기 → 질문 화면으로 옮겨 다녔고, 옮기는
+ * 순간 사진이 사라져서 한 장을 찍어도 문장 하나밖에 못 물었다. 지금은 시트가
+ * 사진 위로 올라왔다 내려가므로, 한 쪽에서 막힌 문장을 연달아 물을 수 있다.
  *
  * 글자를 읽는 일은 기기가 하고(Apple Vision / ML Kit), 줄을 문장으로 잇는 일은
- * 서버가 한다. 인식기는 줄 단위로만 돌려주는데 책은 한 문장이 서너 줄에 걸쳐
- * 있어서, 그걸 앱에서 정규식으로 이으면 답을 내는 모델과 다르게 자르게 된다.
+ * 서버가 한다 — 앱에서 정규식으로 자르면 답을 내는 모델과 다르게 자른다(ADR-0002).
+ * 인식기가 좌표를 함께 주면 사진 위에서 짚고, 아니면 읽어낸 글을 조판해 보여준다.
  *
  * 사진은 기기 밖으로 나가지 않는다. 서버로 가는 것은 읽어낸 글자뿐이다.
  */
@@ -30,15 +38,33 @@ export default function ScanScreen() {
 
   const camera = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [sentences, setSentences] = useState<string[] | null>(null);
+  const [shot, setShot] = useState<Shot | null>(null);
+  const [lines, setLines] = useState<OcrLine[]>([]);
+  const [places, setPlaces] = useState<SentencePlacement[]>([]);
   const [rough, setRough] = useState(false);
   const [reading, setReading] = useState(false);
-  const [selected, setSelected] = useState<string | undefined>();
+
+  /** 지금 짚은 문장과, 그 문장에 대해 받은 답 */
+  const [picked, setPicked] = useState<string | undefined>();
+  const [answer, setAnswer] = useState<ApiAskView | null>(null);
+  const [keep, setKeep] = useState<Set<string>>(new Set());
 
   const split = useSplitLines();
+  const createAsk = useCreateAsk();
+  const saveItem = useSaveItem();
+  const keepSentence = useCreateSentence();
+  const { data: quota } = useAskQuota();
   const { data: current } = useCurrentBook();
   const { data: chosen } = useBook(params.bookId);
   const book = chosen ?? current?.book;
+  const left = quota?.remaining ?? 0;
+
+  const phase: SheetPhase = !answer
+    ? 'picked'
+    : answer.ask.status === 'answered'
+      ? 'answered'
+      : 'pending';
+  const busy = createAsk.isPending || saveItem.isPending || keepSentence.isPending;
 
   const shoot = async () => {
     if (!camera.current || reading) return;
@@ -47,11 +73,14 @@ export default function ScanScreen() {
       const photo = await camera.current.takePictureAsync({ quality: 0.8 });
       if (!photo?.uri) throw new Error('사진을 찍지 못했어요.');
 
-      const lines = await extractText(photo.uri);
-      if (!lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
+      const read = await readLines(photo.uri);
+      if (!read.lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
-      const result = await split.mutateAsync(lines);
-      setSentences(result.sentences);
+      const result = await split.mutateAsync(read.lines.map((l) => l.text));
+      setShot({ uri: photo.uri, width: photo.width, height: photo.height });
+      setLines(read.lines);
+      /** 서버가 이어 준 문장을 원래 줄에 다시 맞춘다 — 사진 위에 얹으려면 필요하다 */
+      setPlaces(alignSentences(read.lines, result.sentences));
       setRough(result.rough);
     } catch (error) {
       Alert.alert('다시 찍어볼까요', error instanceof Error ? error.message : '');
@@ -61,16 +90,59 @@ export default function ScanScreen() {
   };
 
   const retake = () => {
-    setSentences(null);
-    setSelected(undefined);
+    setShot(null);
+    setLines([]);
+    setPlaces([]);
+    closeSheet();
   };
 
-  /** 고른 문장을 들고 질문 화면으로 — 거기서 손으로 고칠 수도 있다 */
-  const ask = () =>
-    router.replace({
-      pathname: '/ask',
-      params: { text: selected, ...(book ? { bookId: book.id } : {}) },
-    });
+  const closeSheet = () => {
+    setPicked(undefined);
+    setAnswer(null);
+    setKeep(new Set());
+  };
+
+  const ask = async () => {
+    if (!book || !picked || busy) return;
+    try {
+      const view = await createAsk.mutateAsync({ bookId: book.id, text: picked });
+      setAnswer(view);
+      /** 답이 왔으면 후보를 전부 골라둔 채로 시작한다 — 빼는 편이 고르는 것보다 빠르다 */
+      setKeep(new Set(view.ask.candidates.map((c) => c.term)));
+    } catch (error) {
+      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
+    }
+  };
+
+  /** 뜻은 몰라도 되고 그냥 좋았던 문장 — 질문 횟수를 쓰지 않는다 */
+  const keepOnly = async () => {
+    if (!book || !picked || busy) return;
+    try {
+      await keepSentence.mutateAsync({ bookId: book.id, text: picked });
+      closeSheet();
+    } catch (error) {
+      Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
+    }
+  };
+
+  /** 고른 표현을 서랍에 담는다. 이미 있던 표현이면 그 자리에서 재회가 된다. */
+  const keepPicked = async () => {
+    if (!answer?.sentence || busy) return;
+    try {
+      for (const c of answer.ask.candidates.filter((x) => keep.has(x.term))) {
+        await saveItem.mutateAsync({
+          term: c.term,
+          meaning: c.meaning,
+          register: c.register,
+          surface: c.surface,
+          sentenceId: answer.sentence._id,
+        });
+      }
+      closeSheet();
+    } catch (error) {
+      Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
+    }
+  };
 
   if (!available) {
     return (
@@ -99,7 +171,7 @@ export default function ScanScreen() {
   }
 
   /* ── 찍기 전 ─────────────────────────────────────────────── */
-  if (!sentences) {
+  if (!shot) {
     return (
       <View style={styles.screen}>
         <ScreenHeader leading="close" onLeadingPress={() => router.back()} title="페이지 촬영" />
@@ -118,7 +190,12 @@ export default function ScanScreen() {
           <AppText style={styles.guide}>
             {book ? `${book.title} · ` : ''}읽던 쪽이 화면에 다 들어오게 찍어주세요
           </AppText>
-          <Tap style={styles.shutter} onPress={shoot} disabled={reading} accessibilityLabel="찍기">
+          <Tap
+            style={styles.shutter}
+            onPress={shoot}
+            disabled={reading}
+            accessibilityRole="button"
+            accessibilityLabel="찍기">
             <View style={styles.shutterCore} />
           </Tap>
         </View>
@@ -126,49 +203,61 @@ export default function ScanScreen() {
     );
   }
 
-  /* ── 찍은 뒤: 문장 고르기 ────────────────────────────────── */
+  /* ── 찍은 뒤: 쪽 위에서 문장 짚기 ─────────────────────────── */
   return (
     <View style={styles.screen}>
       <ScreenHeader
         leading="back"
         onLeadingPress={retake}
+        title={picked ? undefined : '물어볼 문장을 짚어보세요'}
         trailing={<HeaderAction label="다시 찍기" tone={color.text.meta} onPress={retake} />}
       />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        style={styles.scroll}>
-        <View>
-          <AppText style={styles.headline}>어느 문장에서{'\n'}막히셨어요?</AppText>
-          {book ? (
-            <View style={styles.source}>
-              <BookSpine book={book} width={18} height={24} radius={3} />
-              <AppText style={styles.sourceText}>{book.title} · 방금 촬영</AppText>
-            </View>
-          ) : null}
-        </View>
-
-        {sentences.length ? (
-          <ScannedPage sentences={sentences} selected={selected} onSelect={setSelected} />
-        ) : (
-          <AppText style={styles.empty}>읽어낸 글이 없어요. 더 가까이서 다시 찍어보세요.</AppText>
-        )}
-
-        {rough ? (
-          <AppText style={styles.rough}>
-            지금은 문장을 거칠게 나눴어요 — 어긋난 곳은 다음 화면에서 고칠 수 있어요.
-          </AppText>
-        ) : null}
-      </ScrollView>
-
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <ActionButton
-          label={selected ? '이 문장 물어보기' : '문장을 골라주세요'}
-          variant={selected ? 'primary' : 'subtle'}
-          onPress={selected ? ask : undefined}
+      <View style={styles.stage}>
+        <PhotoPicker
+          shot={shot}
+          lines={lines}
+          placements={places}
+          selected={picked}
+          onSelect={(s) => {
+            if (s === picked) return;
+            setAnswer(null);
+            setKeep(new Set());
+            setPicked(s);
+          }}
         />
       </View>
+
+      {rough && !picked ? (
+        <AppText style={[styles.rough, { paddingBottom: insets.bottom + 10 }]}>
+          지금은 문장을 거칠게 나눴어요 — 짚은 다음 손으로 고칠 수 있어요.
+        </AppText>
+      ) : null}
+
+      {picked ? (
+        <AskSheet
+          sentence={picked}
+          phase={phase}
+          translation={answer?.ask.translation}
+          candidates={answer?.ask.candidates ?? []}
+          picked={keep}
+          quotaLeft={left}
+          busy={busy}
+          pendingReason={answer?.ask.pendingReason}
+          onTogglePick={(term) =>
+            setKeep((prev) => {
+              const next = new Set(prev);
+              if (next.has(term)) next.delete(term);
+              else next.add(term);
+              return next;
+            })
+          }
+          onAsk={ask}
+          onKeepOnly={keepOnly}
+          onKeep={keepPicked}
+          onClose={closeSheet}
+        />
+      ) : null}
     </View>
   );
 }
@@ -204,8 +293,14 @@ function Notice({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24, gap: 20 },
+  /** 찍은 쪽이 화면을 채운다. 시트는 이 위로 올라온다. */
+  stage: {
+    flex: 1,
+    marginHorizontal: gutter,
+    marginBottom: 12,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
 
   /** 뷰파인더는 잉크 위에 둔다 — 종이를 비추는 동안은 화면이 물러나야 한다 */
   viewfinder: {
@@ -224,7 +319,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: 'rgba(15,15,16,0.55)',
+    backgroundColor: ink(0.55),
   },
   readingLabel: { ...type.label2, color: color.text.onInk },
 
@@ -239,22 +334,18 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: color.text.primary,
   },
-  shutterCore: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: color.text.primary,
+  shutterCore: { width: 52, height: 52, borderRadius: 26, backgroundColor: color.text.primary },
+
+  rough: {
+    ...type.caption1,
+    color: color.status.cautionary,
+    lineHeight: 18,
+    paddingHorizontal: gutter,
   },
 
-  headline: { ...type.title3, lineHeight: 34, color: color.text.primary },
-  source: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  sourceText: { ...type.caption1, color: color.text.meta },
-  empty: { ...type.label2, color: color.text.assistive, lineHeight: 21 },
-  rough: { ...type.caption1, color: color.status.cautionary, lineHeight: 18 },
-
-  notice: { flex: 1, paddingHorizontal: 24, paddingTop: 40, gap: 10 },
+  notice: { flex: 1, paddingHorizontal: gutter, paddingTop: 40, gap: 10 },
   noticeTitle: { ...type.heading2, color: color.text.primary, lineHeight: 30 },
   noticeBody: { ...type.label1, color: color.text.secondary, lineHeight: 23 },
 
-  footer: { paddingHorizontal: 24, paddingTop: 12 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });

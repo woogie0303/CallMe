@@ -1,8 +1,7 @@
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import type { Book } from "@/entities/book/model/types";
-import { color, family, type } from "@/shared/config";
-import { CameraIcon, Tap } from "@/shared/ui";
+import { color, family } from '@/shared/config';
+import { CameraIcon, Tap } from '@/shared/ui';
 
 /**
  * 물어볼 문장을 적는 곳. 책에서 온 영어라 입력창 안에서도 세리프다 —
@@ -11,18 +10,10 @@ import { CameraIcon, Tap } from "@/shared/ui";
 export function SentenceField({
   value,
   onChangeText,
-  book,
-  page,
-  editable = true,
-  onChangeBook,
   onCapture,
 }: {
   value: string;
   onChangeText?: (next: string) => void;
-  book?: Book;
-  page?: number;
-  editable?: boolean;
-  onChangeBook?: () => void;
   onCapture?: () => void;
 }) {
   return (
@@ -31,13 +22,16 @@ export function SentenceField({
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          editable={editable}
           multiline
           placeholder="막힌 문장을 그대로 옮겨 적어보세요"
           placeholderTextColor={color.text.assistive}
           style={styles.input}
         />
-        <Tap style={styles.camera} onPress={onCapture}>
+        <Tap
+          style={styles.camera}
+          onPress={onCapture}
+          accessibilityRole="button"
+          accessibilityLabel="읽던 쪽 촬영">
           <CameraIcon size={19} color={color.text.onInk} />
         </Tap>
       </View>
@@ -47,32 +41,6 @@ export function SentenceField({
 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
-  bookRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: color.surface.alt,
-  },
-  bookMeta: { flex: 1, gap: 2, minWidth: 0 },
-  bookTitle: { ...type.label2, fontWeight: "600", color: color.text.primary },
-  bookWhere: { ...type.caption2, color: color.text.meta },
-  change: {
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: color.fill.normal,
-  },
-  changeLabel: { ...type.caption2, fontWeight: "600", color: color.text.meta },
-  unfiled: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: color.surface.alt,
-  },
-  unfiledLabel: { ...type.caption1, color: color.text.meta },
 
   field: {
     minHeight: 148,
@@ -88,18 +56,18 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 27,
     color: color.text.primary,
-    textAlignVertical: "top",
+    textAlignVertical: 'top',
     flex: 1,
   },
   camera: {
-    position: "absolute",
+    position: 'absolute',
     left: 14,
     bottom: 14,
     width: 36,
     height: 36,
     borderRadius: 11,
     backgroundColor: color.surface.ink,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

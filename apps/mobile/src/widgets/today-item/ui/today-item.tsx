@@ -1,10 +1,10 @@
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
-import { SpineEdge } from "@/entities/book/ui/spine-edge";
-import type { ItemSummary } from "@/entities/lexical-item/api/item.api";
-import { color, type } from "@/shared/config";
-import { gapLabel } from "@/shared/lib/date";
-import { AppText, Quote, Tap, emphasis } from "@/shared/ui";
+import { SpineEdge } from '@/entities/book/ui/spine-edge';
+import type { ItemSummary } from '@/entities/lexical-item/api/item.api';
+import { color, type } from '@/shared/config';
+import { gapLabel } from '@/shared/lib/date';
+import { AppText, Quote, Tap, emphasis } from '@/shared/ui';
 
 /**
  * 오늘의 표현 — 담아둔 것 중 하나를 홈으로 끌어올린다.
@@ -27,7 +27,11 @@ export function TodayItem({
   const book = item.books[item.books.length - 1];
 
   return (
-    <Tap style={[styles.card, style]} onPress={onPress}>
+    <Tap
+      style={[styles.card, style]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`오늘의 표현 ${item.term}, ${item.meaning}`}>
       {book ? <SpineEdge book={book} /> : null}
       <View style={styles.body}>
         <AppText style={styles.eyebrow}>오늘의 표현</AppText>
@@ -40,8 +44,7 @@ export function TodayItem({
         <AppText style={styles.reason}>
           {gap ? (
             <>
-              <AppText style={emphasis(color.primary)}>{gap}</AppText> 또
-              헷갈렸어요
+              <AppText style={emphasis(color.primary)}>{gap}</AppText> 또 헷갈렸어요
             </>
           ) : (
             `${item.latest?.savedLabel ?? '언젠가'}에 담아뒀어요`
@@ -53,33 +56,27 @@ export function TodayItem({
 }
 
 const styles = StyleSheet.create({
-  /**
-   * 제 내용만큼만 쓴다. 가로줄에 서던 카드라 flex: 1을 달고 있었는데, 세로로
-   * 쌓이는 홈에서는 그게 '남는 높이를 다 가져가라'는 말이 되어 카드가 늘어났다.
-   * 남는 높이는 아래의 '읽고 있는 책 추가'가 받는다.
-   */
+  /** 제 내용만큼만 쓴다 — 홈은 흐르는 화면이라 남는 높이를 나눠 가질 일이 없다 */
   card: {
-    flexShrink: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     borderRadius: 18,
     backgroundColor: color.surface.base,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border.subtle,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
-  /** 판이 검색 타일과 키를 맞추느라 늘어나도 글은 가운데에 선다 */
   body: {
     flex: 1,
     minWidth: 0,
-    justifyContent: "center",
     gap: 3,
+    paddingVertical: 14,
     paddingHorizontal: 14,
   },
   eyebrow: { ...type.caption2, color: color.text.meta },
   term: {
     fontSize: 17,
     lineHeight: 23,
-    fontWeight: "600",
+    fontWeight: '600',
     color: color.text.primary,
   },
   meaning: { ...type.label2, color: color.text.secondary },

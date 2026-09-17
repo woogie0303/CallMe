@@ -1,16 +1,22 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAskQuota, usePendingAsks } from '@/entities/ask/api/ask.api';
+import { useAskQuota } from '@/entities/ask/api/ask.api';
 import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useReader } from '@/entities/reader/api/reader.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
-import { ActionButton, AltPanel, AppText, Icon, ProgressBar, Tap } from '@/shared/ui';
+import { ActionButton, AltPanel, AppText, DisclosureRow, ProgressBar } from '@/shared/ui';
 
-/** 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들. */
+/**
+ * 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들.
+ *
+ * 기다리는 문장은 여기 없다. 답을 기다리는 문장은 **할 일**이지 설정이 아니라서,
+ * 문장이 사는 곳(서랍)에서 말을 건다 — 여기 두면 세 탭을 건너야 닿고, 줄이
+ * 하나도 없을 땐 아예 보이지 않아서 있는 줄도 모른다.
+ */
 export default function MyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -18,11 +24,21 @@ export default function MyScreen() {
   const { data: reader } = useReader();
   const { data: items = [] } = useItems();
   const { data: quota } = useAskQuota();
-  const { data: pending = [] } = usePendingAsks();
   const { data: week } = useReadingWeek();
   const confused = items.filter((i) => i.status === '헷갈려요').length;
   const again = items.filter((i) => i.met > 1).length;
   const left = quota?.remaining ?? 0;
+
+  /** 되돌릴 수 없는 일은 한 번 묻는다 — 다시 들어오려면 로그인부터다 */
+  const confirmSignOut = () =>
+    Alert.alert(
+      '로그아웃할까요?',
+      '담아둔 것은 그대로 있어요. 다시 로그인하면 이어서 볼 수 있어요.',
+      [
+        { text: '그대로 둘게요', style: 'cancel' },
+        { text: '로그아웃', style: 'destructive', onPress: signOut },
+      ],
+    );
 
   return (
     <View style={styles.screen}>
@@ -34,18 +50,12 @@ export default function MyScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}>
-        <Tap onPress={() => router.push('/level')}>
-          <AltPanel style={styles.levelPanel}>
-            <View style={styles.levelText}>
-              <AppText style={styles.levelLabel}>내 레벨</AppText>
-              <AppText style={styles.levelValue}>{reader?.level ?? '—'}</AppText>
-              <AppText style={styles.levelHint}>
-                책을 한 권 끝낼 때마다 다시 물어봐요 · 지금까지 {reader?.booksFinished ?? 0}권
-              </AppText>
-            </View>
-            <Icon name="chevronRight" size={16} color={color.text.assistive} />
-          </AltPanel>
-        </Tap>
+        <DisclosureRow
+          eyebrow="내 레벨"
+          title={reader?.level ?? '—'}
+          body={`책을 한 권 끝낼 때마다 다시 물어봐요 · 지금까지 ${reader?.booksFinished ?? 0}권`}
+          onPress={() => router.push('/level')}
+        />
 
         <AltPanel style={styles.quotaPanel}>
           <View style={styles.quotaHead}>
@@ -62,18 +72,6 @@ export default function MyScreen() {
           </AppText>
         </AltPanel>
 
-        {pending.length ? (
-          <Tap onPress={() => router.push('/pending')}>
-            <AltPanel style={styles.pendingPanel}>
-              <View style={styles.levelText}>
-                <AppText style={styles.levelLabel}>기다리는 문장</AppText>
-                <AppText style={styles.levelValue}>{pending.length}개</AppText>
-              </View>
-              <Icon name="chevronRight" size={16} color={color.text.assistive} />
-            </AltPanel>
-          </Tap>
-        ) : null}
-
         <AltPanel style={styles.statsPanel}>
           <Row label="담아둔 표현" value={`${items.length}개`} />
           <Row label="아직 헷갈리는 표현" value={`${confused}개`} />
@@ -81,7 +79,10 @@ export default function MyScreen() {
           <Row label="이번 주에 읽은 날" value={`${week?.days ?? 0}일`} />
         </AltPanel>
 
-        <ActionButton label="로그아웃" variant="subtle" onPress={signOut} />
+        {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}
+        <View style={styles.exit}>
+          <ActionButton label="로그아웃" variant="subtle" onPress={confirmSignOut} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -98,17 +99,10 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
-  header: { paddingHorizontal: 24, paddingBottom: 14 },
+  header: { paddingHorizontal: gutter, paddingBottom: 14 },
   title: { ...type.title3, color: color.text.primary },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
-
-  levelPanel: { padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pendingPanel: { padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  levelText: { flex: 1, gap: 3 },
-  levelLabel: { ...type.caption1, color: color.text.meta },
-  levelValue: { ...type.headline1, fontWeight: '700', color: color.text.primary },
-  levelHint: { ...type.caption2, color: color.text.assistive },
+  content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 12 },
 
   quotaPanel: { padding: 18, gap: 10 },
   quotaHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
@@ -120,4 +114,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   rowLabel: { ...type.label1, color: color.text.secondary },
   rowValue: { ...type.label1, fontWeight: '700', color: color.text.primary },
+
+  exit: { marginTop: 12 },
 });

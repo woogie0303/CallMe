@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import type { Book } from '@/entities/book/model/types';
 import { BookCover } from '@/entities/book/ui/book-cover';
 import type { ReadingProgress } from '@/entities/reading/model/types';
-import { color, type } from '@/shared/config';
+import { color, shadow, type } from '@/shared/config';
 import { AppText, CameraIcon, Icon, ProgressBar, Quote, Tap } from '@/shared/ui';
 
 /**
@@ -35,48 +35,90 @@ export function BookHero({
   onAsk?: () => void;
   onCapture?: () => void;
 }) {
-  const ratio = progress ? progress.currentPage / progress.totalPages : 0;
+  /**
+   * 쪽수를 모르는 책이 있다 — 손으로 들인 책은 쪽수가 선택이다. 그때
+   * `totalPages`가 0이라 나누면 Infinity가 되고, 막대는 `NaN%`로, 글은
+   * 'p.50 / 0 · Infinity%'로 그려졌다. 비율은 쪽수를 아는 책에만 있다.
+   */
+  const measured = Boolean(progress && progress.totalPages > 0);
+  const ratio = progress && measured ? progress.currentPage / progress.totalPages : 0;
   const actionable = Boolean(onAsk || onCapture);
 
   return (
     <View style={[styles.panel, { paddingHorizontal: inset }]}>
       <View style={styles.row}>
         <View style={styles.left}>
-          <Tap onPress={onPressBook} style={styles.titleBlock}>
+          <Tap
+            onPress={onPressBook}
+            style={styles.titleBlock}
+            accessibilityRole={onPressBook ? 'button' : undefined}
+            accessibilityLabel={`${book.title}, ${book.author}`}>
             <Quote style={styles.title}>{book.title}</Quote>
             <AppText style={styles.author}>{book.author}</AppText>
           </Tap>
 
-          {/* 이 책에 대고 지금 할 수 있는 일 둘 — 찍어서 묻기, 적어서 묻기 */}
+          {/*
+            이 앱이 하는 일이 여기 있다 — 읽던 쪽을 찍어 막힌 문장을 묻는 것.
+            한동안 19px 아이콘 둘로 나란히 서 있었는데, 제품의 본 동작이 화면에서
+            가장 작고 이름 없는 것이 되어 있었다. 찍기에 이름을 주고, 손으로 적는
+            길은 그 곁의 아이콘으로 물러난다 — 둘은 같은 무게가 아니다.
+          */}
           {actionable ? (
             <View style={styles.actions}>
-              <Tap style={styles.action} onPress={onCapture} accessibilityLabel="페이지 촬영">
-                <CameraIcon size={19} color={color.text.onInk} />
+              <Tap
+                style={styles.capture}
+                onPress={onCapture}
+                accessibilityRole="button"
+                accessibilityLabel="읽던 쪽 찍기">
+                <CameraIcon size={18} color={color.text.onInk} />
+                <AppText style={styles.captureLabel}>읽던 쪽 찍기</AppText>
               </Tap>
-              <View style={styles.divider} />
-              <Tap style={styles.action} onPress={onAsk} accessibilityLabel="문장 물어보기">
-                <Icon name="write" size={18} color={color.text.onInk} />
+              <Tap
+                style={styles.write}
+                onPress={onAsk}
+                accessibilityRole="button"
+                accessibilityLabel="문장 적어서 묻기">
+                <Icon name="write" size={17} color={color.primary} />
               </Tap>
             </View>
           ) : null}
         </View>
 
-        <Tap onPress={onPressBook} style={styles.coverTap}>
+        {/* 제목이 이미 같은 곳으로 데려가므로, 표지는 읽어주지 않는다 */}
+        <Tap
+          onPress={onPressBook}
+          style={styles.coverTap}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants">
           <BookCover book={book} width={130} height={200} radius={10} showTitle={false} />
         </Tap>
       </View>
 
-      <Tap style={styles.progress} onPress={onPressProgress} disabled={!onPressProgress}>
+      <Tap
+        style={styles.progress}
+        onPress={onPressProgress}
+        disabled={!onPressProgress}
+        accessibilityRole={onPressProgress ? 'button' : undefined}
+        accessibilityLabel={
+          progress && measured
+            ? `${progress.totalPages}쪽 중 ${progress.currentPage}쪽까지 읽었어요`
+            : progress
+              ? `${progress.currentPage}쪽까지 읽었어요`
+              : undefined
+        }
+        accessibilityHint={onPressProgress ? '읽은 데까지 옮기기' : undefined}>
         {progress ? (
           <>
-            <ProgressBar value={ratio} />
+            {measured ? <ProgressBar value={ratio} /> : null}
             <AppText style={styles.progressLabel}>
-              p.{progress.currentPage} / {progress.totalPages} · {Math.round(ratio * 100)}%
+              {measured
+                ? `p.${progress.currentPage} / ${progress.totalPages} · ${Math.round(ratio * 100)}%`
+                : `p.${progress.currentPage}`}
               {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ''}
             </AppText>
           </>
         ) : (
-          <AppText style={styles.progressLabel}>{book.pages}p</AppText>
+          <AppText style={styles.progressLabel}>{book.pages ? `${book.pages}p` : ''}</AppText>
         )}
       </Tap>
     </View>
@@ -105,24 +147,27 @@ const styles = StyleSheet.create({
   },
   author: { ...type.label2, color: color.text.secondary },
 
-  actions: {
+  actions: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8 },
+  /** 이름이 붙은 쪽이 주된 행동이다 */
+  capture: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    gap: 7,
+    height: 44,
+    paddingHorizontal: 14,
     borderRadius: 14,
     backgroundColor: color.primary,
-    overflow: 'hidden',
+    ...shadow.primary,
   },
-  action: {
-    width: 52,
+  captureLabel: { ...type.label2, fontWeight: '700', color: color.text.onInk },
+  /** 곁의 길 — 찍을 수 없을 때 손으로 적는다 */
+  write: {
+    width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  divider: {
-    width: StyleSheet.hairlineWidth,
-    height: 22,
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    borderRadius: 14,
+    backgroundColor: color.primaryTint,
   },
 
   progress: { gap: 6 },

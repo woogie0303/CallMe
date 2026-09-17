@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Book } from '@/entities/book/model/types';
 import { BookCover } from '@/entities/book/ui/book-cover';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { AppText, Icon, Tap } from '@/shared/ui';
 
 const COVER = { width: 62, height: 90 } as const;
@@ -32,7 +32,12 @@ export function ReadingShelf({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}>
         {books.map((book) => (
-          <Tap key={book.id} style={styles.item} onPress={() => onPressBook?.(book.id)}>
+          <Tap
+            key={book.id}
+            style={styles.item}
+            onPress={() => onPressBook?.(book.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`${book.title}, ${book.author}`}>
             <BookCover book={book} width={COVER.width} height={COVER.height} radius={8} />
             <AppText numberOfLines={1} style={styles.title}>
               {book.title}
@@ -40,7 +45,11 @@ export function ReadingShelf({
           </Tap>
         ))}
 
-        <Tap style={styles.item} onPress={onAdd} accessibilityLabel="읽고 있는 책 추가">
+        <Tap
+          style={styles.item}
+          onPress={onAdd}
+          accessibilityRole="button"
+          accessibilityLabel="읽고 있는 책 추가">
           {/* 점선은 비어 있다는 말을 생김새로 한다 — 실선이면 이미 담긴 카드로 보인다 */}
           <View style={[styles.slot, COVER]}>
             <Icon name="plus" size={18} color={color.text.assistive} />
@@ -53,8 +62,13 @@ export function ReadingShelf({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: -12 },
-  rail: { gap: 10, paddingHorizontal: 20 },
+  /**
+   * 화면 여백(20)을 걷어내고 제 여백을 다시 준다 — 줄이 화면 끝까지 흘러야
+   * 옆에 더 있다는 것이 보인다. 두 값은 같이 움직인다: 여기가 화면 여백과
+   * 어긋나면 선반만 다른 선에서 시작한다.
+   */
+  wrap: { marginHorizontal: -gutter },
+  rail: { gap: 10, paddingHorizontal: gutter },
   item: { width: COVER.width, gap: 6 },
   title: { ...type.caption2, color: color.text.meta },
   slot: {

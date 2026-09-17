@@ -18,7 +18,11 @@ export function ItemCard({ item, onPress }: { item: ItemSummary; onPress?: () =>
   const met = item.met;
 
   return (
-    <Tap style={styles.card} onPress={onPress}>
+    <Tap
+      style={styles.card}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.term}, ${item.meaning}${met > 1 ? `, ${met}번 만남` : ''}`}>
       <View style={styles.head}>
         <Quote style={styles.term}>{item.term}</Quote>
         {met > 1 ? <CountBadge label={`${met}번 만남`} /> : null}

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LEVELS } from '@/entities/reader/model/levels';
 import { useReader, useUpdateReader } from '@/entities/reader/api/reader.api';
 import type { Level } from '@/shared/api/types';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, Icon, ScreenHeader, Tap } from '@/shared/ui';
 
 /**
@@ -64,8 +64,9 @@ export default function LevelScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         <ActionButton
-          label={update.isPending ? '저장하는 중…' : '이걸로 할게요'}
-          variant={current ? 'primary' : 'subtle'}
+          label="이걸로 할게요"
+          disabled={!current}
+          loading={update.isPending}
           onPress={async () => {
             if (!current) return;
             await update.mutateAsync({ level: current });
@@ -80,7 +81,7 @@ export default function LevelScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingBottom: 24, gap: 24 },
+  content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 24 },
   headline: { ...type.title3, color: color.text.primary, lineHeight: 33 },
   sub: { ...type.label1, lineHeight: 22, color: color.text.secondary, marginTop: 10 },
   options: { gap: 10 },
@@ -109,5 +110,5 @@ const styles = StyleSheet.create({
     borderColor: color.border.strong,
   },
   markOn: { backgroundColor: color.primary, borderColor: color.primary },
-  footer: { paddingHorizontal: 24, paddingTop: 12 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { toBook } from '@/entities/book/api/book.api';
 import { SpineEdge } from '@/entities/book/ui/spine-edge';
 import type { ApiItemDetail } from '@/shared/api/types';
-import { color, type } from '@/shared/config';
+import { blue, color, type } from '@/shared/config';
 import { daysBetween, gapLabel, savedLabel } from '@/shared/lib/date';
 import { AltPanel, AppText, Chip, Icon, InkPanel, Quote, Tap, emphasis } from '@/shared/ui';
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,102,255,0.16)',
+    backgroundColor: blue(0.24),
   },
   gapText: { flex: 1, ...type.caption1, lineHeight: 17, color: color.text.onInkBody },
 

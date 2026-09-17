@@ -27,17 +27,29 @@ export function useAsk(id?: string) {
 }
 
 /**
+ * 묻는 두 가지 길.
+ *
+ * - `{ bookId, text }` — 방금 옮겨 적은 문장. 서버가 문장을 먼저 만들고 묻는다.
+ * - `{ sentenceId }` — **이미 담아둔 문장**을 나중에 묻는다(ADR-0004). 이쪽으로
+ *   보내야 같은 글이 두 줄이 되지 않는다. 책과 쪽수는 그 문장이 이미 안다.
+ */
+export type AskInput =
+  | { bookId: string; text: string; page?: number }
+  | { sentenceId: string };
+
+/**
  * 문장을 통째로 묻는다. 답을 못 받아도 실패가 아니다 — 문장은 저장되고
  * 질문은 pending으로 남는다. 그래서 오류를 띄우는 대신 상태를 보여준다.
  */
 export function useCreateAsk() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { bookId: string; text: string; page?: number }) =>
-      api<ApiAskView>('/asks', { method: 'POST', body }),
+    mutationFn: (body: AskInput) => api<ApiAskView>('/asks', { method: 'POST', body }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['sentences'] });
+      /** 담기면 밑줄이 생길 수 있어서 항목 목록도 다시 받는다 */
+      client.invalidateQueries({ queryKey: ['items'] });
     },
   });
 }

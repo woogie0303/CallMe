@@ -1,5 +1,10 @@
 import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
+import { color } from '@/shared/config';
+
+/** 색을 안 주면 먹색 — 아이콘은 대개 글 옆에 서고, 그 글의 색이 이것이다 */
+const INK = color.text.primary;
+
 /**
  * 디자인 문서(`icons/*.svg`)에서 그대로 옮긴 아이콘.
  * 새로 그리지 않는다 — 여기 없는 아이콘이 필요하면 디자인에서 먼저 가져온다.
@@ -94,7 +99,7 @@ const FILLED = {
 
 export type FilledIconName = keyof typeof FILLED;
 
-export function Icon({ name, size = 20, color = '#171717' }: IconProps & { name: FilledIconName }) {
+export function Icon({ name, size = 20, color = INK }: IconProps & { name: FilledIconName }) {
   const glyph = FILLED[name];
   const body = <Path d={glyph.d} fill={color} fillRule="evenodd" />;
   return (
@@ -105,7 +110,7 @@ export function Icon({ name, size = 20, color = '#171717' }: IconProps & { name:
 }
 
 /** 선으로 그려진 아이콘은 굵기를 유지해야 해서 따로 둔다. */
-export function CameraIcon({ size = 20, color = '#171717' }: IconProps) {
+export function CameraIcon({ size = 20, color = INK }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -120,7 +125,7 @@ export function CameraIcon({ size = 20, color = '#171717' }: IconProps) {
   );
 }
 
-export function MicIcon({ size = 20, color = '#171717' }: IconProps) {
+export function MicIcon({ size = 20, color = INK }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect

@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   body: {
     ...type.caption1,
     lineHeight: 18,
-    color: color.text.assistive,
+    color: color.text.secondary,
     textAlign: 'center',
   },
 });

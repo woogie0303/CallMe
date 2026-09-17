@@ -21,7 +21,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         const tab = TABS[route.name];
         if (!tab) return null;
         const focused = state.index === index;
-        const tint = focused ? color.text.primary : 'rgba(23,23,25,0.32)';
+        const tint = focused ? color.text.primary : color.text.meta;
 
         return (
           <Tap
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border.hairline,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: color.surface.base,
   },
   tab: { alignItems: 'center', gap: 5, flex: 1 },
   label: { ...type.caption2, fontSize: 10, lineHeight: 12 },

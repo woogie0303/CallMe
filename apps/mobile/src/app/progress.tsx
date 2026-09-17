@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
-import { color, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, ProgressBar, Quote, ScreenHeader } from '@/shared/ui';
 
 /**
@@ -25,6 +25,8 @@ export default function ProgressScreen() {
   const typed = Number(page);
   const total = book?.pages ?? 0;
   const valid = Number.isFinite(typed) && typed > 0 && (total === 0 || typed <= total);
+  /** 적긴 적었는데 이 책에 없는 쪽수 — 빈칸과 달리 이건 이유를 말해줘야 한다 */
+  const tooFar = total > 0 && Number.isFinite(typed) && typed > total;
 
   const save = async () => {
     if (!valid || !bookId) return;
@@ -61,15 +63,19 @@ export default function ProgressScreen() {
           <AppText style={styles.unit}>{total ? `/ ${total} 쪽` : '쪽'}</AppText>
         </View>
 
-        <AppText style={styles.hint}>
-          지난번보다 앞으로 간 만큼이 오늘 읽은 양이 돼요.
+        {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
+        <AppText style={[styles.hint, tooFar ? styles.hintWarn : null]}>
+          {tooFar
+            ? `이 책은 ${total}쪽까지예요. 그 안의 쪽수를 적어주세요.`
+            : '지난번보다 앞으로 간 만큼이 오늘 읽은 양이 돼요.'}
         </AppText>
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <ActionButton
-          label={update.isPending ? '저장하는 중…' : '여기까지 읽었어요'}
-          variant={valid ? 'primary' : 'subtle'}
+          label="여기까지 읽었어요"
+          disabled={!valid}
+          loading={update.isPending}
           onPress={save}
         />
       </View>
@@ -79,7 +85,7 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
-  body: { flex: 1, paddingHorizontal: 24, paddingTop: 12, gap: 24 },
+  body: { flex: 1, paddingHorizontal: gutter, paddingTop: 12, gap: 24 },
   head: { gap: 10 },
   title: { fontSize: 18, lineHeight: 24, fontWeight: '600', color: color.text.primary },
   field: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   unit: { ...type.body1, color: color.text.meta },
-  hint: { ...type.label2, color: color.text.assistive, lineHeight: 21 },
-  footer: { paddingHorizontal: 24, paddingTop: 12 },
+  hint: { ...type.label2, color: color.text.secondary, lineHeight: 21 },
+  hintWarn: { color: color.status.cautionary },
+  footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });
