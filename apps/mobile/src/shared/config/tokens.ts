@@ -3,11 +3,14 @@
  *
  * 바탕이 흰색이 아니라 **종이색**이다. 원서를 읽는 동안 곁에 두는 앱이라
  * 임상적인 순백 위의 테크 블루는 화면을 차갑게 만들었다 — 종이 위의 먹과
- * 잉크블루로 바꾼다. 세리프/산세리프 규칙(책에서 온 영어만 세리프)은 그대로다.
+ * 테라코타로 바꾼다. 세리프/산세리프 규칙(책에서 온 영어만 세리프)은 그대로다.
  *
- * 파랑은 장식이 아니라 **기능색 하나**다. "지금 보는 것"과 "재회"를 뜻하고,
- * 화면당 한 번만 쓴다. 그래서 팔레트를 종이로 옮기면서도 이 역할은 그대로 두고
- * 값만 종이 위에서 4.5:1을 넘도록 깊게 잡았다(#0066FF는 종이에서 4.68로 아슬아슬했다).
+ * 포인트 색은 장식이 아니라 **기능색 하나**다. "지금 보는 것"과 "재회"를 뜻하고,
+ * 화면당 한 번만 쓴다. 파랑에서 테라코타(#B3492A)로 옮긴 이유는 둘이다 — 종이
+ * 위에서 붙는 색이어야 했고(파랑은 테크 제품의 색이라 차가웠다), 이미 쓰는 상태색
+ * (positive #0E8A3E)과 색상(hue)이 겹치지 않아야 했다. 초록 계열 후보는 hue가
+ * positive와 9°밖에 안 떨어져 있어 재회 배지가 '외웠어요' 칩과 헷갈릴 수 있었다.
+ * 값은 종이 위에서 4.5:1을 넘도록 잡았다.
  *
  * 알파 헬퍼는 원색(primitive)에서만 파생된다.
  *
@@ -22,20 +25,20 @@ export const onInk = (a: number) => `rgba(255,255,255,${a})`;
 export const slate = (a: number) => `rgba(28,25,21,${a})`;
 /** 중립 채움 — 종이에 맞춘 따뜻한 회색 */
 export const neutral = (a: number) => `rgba(120,113,108,${a})`;
-/** 잉크블루 */
-export const blue = (a: number) => `rgba(0,82,204,${a})`;
+/** 포인트 색 — 테라코타 */
+export const accent = (a: number) => `rgba(179,73,42,${a})`;
 /** 잉크를 덮개로 쓸 때 — 뷰파인더 위, 시트 뒤 */
 export const ink = (a: number) => `rgba(22,19,15,${a})`;
 
 export const color = {
   /* --- brand ---------------------------------------------------------- */
-  primary: '#0052CC',
-  primaryStrong: '#00419E',
-  primaryBg: blue(0.06),
-  primaryBgSoft: blue(0.05),
-  primaryTint: blue(0.1),
-  primaryLine: blue(0.2),
-  accent: '#5B3FD6',
+  primary: '#B3492A',
+  /** 눌린 상태처럼 더 짙게 쓸 자리 — 아직 화면에서 쓰지 않는다 */
+  primaryStrong: '#90381D',
+  primaryBg: accent(0.06),
+  primaryBgSoft: accent(0.05),
+  primaryTint: accent(0.1),
+  primaryLine: accent(0.2),
 
   /* --- text -----------------------------------------------------------
    * 종이 위 대비비를 재서 잡은 값이다. 정보를 지닌 글은 전부 4.5:1을 넘는다.
@@ -138,14 +141,14 @@ export const shadow = {
     elevation: 6,
   },
   primary: {
-    shadowColor: '#0052CC',
+    shadowColor: '#B3492A',
     shadowOpacity: 0.22,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
   },
   fab: {
-    shadowColor: '#0052CC',
+    shadowColor: '#B3492A',
     shadowOpacity: 0.28,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 10 },

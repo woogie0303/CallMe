@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { blue, color, ink, type } from '@/shared/config';
+import { accent, color, ink, type } from '@/shared/config';
 import type { SentencePlacement } from '@/shared/ocr/align';
 import type { OcrLine } from '@/shared/ocr/text-extractor';
 import { AppText, Quote, Tap } from '@/shared/ui';
@@ -142,10 +142,10 @@ const styles = StyleSheet.create({
   band: {
     position: 'absolute',
     borderRadius: 3,
-    backgroundColor: blue(0.18),
+    backgroundColor: accent(0.18),
   },
   bandOn: {
-    backgroundColor: blue(0.42),
+    backgroundColor: accent(0.42),
     borderWidth: 1.5,
     borderColor: color.primary,
   },
@@ -161,6 +161,6 @@ const styles = StyleSheet.create({
   },
   flow: { fontSize: 16, lineHeight: 28 },
   plainText: { color: color.text.body },
-  pickedText: { color: color.primary, backgroundColor: blue(0.12), fontWeight: '600' },
+  pickedText: { color: color.primary, backgroundColor: accent(0.12), fontWeight: '600' },
   hint: { ...type.caption2, color: color.text.meta },
 });

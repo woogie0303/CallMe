@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import { blue, color, slate } from '@/shared/config';
+import { accent, color, slate } from '@/shared/config';
 
 /**
  * 찍어둔 책 페이지. 글자를 읽히려는 게 아니라 "종이 한 장을 담아뒀다"는
- * 사실만 보여준다 — 파란 줄 하나가 그중 무엇을 집었는지 가리킨다.
+ * 사실만 보여준다 — 포인트 색 줄 하나가 그중 무엇을 집었는지 가리킨다.
  */
 export function PageThumb({
   width,
@@ -38,7 +38,7 @@ export function PageThumb({
             height: lineHeight,
             borderRadius: 2,
             backgroundColor:
-              i === markedLine ? blue(0.5) : i === lines.length - 1 ? slate(0.12) : slate(0.18),
+              i === markedLine ? accent(0.5) : i === lines.length - 1 ? slate(0.12) : slate(0.18),
           }}
         />
       ))}

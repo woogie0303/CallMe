@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { ReadingWeek } from '@/entities/reading/model/types';
-import { blue, color, type } from '@/shared/config';
+import { accent, color, type } from '@/shared/config';
 import { AltPanel, AppText, emphasis } from '@/shared/ui';
 
 /**
@@ -42,8 +42,8 @@ export function ReadingWeekChart({ week }: { week: ReadingWeek }) {
 }
 
 const styles = StyleSheet.create({
-  /** 회색 대신 옅은 파랑 — 홈에서 이 판만 색을 갖는다 */
-  panel: { padding: 20, gap: 12, borderRadius: 24, backgroundColor: blue(0.05) },
+  /** 회색 대신 옅은 포인트 색 — 홈에서 이 판만 색을 갖는다 */
+  panel: { padding: 20, gap: 12, borderRadius: 24, backgroundColor: accent(0.05) },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: { ...type.caption1, color: color.text.meta },
   month: { ...type.caption1, color: color.text.meta },
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 72,
     borderRadius: 999,
-    backgroundColor: blue(0.12),
+    backgroundColor: accent(0.12),
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },

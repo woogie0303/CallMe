@@ -13,7 +13,7 @@ SplashScreen.preventAutoHideAsync();
 
 /**
  * Reread는 흰 종이 위에서만 산다 — 화면은 라이트 하나뿐이다.
- * (디자인의 여섯 화면 모두 흰 바탕을 전제로 잉크·파랑의 대비를 쓴다.)
+ * (디자인의 여섯 화면 모두 종이 바탕 위 잉크·포인트 색의 대비를 쓴다.)
  */
 export default function RootLayout() {
   return (
