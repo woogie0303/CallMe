@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
 import type { ApiBook } from '@/shared/api/types';
+import { sampleWeek } from '../lib/sample';
 import type { ReadingWeek } from '../model/types';
 
 type ApiWeek = {
@@ -26,11 +27,20 @@ export function useReadingWeek() {
     queryFn: async (): Promise<ReadingWeek> => {
       const week = await api<ApiWeek>('/reading/week');
       const most = Math.max(1, ...week.days.map((day) => day.pages));
+      const total = week.days.reduce((sum, day) => sum + day.pages, 0);
+      const monthLabel = `${new Date().getMonth() + 1}월`;
       const today = new Date().toDateString();
 
+      /**
+       * 기록이 하나도 없으면 개발 빌드에서만 가짜 이레를 그린다 — 막대가 전부
+       * 비어 있으면 차트 디자인을 볼 수가 없어서다. 배포 빌드에는 없다.
+       */
+      if (__DEV__ && total === 0) return sampleWeek(monthLabel, '오늘');
+
       return {
-        monthLabel: `${new Date().getMonth() + 1}월`,
+        monthLabel,
         days: week.daysRead,
+        pages: total,
         streak: week.streak,
         bars: week.days.map((day) => {
           const date = new Date(day.date);
@@ -38,6 +48,7 @@ export function useReadingWeek() {
           return {
             label: isToday ? '오늘' : WEEKDAYS[date.getDay()],
             amount: day.pages / most,
+            pages: day.pages,
             today: isToday,
           };
         }),
