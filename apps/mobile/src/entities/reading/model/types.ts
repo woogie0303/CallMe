@@ -21,9 +21,11 @@ export type ReadingProgress = {
 
 export type ReadingDay = {
   label: string;
-  /** 그날 읽은 양, 0~1. 0이면 안 읽은 날 */
+  /** 그날 읽은 양, 0~1. 그 주에 가장 많이 읽은 날이 1이다. */
   amount: number;
-  /** 오늘 — 아직 지나지 않은 날이라 채우지 않고 테두리만 그린다 */
+  /** 그날 실제로 읽은 쪽수 — 막대 높이는 비율이지만 합계는 이쪽에서 센다 */
+  pages: number;
+  /** 오늘 — 아직 지나지 않은 날이라 라벨로만 표시한다 */
   today?: boolean;
 };
 
@@ -31,6 +33,8 @@ export type ReadingWeek = {
   monthLabel: string;
   /** 이번 주에 읽은 날 수 */
   days: number;
+  /** 이레치 합계 쪽수 — 막대는 비율만 말하므로 양은 글로 적는다 */
+  pages: number;
   /** 연속 일수 — 지난주까지 이어진다 */
   streak: number;
   bars: ReadingDay[];
