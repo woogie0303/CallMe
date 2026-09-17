@@ -61,7 +61,16 @@ function Gate() {
       */}
       <Stack.Screen
         name="book-pick"
-        options={{ presentation: 'transparentModal', animation: 'fade' }}
+        options={{
+          presentation: 'transparentModal',
+          animation: 'fade',
+          /**
+           * 위의 screenOptions가 모든 화면에 불투명 종이색을 칠한다. 여기서
+           * 덮어쓰지 않으면 이 화면 뒤는 항상 그 불투명한 색이라, 시트 뒤로
+           * 드러나야 할 이전 화면이 하나도 비치지 않는다.
+           */
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
       />
       <Stack.Screen name="book-add" />
       <Stack.Screen name="book-search" />

@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { color, gutter, ink, type } from '@/shared/config';
-import { AppText, DisclosureRow, Tap } from '@/shared/ui';
+import { color, gutter, ink } from '@/shared/config';
+import { DisclosureRow, Tap } from '@/shared/ui';
 
 /**
  * 책을 서가에 들이는 첫걸음 — 찾아서 넣을지, 손으로 적어 넣을지.
@@ -45,7 +45,6 @@ export default function BookPickScreen() {
         exiting={SlideOutDown.duration(160)}
         style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.grip} />
-        <AppText style={styles.title}>책 추가</AppText>
 
         <View style={styles.options}>
           <DisclosureRow
@@ -68,13 +67,13 @@ export default function BookPickScreen() {
 
 const styles = StyleSheet.create({
   /** 시트를 바닥에 붙이고, 남는 곳은 전부 '바깥'이 된다 */
-  root: { flex: 1, justifyContent: 'flex-end', backgroundColor: ink(0.32) },
+  root: { flex: 1, justifyContent: 'flex-end', backgroundColor: ink(0.4) },
   /** 높이를 주지 않는다 — 안에 든 것만큼만 쓴다 */
   sheet: {
     backgroundColor: color.surface.base,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 10,
+    paddingTop: 14,
     gap: 12,
   },
   /** 닫기 표시 대신 여기가 '내릴 수 있다'고 말한다 */
@@ -85,6 +84,5 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: color.fill.bold,
   },
-  title: { ...type.label2, fontWeight: '600', color: color.text.meta, textAlign: 'center' },
   options: { paddingHorizontal: gutter, gap: 10 },
 });
