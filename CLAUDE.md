@@ -21,9 +21,11 @@ pnpm 워크스페이스 + Turborepo.
 `Reread 앱.dc.html`(모바일 6개 화면)에서 왔다. 다음 세 가지는 화면을 건드리기 전에
 알고 있어야 한다.
 
-- **색과 타이포는 새로 만들지 않는다.** Wanted Design System 토큰을
-  `apps/web/src/app/globals.css`에 그대로 옮겨뒀다. 인라인 `style` 대신
-  `bg-(--surface-ink)` 같은 CSS 변수 유틸리티를 쓴다. 타입 램프는 `.wds-*` 클래스다.
+- **색과 타이포는 새로 만들지 않는다.** 웹은 `apps/web/src/app/globals.css`,
+  모바일은 `apps/mobile/src/shared/config`가 각각 원본이다 — 둘을 잇는 코드는
+  없으니 한쪽을 고쳐도 다른 쪽이 따라오지 않는다. 웹에서는 인라인 `style` 대신
+  `bg-(--surface-ink)` 같은 CSS 변수 유틸리티를 쓰고, 타입 램프는 `.wds-*`다.
+  모바일은 종이색 바탕으로 먼저 옮겨갔다(ADR-0004 재설계).
 - **세리프는 책에서 온 영어에만 쓴다.** 원문 문장·표현·인용은 `.quote`(Iowan Old
   Style), 앱이 하는 말은 전부 Pretendard. 이 구분이 무너지면 화면이 평범해진다.
 - **웹의 몫은 대조(對照)다.** 모바일이 위아래로 쌓을 수밖에 없던 두 가지를 —

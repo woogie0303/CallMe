@@ -30,10 +30,10 @@ in the drawer when the reader picks it.
 _Avoid_: Suggestion / 제안, Extraction, Highlight
 
 **Sentence (문장)**:
-One line copied verbatim from the book. It is a **record separate from** a lexical item,
-and there are two reasons to save one, which decide where it lives — it contains a lexical
-item the reader did not know, and so is reachable through that item in the *Drawer*; or the
-reader simply liked it, and so belongs to the *Book* alone, with no lexical item attached.
+One line copied verbatim from the book, and the unit the reader saves and returns to. It is
+a **record separate from** a lexical item: a sentence may carry items the reader did not know,
+or none at all because they simply liked it. Both live in the *Drawer* all the same — the
+difference is only whether anything is underlined inside it.
 _Avoid_: Quote / 인용, 구절, 예문
 
 **Pending Ask (대기 중인 질문)**:
@@ -56,15 +56,17 @@ sentence on March 20." This is the one thing Bookmori (북모리) does not have.
 _Avoid_: Duplicate / 중복, 재저장
 
 **Book (책)**:
-The source of a sentence, and the reading record itself — progress, and the sentences the
-reader liked but saved no lexical item from. A lexical item does not belong to a book —
+The source of a sentence, and the reading record itself — progress, and the sentences that
+came out of this book gathered in one place. A lexical item does not belong to a book —
 traveling across several books is what a lexical item does, and that movement is exactly
 what a re-encounter is.
 _Avoid_: Work / 작품, 도서
 
 **Drawer (서랍)**:
-Where saved lexical items pile up, one card per item, never per sentence. Opening an item
-shows every sentence it was met in, which is what makes a re-encounter visible after the
-moment it happened. Sentences saved only because the reader liked them are not here — they
-live on their *Book*.
+Where saved sentences pile up, one card per sentence, newest first, across every book. A
+sentence shows in English alone — its Korean opens below the line only when the reader asks
+for it, never beside it. A lexical item saved out of a sentence is an underline within it,
+and opening that underline shows every sentence the item was met in, which is what makes a
+re-encounter visible after the moment it happened. Sentences saved only because the reader
+liked them belong here too, and can be asked about later (ADR-0004).
 _Avoid_: Wordbook / 단어장, Notes / 노트, Collection / 컬렉션
