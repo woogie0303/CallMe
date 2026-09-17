@@ -11,6 +11,7 @@ import type {
   SaveItemResult,
 } from '@/shared/api/types';
 import { savedLabel } from '@/shared/lib/date';
+import { sampleItems } from '../lib/sample';
 
 /** 서랍의 한 줄에 필요한 것 전부 — 목록 한 번으로 온다 */
 export type ItemSummary = {
@@ -26,7 +27,17 @@ export type ItemSummary = {
    * 문장→항목 방향 API가 없어서, 목록을 받아 앱에서 뒤집어 쓴다.
    */
   encounters: { sentenceId: string; surface?: string }[];
-  latest?: { text: string; page?: number; bookTitle?: string; savedLabel: string };
+  /**
+   * 가장 최근에 만난 문장. `sentenceId`가 있어야 `encounters`에서 그 문장에
+   * 쳐진 밑줄(surface)을 찾을 수 있다 — 문장 안에 표현을 그리려면 필요하다.
+   */
+  latest?: {
+    sentenceId: string;
+    text: string;
+    page?: number;
+    bookTitle?: string;
+    savedLabel: string;
+  };
   /** 처음과 마지막 사이의 날수 — '2개월 만에'로 옮기는 일은 화면이 한다 */
   gapDays?: number;
 };
@@ -50,6 +61,7 @@ function toSummary(row: ApiItemSummary): ItemSummary {
     books: row.books.map(toBook),
     latest: row.latest
       ? {
+          sentenceId: row.latest.sentence._id,
           text: row.latest.sentence.text,
           page: row.latest.sentence.page,
           bookTitle: row.latest.book?.title,
@@ -74,8 +86,12 @@ export function useItems(params?: {
 
   return useQuery({
     queryKey: [...itemsKey, query],
-    queryFn: async () =>
-      (await api<ApiItemSummary[]>(`/items${query ? `?${query}` : ''}`)).map(toSummary),
+    queryFn: async () => {
+      const rows = (await api<ApiItemSummary[]>(`/items${query ? `?${query}` : ''}`)).map(toSummary);
+      /** 담아둔 것이 없으면 개발 빌드에서만 가짜 열 줄을 그린다. 배포에는 안 돈다. */
+      if (__DEV__ && !rows.length && !query) return sampleItems();
+      return rows;
+    },
   });
 }
 

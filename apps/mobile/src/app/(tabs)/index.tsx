@@ -11,7 +11,7 @@ import { ActionButton, EmptyState } from '@/shared/ui';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ReadingShelf } from '@/widgets/reading-shelf/ui/reading-shelf';
 import { ReadingWeekChart } from '@/widgets/reading-week/ui/reading-week';
-import { TodayItem } from '@/widgets/today-item/ui/today-item';
+import { TodayItem, TodayItemEmpty } from '@/widgets/today-item/ui/today-item';
 
 /**
  * 01 홈 — 읽고 있는 책 · 이번 주 · 오늘의 표현.
@@ -48,8 +48,8 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={[styles.screen, { paddingTop: insets.top + 6 }]}
-      contentContainerStyle={styles.content}
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + gutter }]}
       showsVerticalScrollIndicator={false}>
       {isPending ? (
         <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
@@ -79,12 +79,15 @@ export default function HomeScreen() {
             onAdd={() => router.push('/book-pick')}
           />
           {week ? <ReadingWeekChart week={week} /> : null}
+          {/* 담아둔 것이 없어도 자리는 남긴다 — 비면 화면이 덜 만들어진 것처럼 보인다 */}
           {today ? (
             <TodayItem
               item={today}
               onPress={() => router.push({ pathname: '/item/[id]', params: { id: today.id } })}
             />
-          ) : null}
+          ) : (
+            <TodayItemEmpty />
+          )}
         </>
       ) : (
         /* 책이 한 권도 없으면 선반만 덩그러니 두지 않는다 — 여기서 할 일은 하나다 */
@@ -106,11 +109,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: color.surface.base,
   },
-  /** 여백은 여기서 한 번만 준다. 판들은 이 선 위에 그대로 선다. */
+  /**
+   * 여백은 여기서 한 번만 준다. 판들은 이 선 위에 그대로 선다.
+   *
+   * 네 방향과 판 사이 간격이 모두 `gutter` 하나다 — 위는 안전영역 뒤에 그만큼,
+   * 아래는 탭 바 앞에 그만큼. 한동안 위는 6, 아래는 24, 사이는 22였는데 셋 다
+   * 다른 값이라 화면이 위로 쏠려 보였다.
+   *
+   * 여백은 `contentContainerStyle`에 준다. ScrollView 바깥 `style`에 주면
+   * 스크롤 영역 자체가 줄어서, 내용이 그 위로 흘러 올라가지 못한다.
+   */
   content: {
     paddingHorizontal: gutter,
-    paddingBottom: 24,
-    gap: 22,
+    paddingBottom: gutter,
+    gap: gutter,
   },
   spinner: { paddingVertical: 60 },
   blank: { paddingTop: 24, gap: 8 },
