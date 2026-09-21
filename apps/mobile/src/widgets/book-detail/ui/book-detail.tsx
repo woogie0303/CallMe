@@ -8,6 +8,7 @@ import { useRetells } from '@/entities/retell/api/retell.api';
 import { useLikedSentences } from '@/entities/sentence/api/sentence.api';
 import { EmptyState } from '@/shared/ui';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
+import { BookPrimer } from '@/widgets/book-primer/ui/book-primer';
 import { ItemShelf } from '@/widgets/item-shelf/ui/item-shelf';
 import { SentenceShelf } from '@/widgets/sentence-shelf/ui/sentence-shelf';
 import { BookRetell } from './book-retell';
@@ -43,7 +44,7 @@ export function BookDetail({
   onAsk?: () => void;
   onCapture?: () => void;
 }) {
-  const [tab, setTab] = useState<BookTab>('liked');
+  const [tab, setTab] = useState<BookTab>('items');
   const { data: items = [] } = useItems({ bookId: book.id });
   const { data: sentences = [] } = useLikedSentences(book.id);
   const { data: retells = [] } = useRetells(book.id);
@@ -60,19 +61,37 @@ export function BookDetail({
     <View style={styles.wrap}>
       <BookHero book={book} progress={progress} inset={0} onAsk={onAsk} onCapture={onCapture} />
 
-      {items.length ? (
-        <ItemShelf items={items} onPressItem={onOpenItem} />
-      ) : (
-        <EmptyState
-          mark="drawer"
-          compact
-          title="아직 이 책에서 담은 표현이 없어요"
+      {/*
+        머리 바로 아래는 '읽기 전에'의 자리다. 한동안 '담은 표현'이 여기 있었는데,
+        비어 있을 때 빈 상태 문구가 화면에서 제일 좋은 자리를 차지했다 — 그리고
+        담은 표현은 마음에 든 문장·리텔링과 성격이 같아서 셋이 나란히 서는 게 맞다.
+      */}
+      {book.primer ? (
+        <BookPrimer
+          primer={book.primer}
+          started={(progress?.currentPage ?? book.currentPage ?? 0) > 0}
         />
-      )}
+      ) : null}
 
       <View style={styles.tabs}>
-        <BookTabs value={tab} onChange={setTab} likedCount={liked.length} />
-        {tab === 'liked' ? (
+        <BookTabs
+          value={tab}
+          onChange={setTab}
+          counts={{ items: items.length, liked: liked.length }}
+        />
+
+        {tab === 'items' ? (
+          items.length ? (
+            <ItemShelf items={items} onPressItem={onOpenItem} title={null} />
+          ) : (
+            <EmptyState
+              mark="drawer"
+              compact
+              title="아직 이 책에서 담은 표현이 없어요"
+              body="막힌 문장을 물어보고 고른 표현이 여기 모여요."
+            />
+          )
+        ) : tab === 'liked' ? (
           liked.length ? (
             <SentenceShelf sentences={liked} title={null} />
           ) : (

@@ -17,13 +17,14 @@ export function ItemShelf({
   bleed = 20,
 }: {
   items: ItemSummary[];
-  title?: string;
+  /** null이면 제목을 그리지 않는다 — 탭 라벨이 이미 이름을 대고 있을 때 */
+  title?: string | null;
   onPressItem?: (id: string) => void;
   bleed?: number;
 }) {
   return (
     <View style={styles.wrap}>
-      <SectionHeader title={title} aside={`${items.length}개`} />
+      {title !== null ? <SectionHeader title={title} aside={`${items.length}개`} /> : null}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
