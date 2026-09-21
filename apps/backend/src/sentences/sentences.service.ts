@@ -11,6 +11,12 @@ import type {
   UpdateSentenceDto,
 } from './dto/sentence.dto';
 
+/**
+ * 한 번에 돌려주는 줄 수의 기본값. 부르는 쪽이 아무것도 안 보내도 전 기록이
+ * 나가지 않게 막는 자리다 — 상한(200)은 DTO가 건다.
+ */
+const DEFAULT_LIMIT = 50;
+
 @Injectable()
 export class SentencesService {
   constructor(
@@ -51,7 +57,11 @@ export class SentencesService {
       filter._id = { $nin: [...claimed, ...asked] };
     }
 
-    return this.sentences.find(filter).sort({ createdAt: -1 }).exec();
+    return this.sentences
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(query.limit ?? DEFAULT_LIMIT)
+      .exec();
   }
 
   async find(readerId: string, id: string): Promise<SentenceDocument> {

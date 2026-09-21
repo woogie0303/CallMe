@@ -4,8 +4,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSentenceFeed } from '@/entities/sentence/api/feed.api';
 import type { SentenceCardData } from '@/entities/sentence/model/types';
 import { SentenceCard } from '@/entities/sentence/ui/sentence-card';
-import { color } from '@/shared/config';
-import { EmptyState } from '@/shared/ui';
+import { color, type } from '@/shared/config';
+import { AppText, EmptyState, Tap } from '@/shared/ui';
 import { DrawerFilterRow, type DrawerFilter } from './drawer-filter';
 
 const MATCH: Record<DrawerFilter, (row: SentenceCardData) => boolean> = {
@@ -27,14 +27,16 @@ export function DrawerList({
   query,
   onOpenItem,
   onAsk,
+  onDelete,
 }: {
   /** 검색어 — 문장이나 번역에 들어 있으면 남긴다. 갈래와 함께 걸린다. */
   query?: string;
   onOpenItem?: (itemId: string) => void;
   onAsk?: (sentenceId: string) => void;
+  onDelete?: (sentenceId: string) => void;
 }) {
   const [filter, setFilter] = useState<DrawerFilter | undefined>();
-  const { feed, isPending, error } = useSentenceFeed();
+  const { feed, isPending, error, hasMore, loadingMore, loadMore } = useSentenceFeed();
 
   const byFilter = filter ? feed.filter(MATCH[filter]) : feed;
   const needle = query?.trim().toLowerCase();
@@ -59,8 +61,36 @@ export function DrawerList({
       ) : rows.length ? (
         <View style={styles.list}>
           {rows.map((row) => (
-            <SentenceCard key={row.id} data={row} onOpenItem={onOpenItem} onAsk={onAsk} />
+            <SentenceCard
+              key={row.id}
+              data={row}
+              onOpenItem={onOpenItem}
+              onAsk={onAsk}
+              onDelete={onDelete}
+            />
           ))}
+
+          {/*
+            서버가 한 번에 내주는 만큼만 받아온다 — 예전에는 전 기록이 한
+            응답에 실려 왔고, 오래 쓴 독자에서 가장 먼저 깨질 자리였다.
+            거르는 중에는 숨긴다: 손에 있는 것만 걸러 보여주는 것이라
+            '더 보기'가 갈래에 맞는 줄을 더 가져온다는 뜻이 되지 않는다.
+          */}
+          {hasMore && !filter && !needle ? (
+            <Tap
+              style={styles.more}
+              onPress={loadMore}
+              disabled={loadingMore}
+              accessibilityRole="button"
+              accessibilityLabel="문장 더 보기"
+              accessibilityState={{ busy: loadingMore }}>
+              {loadingMore ? (
+                <ActivityIndicator size="small" color={color.text.meta} />
+              ) : (
+                <AppText style={styles.moreLabel}>더 보기</AppText>
+              )}
+            </Tap>
+          ) : null}
         </View>
       ) : (
         <EmptyState
@@ -87,4 +117,13 @@ const styles = StyleSheet.create({
   wrap: { gap: 14 },
   list: { gap: 10 },
   spinner: { paddingTop: 40 },
+  more: {
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.fill.default,
+    marginTop: 2,
+  },
+  moreLabel: { ...type.label2, fontWeight: '600', color: color.text.secondary },
 });
