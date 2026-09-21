@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
 import type { ApiBook } from '@/shared/api/types';
+import { samplePrimer } from '../lib/sample';
 import { spineFor } from '../lib/spine';
 import type { Book } from '../model/types';
 
@@ -17,8 +18,14 @@ export function toBook(api: ApiBook): Book {
     title: api.title,
     author: api.author,
     pages: api.pages ?? 0,
+    currentPage: api.currentPage,
     cover: api.cover,
     spine: [from, to] as const,
+    /**
+     * 서버가 아직 안 준다 — 모델이 써야 하는 글인데 키가 없다. 화면 구조를
+     * 보려고 개발 빌드에서만 가짜를 끼운다. 배포에서는 그냥 없는 값이다.
+     */
+    primer: __DEV__ ? samplePrimer() : undefined,
   };
 }
 
