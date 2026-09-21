@@ -8,6 +8,12 @@ import { AltPanel, AppText, emphasis } from '@/shared/ui';
 const TRACK = 60;
 /** 조금이라도 읽은 날은 이만큼은 보인다 — 1쪽이 0px이면 안 읽은 날과 같아진다 */
 const MIN_BAR = 6;
+/**
+ * 막대 굵기. 칸은 이레를 나눠 가지므로 기기마다 40pt 안팎인데, 그 안에서
+ * 이만큼을 차지한다 — 얇으면 판만 넓어 보이고, 칸을 꽉 채우면 사이가 막혀
+ * 이레라는 리듬이 안 읽힌다.
+ */
+const BAR = 16;
 
 /**
  * 이번 주 읽기.
@@ -91,9 +97,9 @@ const styles = StyleSheet.create({
   column: { flex: 1, alignItems: 'center', gap: 10 },
   /** 막대는 바닥에서 차오른다 */
   track: { height: TRACK, justifyContent: 'flex-end', alignItems: 'center' },
-  bar: { width: 10, borderRadius: 5, backgroundColor: color.primary },
+  bar: { width: BAR, borderRadius: BAR / 2, backgroundColor: color.primary },
   /** 안 읽은 날 — 빈 통이 아니라 바닥의 점 하나 */
-  none: { width: 10, height: 3, borderRadius: 2, backgroundColor: color.fill.bold },
+  none: { width: BAR, height: 3, borderRadius: 2, backgroundColor: color.fill.bold },
   day: { ...type.caption2, color: color.text.meta },
   dayToday: { fontWeight: '700', color: color.primary },
 });
