@@ -4,7 +4,10 @@ import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCreateAsk } from '@/entities/ask/api/ask.api';
+import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useSentenceFeed } from '@/entities/sentence/api/feed.api';
+import { useDeleteSentence } from '@/entities/sentence/api/sentence.api';
+import { deleteImpact, deleteMessage } from '@/entities/sentence/lib/delete-impact';
 import { color, gutter, type } from '@/shared/config';
 import { AppText, Icon, Tap, emphasis } from '@/shared/ui';
 import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
@@ -21,6 +24,9 @@ export default function DrawerScreen() {
   const router = useRouter();
   const { feed } = useSentenceFeed();
   const ask = useCreateAsk();
+  const remove = useDeleteSentence();
+  /** 문장→항목 방향 API가 없어서, 무엇이 함께 사라지는지는 항목 목록을 뒤집어 센다 */
+  const { data: items = [] } = useItems();
   const unasked = feed.filter((s) => !s.asked).length;
   const again = feed.filter((s) => s.marks.some((m) => (m.met ?? 0) > 1)).length;
   /** 답을 기다리는 문장 — 할 일이라 문장이 사는 곳에서 말을 건다 */
@@ -41,6 +47,30 @@ export default function DrawerScreen() {
     } catch (error) {
       Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
     }
+  };
+
+  /**
+   * 지우기는 문장만 지우지 않는다 — 그 문장이 마지막 만남이던 표현은 서랍에서
+   * 함께 사라진다. 묻기 전에 무엇이 사라지는지 세어서 이름까지 말한다.
+   */
+  const confirmDelete = (sentenceId: string) => {
+    if (remove.isPending) return;
+    const impact = deleteImpact(sentenceId, items);
+
+    Alert.alert('이 문장을 지울까요?', deleteMessage(impact), [
+      { text: '그대로 둘게요', style: 'cancel' },
+      {
+        text: '지우기',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await remove.mutateAsync(sentenceId);
+          } catch (error) {
+            Alert.alert('지우지 못했어요', error instanceof Error ? error.message : '');
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -102,6 +132,7 @@ export default function DrawerScreen() {
           query={query}
           onOpenItem={(id) => router.push({ pathname: '/item/[id]', params: { id } })}
           onAsk={askLater}
+          onDelete={confirmDelete}
         />
       </ScrollView>
     </View>

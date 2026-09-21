@@ -16,6 +16,24 @@ export function useLikedSentences(bookId?: string) {
 }
 
 /**
+ * 문장 하나를 지운다. **문장만 지워지지 않는다** — 서버가 그 문장을 가리키던
+ * 만남을 모든 항목에서 빼고, 만남이 하나도 안 남은 항목은 통째로 지운다.
+ * 무엇이 함께 사라지는지는 `lib/delete-impact.ts`가 세고, 묻는 일은 화면이 한다.
+ */
+export function useDeleteSentence() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: true }>(`/sentences/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['sentences'] });
+      /** 항목이 함께 사라졌을 수 있다 — 서랍의 밑줄도 다시 받는다 */
+      client.invalidateQueries({ queryKey: ['items'] });
+      client.invalidateQueries({ queryKey: ['asks'] });
+    },
+  });
+}
+
+/**
  * 뜻을 묻지 않고 문장만 담는다 — 몰라서가 아니라 그냥 좋아서 담아둔 줄.
  *
  * 어휘 항목이 딸리지 않으므로 서랍에는 걸릴 데가 없고 그 책에 남는다(Q25).

@@ -23,12 +23,15 @@ export function SentenceCard({
   data,
   onOpenItem,
   onAsk,
+  onDelete,
 }: {
   data: SentenceCardData;
   /** 밑줄에서 항목 상세로 — 재회가 보이는 자리 */
   onOpenItem?: (itemId: string) => void;
   /** 아직 묻지 않은 문장을 지금 묻는다 */
   onAsk?: (sentenceId: string) => void;
+  /** 지우기. 무엇이 함께 사라지는지 묻는 일은 부르는 쪽이 한다. */
+  onDelete?: (sentenceId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [mark, setMark] = useState<SentenceMark | null>(null);
@@ -120,6 +123,20 @@ export function SentenceCard({
           ) : openable ? (
             <AppText style={styles.reveal}>{open ? '뜻 닫기' : '뜻 보기'}</AppText>
           ) : null}
+
+          {/*
+            지우기는 조용히 둔다 — 자주 할 일이 아닌데 목록마다 붉게 서 있으면
+            누르라는 말처럼 보인다. 위험하다는 말은 누른 뒤 확인 창이 한다.
+          */}
+          {onDelete ? (
+            <Tap
+              hitSlop={10}
+              onPress={() => onDelete(data.id)}
+              accessibilityRole="button"
+              accessibilityLabel="이 문장 지우기">
+              <AppText style={styles.remove}>지우기</AppText>
+            </Tap>
+          ) : null}
         </View>
       </View>
     </View>
@@ -171,6 +188,7 @@ const styles = StyleSheet.create({
   foot: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   source: { flex: 1, ...type.caption2, color: color.text.meta },
   reveal: { ...type.caption2, fontWeight: '600', color: color.text.meta },
+  remove: { ...type.caption2, color: color.text.meta },
   ask: {
     paddingHorizontal: 10,
     paddingVertical: 5,
