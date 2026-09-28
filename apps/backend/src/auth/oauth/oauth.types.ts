@@ -37,7 +37,13 @@ export type ProviderConfig = {
  * 그래서 가능한 제공자에서는 `idToken`(서명된 JWT, `aud`에 클라이언트가 적혀
  * 있다)을 받는다. `accessToken`만 주는 제공자는 각자 따로 대조한다.
  */
-export type TokenExchange = { idToken: string } | { accessToken: string };
+export type TokenExchange = ({ idToken: string } | { accessToken: string }) & {
+  /**
+   * 앱이 따로 알고 있는 이름. Apple은 이름을 토큰에 넣지 않고 **처음 로그인할
+   * 때 앱에만** 한 번 알려준다 — 그걸 받아 두는 자리다.
+   */
+  nickname?: string;
+};
 
 export type OAuthProvider = {
   readonly name: ProviderName;

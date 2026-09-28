@@ -37,9 +37,9 @@ export class AuthService {
     const impl = PROVIDERS[provider];
 
     const profile = dto.idToken
-      ? await impl.verify({ idToken: dto.idToken }, config)
+      ? await impl.verify({ idToken: dto.idToken, nickname: dto.nickname }, config)
       : dto.accessToken
-        ? await impl.verify({ accessToken: dto.accessToken }, config)
+        ? await impl.verify({ accessToken: dto.accessToken, nickname: dto.nickname }, config)
         : await impl.exchange(
             { code: dto.code!, redirectUri: dto.redirectUri!, codeVerifier: dto.codeVerifier, state: dto.state },
             config,

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches, MinLength, ValidateIf } from 'class-validator';
+import { IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
 
 /**
  * 들어오는 길이 둘이다.
@@ -23,6 +23,15 @@ export class ExchangeCodeDto {
   @IsString()
   @MinLength(1)
   accessToken?: string;
+
+  /**
+   * 앱이 따로 알고 있는 이름 — Apple만 쓴다. Apple은 이름을 토큰에 넣지 않고
+   * 처음 로그인할 때 앱에만 한 번 알려준다.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40, { message: '이름은 40자까지만 받아요.' })
+  nickname?: string;
 
   @ValidateIf((dto: ExchangeCodeDto) => !dto.idToken && !dto.accessToken)
   @IsString()

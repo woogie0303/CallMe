@@ -5,7 +5,7 @@ import { HydratedDocument } from 'mongoose';
 export const LEVELS = ['입문', '중급', '고급'] as const;
 export type Level = (typeof LEVELS)[number];
 
-export const PROVIDERS = ['kakao', 'naver', 'google'] as const;
+export const PROVIDERS = ['kakao', 'naver', 'google', 'apple'] as const;
 export type ProviderName = (typeof PROVIDERS)[number];
 
 /**
