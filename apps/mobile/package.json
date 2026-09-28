@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.12",
+    "@react-native-google-signin/google-signin": "^16.1.5",
+    "@react-native-kakao/core": "^2.4.8",
+    "@react-native-kakao/user": "^2.4.8",
+    "@react-native-seoul/naver-login": "^5.0.1",
     "@tanstack/react-query": "^5.102.8",
     "expo": "~57.0.25",
     "expo-auth-session": "^57.0.11",

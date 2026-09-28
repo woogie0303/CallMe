@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProviderName } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
-import { configured, SignInCancelled } from '@/shared/session/oauth';
+import { configured, SignInCancelled, SignInFailed } from '@/shared/session/oauth';
 import { useSession } from '@/shared/session/session';
 import { ActionButton, AppText, Quote } from '@/shared/ui';
 
@@ -29,16 +29,22 @@ export default function SignInScreen() {
       await run();
     } catch (error) {
       /** 동의 화면을 그냥 닫은 것은 실패가 아니다 */
-      if (!(error instanceof SignInCancelled)) {
-        Alert.alert('로그인하지 못했어요', error instanceof Error ? error.message : '');
+      if (error instanceof SignInCancelled) return;
+
+      /** 왜 안 됐는지를 말한다 — 조용히 아무 일도 안 일어나면 고칠 수가 없다 */
+      if (error instanceof SignInFailed) {
+        Alert.alert('로그인하지 못했어요', error.message);
+        return;
       }
+      Alert.alert('로그인하지 못했어요', error instanceof Error ? error.message : '');
     } finally {
       setBusy(null);
     }
   };
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 64, paddingBottom: insets.bottom + 24 }]}>
+    <View
+      style={[styles.screen, { paddingTop: insets.top + 64, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.head}>
         <AppText style={styles.wordmark}>Reread</AppText>
         <Quote style={styles.line}>

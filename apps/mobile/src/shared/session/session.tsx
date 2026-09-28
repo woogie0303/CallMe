@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { api, Unauthenticated } from '@/shared/api/client';
 import { clearTokens, readTokens, saveTokens } from '@/shared/api/tokens';
 import type { ProviderName, ReaderView, SignInResult } from '@/shared/api/types';
-import { devSignIn, signInWith } from './oauth';
+import { devSignIn, prepareSocialSignIn, signInWith } from './oauth';
 
 type Status = 'loading' | 'in' | 'out';
 
@@ -51,6 +51,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let alive = true;
+
+    /**
+     * 소셜 SDK는 쓰기 전에 깨워둬야 한다 — 버튼을 누른 뒤에 초기화하면
+     * 첫 번째 누름이 조용히 실패한다.
+     */
+    prepareSocialSignIn();
 
     (async () => {
       const stored = await readTokens();
