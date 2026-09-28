@@ -1,22 +1,26 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProviderName } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
 import { configured, SignInCancelled, SignInFailed } from '@/shared/session/oauth';
 import { useSession } from '@/shared/session/session';
-import { ActionButton, AppText, Quote } from '@/shared/ui';
+import { ActionButton, AppText, BRAND, BrandLogo, Quote, Tap } from '@/shared/ui';
 
-const PROVIDERS: { name: ProviderName; label: string }[] = [
-  { name: 'kakao', label: '카카오로 계속하기' },
-  { name: 'naver', label: '네이버로 계속하기' },
-  { name: 'google', label: 'Google로 계속하기' },
-];
+/**
+ * 한국 독자가 가장 많이 쓰는 순서. Apple은 크기와 자리가 다른 것과 같아야 한다 —
+ * 더 작거나 구석에 두면 심사에서 걸린다(Apple 로그인 가이드라인).
+ */
+const PROVIDERS: ProviderName[] = ['kakao', 'naver', 'google', 'apple'];
 
 /**
  * 로그인 — 가입과 로그인을 나누지 않는다. 처음 온 계정이면 독자를 만들고
  * 아니면 있던 독자로 이어진다. 비밀번호는 만들지 않는다.
+ *
+ * 버튼은 글자 없이 로고만 둔다. 넷을 "○○로 계속하기"로 쌓으면 화면 아래 절반이
+ * 버튼으로 차서, 위의 문장(이 앱이 무엇인지)보다 버튼이 먼저 읽힌다. 로고는
+ * 모두 알아보는 모양이라 글자가 없어도 뜻이 선다 — 스크린리더에는 이름을 준다.
  */
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
@@ -55,28 +59,28 @@ export default function SignInScreen() {
         </AppText>
       </View>
 
-      <View style={styles.buttons}>
+      <View style={styles.foot}>
         {/* 자동으로 들어가려다 막혔으면 왜인지 그대로 보여준다 — 대개 백엔드가 꺼져 있다 */}
         {problem ? <AppText style={styles.problem}>{problem}</AppText> : null}
 
-        {/*
-          아직 열쇠가 없는 제공자는 눌러도 실패할 뿐이라 눌리지 않게 둔다 —
-          '준비 중'이라고 적어놓고 누르게 하면, 실패가 내 탓처럼 읽힌다.
-        */}
-        {PROVIDERS.map((provider) => {
-          const ready = configured(provider.name);
-          return (
-            <ActionButton
-              key={provider.name}
-              label={provider.label}
-              variant={provider.name === 'kakao' ? 'primary' : 'subtle'}
-              aside={ready ? undefined : '준비 중'}
-              disabled={!ready || (busy !== null && busy !== provider.name)}
-              loading={busy === provider.name}
-              onPress={() => attempt(provider.name, () => signIn(provider.name))}
+        <View style={styles.divider} accessibilityRole="header">
+          <View style={styles.rule} />
+          <AppText style={styles.dividerText}>간편 로그인</AppText>
+          <View style={styles.rule} />
+        </View>
+
+        <View style={styles.row}>
+          {PROVIDERS.map((name) => (
+            <ProviderButton
+              key={name}
+              name={name}
+              ready={configured(name)}
+              loading={busy === name}
+              locked={busy !== null && busy !== name}
+              onPress={() => attempt(name, () => signIn(name))}
             />
-          );
-        })}
+          ))}
+        </View>
 
         {/* 개발용. 소셜 로그인이 실제로 도는 것을 확인하면 이 버튼을 지운다. */}
         {__DEV__ ? (
@@ -86,12 +90,59 @@ export default function SignInScreen() {
             disabled={busy !== null && busy !== 'dev'}
             loading={busy === 'dev'}
             onPress={() => attempt('dev', signInAsDeveloper)}
+            style={styles.dev}
           />
         ) : null}
       </View>
     </View>
   );
 }
+
+/**
+ * 로고 하나짜리 동그란 버튼.
+ *
+ * 아직 쓸 수 없는 제공자(키가 없거나, Apple처럼 이 빌드에 권한이 없는 것)는
+ * 흐리게 두고 누르지 못하게 한다 — 숨기지 않는다. 사라지면 '이 앱은 Apple
+ * 로그인이 없구나'로 읽히고, 흐리면 '아직 안 됨'으로 읽힌다.
+ */
+function ProviderButton({
+  name,
+  ready,
+  loading,
+  locked,
+  onPress,
+}: {
+  name: ProviderName;
+  ready: boolean;
+  loading: boolean;
+  /** 다른 제공자로 로그인하는 중 — 두 창이 겹쳐 뜨지 않게 막는다 */
+  locked: boolean;
+  onPress: () => void;
+}) {
+  const brand = BRAND[name];
+  const off = !ready || locked || loading;
+  /** 로딩 표시는 로고와 같은 색으로 — 노란 바탕에 흰 스피너는 안 보인다 */
+  const spinner = name === 'naver' || name === 'apple' ? '#FFFFFF' : '#000000';
+
+  return (
+    <Tap
+      onPress={onPress}
+      disabled={off}
+      accessibilityRole="button"
+      accessibilityLabel={ready ? `${brand.label}로 로그인` : `${brand.label}로 로그인, 준비 중`}
+      accessibilityState={{ disabled: off, busy: loading }}
+      style={[
+        styles.circle,
+        { backgroundColor: brand.background },
+        brand.border ? { borderWidth: 1, borderColor: brand.border } : null,
+        !ready ? styles.unready : null,
+      ]}>
+      {loading ? <ActivityIndicator color={spinner} /> : <BrandLogo name={name} />}
+    </Tap>
+  );
+}
+
+const CIRCLE = 56;
 
 const styles = StyleSheet.create({
   screen: {
@@ -105,6 +156,24 @@ const styles = StyleSheet.create({
   /** 책에서 온 영어만 세리프 */
   line: { fontSize: 22, lineHeight: 33, color: color.text.primary },
   blurb: { ...type.label1, lineHeight: 23, color: color.text.secondary },
-  buttons: { gap: 10 },
+
+  foot: { gap: 20 },
   problem: { ...type.caption1, lineHeight: 18, color: color.status.cautionary },
+
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: color.border.default },
+  dividerText: { ...type.caption1, color: color.text.secondary },
+
+  row: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
+  circle: {
+    width: CIRCLE,
+    height: CIRCLE,
+    borderRadius: CIRCLE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** 아직 쓸 수 없는 것 — 브랜드 색은 지키되 흐리게 */
+  unready: { opacity: 0.32 },
+
+  dev: { marginTop: 4 },
 });
