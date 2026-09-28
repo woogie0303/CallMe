@@ -77,6 +77,30 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
   중이면 `loading`을 쓴다. 글자만 '저장하는 중…'으로 바꿔두면 두 번 눌린다.
   누르면 아무 일도 없는 자리는 버튼으로 그리지 않는다(광고 자리가 그랬다).
 
+## 개발 빌드 (네이티브 모듈이 필요한 것 전부)
+
+소셜 로그인 SDK 셋과 OCR은 네이티브 모듈이라 **Expo Go에서는 영영 안 돈다.**
+`npx expo run:ios`로 개발 빌드를 만들어야 한다. 그 길에서 걸린 것 셋:
+
+- **Xcode 26 이상이어야 한다.** Expo 57의 `expo-modules-jsi`와
+  `@expo/expo-modules-macros-plugin`이 `swift-tools-version: 6.2`를 요구한다.
+  Xcode 16.4(Swift 6.1)에서는 `package 'apple' is using Swift tools version
+  6.2.0`으로 패키지 해석 단계에서 죽는다.
+- **Xcode 27로 지으면 scene 생명주기를 켜야 한다.** iOS 27 SDK로 지은 앱은
+  UIKit scene 생명주기가 없으면 뜨지 않는다. `expo@57.0.23+`와
+  `expo-build-properties`의 `ios.enableSceneSupport`가 그 스위치고, 바꾼 뒤에는
+  `npx expo prebuild --clean`을 다시 돌려야 한다.
+- **`patches/expo-modules-jsi.patch`는 지우면 안 된다.** 이 저장소가
+  `~/Desktop` 아래 있고 iCloud가 데스크톱을 동기화하는데, iCloud의 file
+  provider가 `.framework` 디렉터리에 번들 비트(`com.apple.FinderInfo`)를
+  붙인다. codesign은 FinderInfo가 붙은 것을 서명하지 못해
+  (`resource fork, Finder information, or similar detritus not allowed`)
+  ExpoModulesJSI xcframework를 짓는 단계에서 빌드가 죽는다. 미리 `xattr -c`로
+  지워도 빌드 도중에 다시 붙는다. 패치는 그 중간 프레임워크의 서명을 끄는
+  것뿐이고(`CODE_SIGNING_ALLOWED=NO`), 앱 자체 서명에는 손대지 않는다 —
+  임베드된 프레임워크는 어차피 앱을 서명할 때 다시 서명된다.
+  저장소를 iCloud 밖으로 옮기면 패치는 필요 없어진다.
+
 ## 아직 안 된 것
 
 **사진 위에서 문장 짚기는 인식기를 갈아끼워야 돈다.** 지금의

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.anonymous.mobile",
+      "bundleIdentifier": "com.dongwookkang.reread",
       "supportsTablet": false
     },
     "android": {
@@ -40,6 +40,14 @@
         {
           "cameraPermission": "읽던 쪽을 찍어 문장을 옮겨 적으려면 카메라가 필요해요.",
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
         }
       ]
     ],
