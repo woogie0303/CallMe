@@ -104,6 +104,8 @@ export function PhotoPicker({
                     top: fit.dy + word.frame.y * fit.scale,
                     width: word.frame.width * fit.scale,
                     height: word.frame.height * fit.scale,
+                    /** RN은 중심을 축으로 돌린다 — 인식기가 준 네모도 중심 기준이다 */
+                    transform: [{ rotate: `${word.frame.angle ?? 0}rad` }],
                   },
                 ]}
               />
@@ -168,8 +170,12 @@ function TypesetPage({
 const styles = StyleSheet.create({
   stage: { flex: 1, backgroundColor: ink(1), overflow: 'hidden' },
 
-  /** 낱말 한 칸. 안 고른 것은 눌리는 자리라는 것만 아주 옅게 알린다. */
-  word: { position: 'absolute', borderRadius: 3, backgroundColor: accent(0.08) },
+  /**
+   * 낱말 한 칸. 안 고른 것은 눌리는 자리라는 것만 옅게 알린다 — 다만 종이색
+   * 위에서 보일 만큼은. 한때 8%였는데 사진 위에서 거의 안 보여서, 인식기가
+   * 못 읽은 줄과 읽었는데 안 보이는 줄을 구분할 수 없었다.
+   */
+  word: { position: 'absolute', borderRadius: 3, backgroundColor: accent(0.16) },
   wordOn: { backgroundColor: accent(0.42) },
   /** 첫 낱말만 짚어둔 상태 — 여기서 시작한다는 표시 */
   wordAnchor: { backgroundColor: accent(0.5), borderWidth: 1.5, borderColor: color.primary },

@@ -11,17 +11,24 @@
  * ## 좌표에 대하여
  *
  * 찍은 사진 **위에서** 문장을 짚으려면 글자가 사진의 어디에 있는지 알아야 한다.
- * 지금 쓰는 `expo-text-extractor`는 글자만 주고 좌표를 주지 않는다(`string[]`).
- * 그래서 이 파일은 좌표를 **선택으로** 다룬다 — 주는 인식기로 갈아끼우면
- * (`@react-native-ml-kit/text-recognition`의 `blocks[].lines[].frame`) 화면이
- * 저절로 사진 위 오버레이로 올라가고, 없으면 글자만 다시 조판해 보여준다.
+ * iOS는 앱 안의 `modules/page-reader`가 Apple Vision으로 읽고 줄·낱말의 좌표를
+ * 함께 준다. `expo-text-extractor`도 같은 Vision을 쓰지만 좌표를 버리고 글자만
+ * 넘겨서(`string[]`), 좌표가 필요한 자리에는 쓸 수 없다 — 안드로이드처럼
+ * page-reader가 없는 곳에서만 물러날 자리로 남긴다.
  *
- * 갈아끼울 자리는 `readLines` 하나다. 화면은 이 모양만 알면 된다. ML Kit은
- * `blocks → lines → elements`로 주는데, `elements`가 여기서 말하는 낱말이다.
+ * 화면은 `readLines`가 돌려주는 모양만 안다. `located`가 참이면 사진 위에 얹고,
+ * 아니면 글자만 다시 조판해 보여준다.
  */
 
-/** 사진 안의 네모 한 칸. 픽셀 좌표계라 화면에 올릴 때 환산해야 한다. */
-export type OcrFrame = { x: number; y: number; width: number; height: number };
+import { requireOptionalNativeModule } from 'expo';
+
+/**
+ * 사진 안의 네모 한 칸. 픽셀 좌표계라 화면에 올릴 때 환산해야 한다.
+ *
+ * `angle`(라디안, 시계 방향)이 있으면 돌리기 **전**의 네모다 — 중심을 축으로
+ * 그만큼 돌려야 글자에 겹친다. 손으로 든 책은 거의 늘 기울어져 찍힌다.
+ */
+export type OcrFrame = { x: number; y: number; width: number; height: number; angle?: number };
 
 /** 읽어낸 줄 하나. `frame`은 주는 인식기에서만 온다. */
 export type OcrLine = {
@@ -52,12 +59,27 @@ export type OcrResult = {
   words: OcrWord[];
   /** 좌표가 함께 왔는지 — 사진 위에 얹을 수 있는지를 이 값으로 정한다 */
   located: boolean;
+  /**
+   * 좌표가 기대는 사진 크기(화면에 보이는 방향 기준). 카메라가 알려주는 크기는
+   * 방향을 적용하기 전일 수 있어서, 좌표를 준 쪽의 크기를 그대로 쓴다.
+   */
+  width?: number;
+  height?: number;
 };
 
 type TextExtractor = {
   isSupported: boolean;
   extractTextFromImage: (uri: string) => Promise<string[]>;
 };
+
+type PageReading = {
+  width: number;
+  height: number;
+  lines: { text: string; frame: OcrFrame }[];
+  words: OcrWord[];
+};
+
+type PageReader = { read: (uri: string) => Promise<PageReading> };
 
 function load(): TextExtractor | null {
   try {
@@ -70,16 +92,33 @@ function load(): TextExtractor | null {
 
 const module = load();
 
+/**
+ * 좌표까지 주는 인식기 — 앱 안의 `modules/page-reader`(iOS, Apple Vision).
+ * 안드로이드와, 이 모듈이 들어가기 전에 지은 빌드에는 없다.
+ */
+const pageReader = requireOptionalNativeModule<PageReader>('PageReader');
+
 /** 이 기기에서 사진의 글자를 읽을 수 있는지 */
-export const available: boolean = Boolean(module?.isSupported);
+export const available: boolean = Boolean(pageReader) || Boolean(module?.isSupported);
 
 /**
- * 사진에서 줄들을 읽어낸다.
+ * 사진에서 줄과 낱말을 읽어낸다.
  *
- * 지금 인식기는 좌표를 주지 않으므로 `located: false`로 돌아온다. 좌표를 주는
- * 인식기로 바꾸는 날, 바꿀 것은 이 함수 안뿐이다.
+ * 좌표를 주는 인식기가 있으면 그것으로 읽어 `located: true`로 돌려준다. 없으면
+ * 글자만 주는 인식기로 물러나 `located: false` — 화면은 조판으로 물러난다.
  */
 export async function readLines(uri: string): Promise<OcrResult> {
+  if (pageReader) {
+    const page = await pageReader.read(uri);
+    return {
+      lines: page.lines,
+      words: page.words,
+      located: page.words.length > 0,
+      width: page.width,
+      height: page.height,
+    };
+  }
+
   if (!module) throw new Error('이 빌드에는 글자 인식기가 들어 있지 않아요.');
   const lines = await module.extractTextFromImage(uri);
   return { lines: lines.map((text) => ({ text })), words: [], located: false };

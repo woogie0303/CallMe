@@ -48,6 +48,14 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
 
 - 인식기가 좌표를 주면 사진 위에 얹고, 아니면 읽어낸 글을 조판해 보여준다.
   갈아끼울 자리는 `shared/ocr/text-extractor.ts`의 `readLines` 하나다.
+- iOS의 좌표는 앱 안의 로컬 모듈 `modules/page-reader`(Apple Vision)가 준다.
+  `expo-text-extractor`도 같은 Vision을 쓰지만 좌표를 버리고 글자만 넘긴다 —
+  그래서 안드로이드처럼 page-reader가 없는 곳의 물러날 자리로만 남겨뒀다.
+  ML Kit 패키지를 쓰지 않은 이유: 1년 넘게 배포가 없었고, iOS에서 구글 로그인과
+  같은 구글 라이브러리(GoogleUtilities, GTMSessionFetcher)를 끌고 와 버전이 부딪힌다.
+- 좌표는 **화면에 보이는 방향(EXIF 적용 후)의 픽셀**이다. 카메라가 알려주는
+  크기는 방향 적용 전일 수 있어서, 사진을 놓을 때는 인식기가 함께 준
+  `width`/`height`를 쓴다.
 - 서버는 줄을 이어 문장으로 돌려주지만 **어느 줄이 어느 문장이 됐는지는 알려주지
   않는다.** 사진 위에 얹으려면 `shared/ocr/align.ts`가 그 사이를 잇는다.
 
@@ -103,15 +111,10 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
 
 ## 아직 안 된 것
 
-**사진 위에서 문장 짚기는 인식기를 갈아끼워야 돈다.** 지금의
-`expo-text-extractor`는 글자만 주고 좌표를 주지 않아서(`string[]`), 화면은
-읽어낸 글을 조판하는 쪽으로 물러나 있다. 좌표를 주는 인식기
-(`@react-native-ml-kit/text-recognition`의 `blocks[].lines[].frame`)로 바꾸면
-`readLines`가 `located: true`로 돌려주고 오버레이가 저절로 올라온다.
-
-바꾸기 전에 확인할 것: 그 패키지는 RN 0.60~1.0을 peer로 걸고 있지만 마지막
-배포가 2025-09고, 이 앱은 RN 0.86(신아키텍처 기본 켜짐)이다. **신아키텍처에서
-도는지 실기기에서 확인하고 넣어야 한다.**
+**안드로이드는 사진 위에서 짚지 못한다.** `modules/page-reader`가 iOS만 있어서
+안드로이드는 `expo-text-extractor`로 글자만 읽고 조판으로 물러난다. 같은 모듈에
+ML Kit(`TextRecognition`의 `Text.TextBlock.lines[].elements[].boundingBox`)으로
+안드로이드 쪽을 채우면 된다 — 돌려주는 모양은 iOS와 같게.
 
 ## 현재 상태
 

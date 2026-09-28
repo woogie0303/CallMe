@@ -80,7 +80,12 @@ export default function ScanScreen() {
       const read = await readLines(photo.uri);
       if (!read.lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
-      setShot({ uri: photo.uri, width: photo.width, height: photo.height });
+      /** 좌표를 준 인식기가 잰 크기가 우선이다 — 좌표가 그 크기에 기대고 있다 */
+      setShot({
+        uri: photo.uri,
+        width: read.width ?? photo.width,
+        height: read.height ?? photo.height,
+      });
       setWords(read.words);
 
       /**
