@@ -16,19 +16,40 @@
  * (`@react-native-ml-kit/text-recognition`의 `blocks[].lines[].frame`) 화면이
  * 저절로 사진 위 오버레이로 올라가고, 없으면 글자만 다시 조판해 보여준다.
  *
- * 갈아끼울 자리는 `readLines` 하나다. 화면은 이 모양만 알면 된다.
+ * 갈아끼울 자리는 `readLines` 하나다. 화면은 이 모양만 알면 된다. ML Kit은
+ * `blocks → lines → elements`로 주는데, `elements`가 여기서 말하는 낱말이다.
  */
+
+/** 사진 안의 네모 한 칸. 픽셀 좌표계라 화면에 올릴 때 환산해야 한다. */
+export type OcrFrame = { x: number; y: number; width: number; height: number };
 
 /** 읽어낸 줄 하나. `frame`은 주는 인식기에서만 온다. */
 export type OcrLine = {
   text: string;
-  /** 사진의 픽셀 좌표계. 화면에 올릴 때 표시 크기로 환산해야 한다. */
-  frame?: { x: number; y: number; width: number; height: number };
+  frame?: OcrFrame;
+};
+
+/**
+ * 낱말 하나. 사진 위에서 **처음 낱말과 끝 낱말을 짚어** 물어볼 범위를 정하려면
+ * 줄이 아니라 이 단위가 필요하다 — 한 줄에 여러 문장이 걸치기도 하고, 한 문장이
+ * 여러 줄에 걸치기도 해서 줄로는 범위를 못 짚는다.
+ *
+ * `line`은 몇 번째 줄에 속하는지. 읽는 순서는 배열 순서 그대로다.
+ */
+export type OcrWord = {
+  text: string;
+  line: number;
+  frame: OcrFrame;
 };
 
 /** 한 장에서 읽어낸 결과 */
 export type OcrResult = {
   lines: OcrLine[];
+  /**
+   * 낱말 단위 좌표. 주는 인식기에서만 온다 — 이게 있으면 사진 위에서 짚고,
+   * 없으면 읽어낸 글을 조판해 보여주는 쪽으로 물러난다.
+   */
+  words: OcrWord[];
   /** 좌표가 함께 왔는지 — 사진 위에 얹을 수 있는지를 이 값으로 정한다 */
   located: boolean;
 };
@@ -61,7 +82,7 @@ export const available: boolean = Boolean(module?.isSupported);
 export async function readLines(uri: string): Promise<OcrResult> {
   if (!module) throw new Error('이 빌드에는 글자 인식기가 들어 있지 않아요.');
   const lines = await module.extractTextFromImage(uri);
-  return { lines: lines.map((text) => ({ text })), located: false };
+  return { lines: lines.map((text) => ({ text })), words: [], located: false };
 }
 
 /** 글자만 필요할 때 — 문장으로 잇는 일은 서버가 한다 */

@@ -4,40 +4,57 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { accent, color, ink, type } from '@/shared/config';
 import type { SentencePlacement } from '@/shared/ocr/align';
-import type { OcrLine } from '@/shared/ocr/text-extractor';
+import { previewWords, type Selection } from '@/shared/ocr/selection';
+import type { OcrWord } from '@/shared/ocr/text-extractor';
 import { AppText, Quote, Tap } from '@/shared/ui';
 
 export type Shot = { uri: string; width: number; height: number };
 
 /**
- * 찍은 쪽에서 문장을 고르는 자리.
+ * 찍은 쪽에서 물어볼 글을 고르는 자리.
  *
  * **사진을 버리지 않는다.** 예전에는 글자만 읽어내고 사진을 지운 뒤 다시 조판해
  * 보여줬는데, 그러면 방금 내가 본 쪽과 화면에 뜬 글이 서로 다른 것이 되어
- * '이 줄'을 짚는 감각이 사라진다. 좌표가 있으면 **사진 위에서** 짚는다.
+ * '이 줄'을 짚는 감각이 사라진다.
  *
- * 좌표가 없는 인식기(지금의 `expo-text-extractor`)에서는 예전처럼 조판해
- * 보여준다 — 고를 수는 있어야 하니까. 둘 중 어느 쪽인지는 `placements`가 정한다.
+ * 고르는 법은 **처음 낱말과 끝 낱말을 한 번씩 누르는 것**이다. 끌지 않는 이유가
+ * 둘 있다 — 끄는 동작은 사진을 넘기거나 확대하는 손짓과 부딪히고, 스크린리더
+ * 에서는 아예 할 수 없다. 두 번 누르기는 둘 다 피한다.
+ *
+ * 짚은 범위는 문장 경계까지 저절로 넓어진다(`shared/ocr/selection`). 조각만
+ * 물으면 맥락 없는 뜻풀이가 되기 때문이다 — 넓어진 만큼이 화면에 그대로 칠해져서
+ * 무엇을 묻게 되는지 누르기 전에 보인다.
+ *
+ * 좌표가 없는 인식기에서는 예전처럼 조판해 보여준다.
  */
 export function PhotoPicker({
   shot,
-  lines,
+  words,
   placements,
+  selection,
+  anchor,
+  onTapWord,
   selected,
-  onSelect,
+  onSelectSentence,
 }: {
   shot: Shot;
-  lines: OcrLine[];
-  /** 문장별로 어느 줄에 놓였는지. 줄 번호가 있으면 사진 위에 얹는다. */
+  words: OcrWord[];
+  /** 좌표가 없을 때의 물러날 자리 */
   placements: SentencePlacement[];
+  /** 지금 정해진 범위 — 넓어진 뒤의 값 */
+  selection: Selection | null;
+  /** 첫 낱말만 짚어둔 상태 */
+  anchor: number | null;
+  onTapWord: (index: number) => void;
   selected?: string;
-  onSelect: (sentence: string) => void;
+  onSelectSentence: (sentence: string) => void;
 }) {
   const [box, setBox] = useState<{ width: number; height: number } | null>(null);
-  const located = placements.some((p) => p.lines.length > 0) && lines.some((l) => l.frame);
 
-  if (!located) {
-    return <TypesetPage placements={placements} selected={selected} onSelect={onSelect} />;
+  if (!words.length) {
+    return (
+      <TypesetPage placements={placements} selected={selected} onSelect={onSelectSentence} />
+    );
   }
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -57,45 +74,55 @@ export function PhotoPicker({
       })()
     : null;
 
+  /** 지금 칠할 범위 — 아직 끝을 안 짚었으면 첫 낱말 하나만 */
+  const shown = selection ?? (anchor !== null ? previewWords(words, anchor) : null);
+
   return (
     <View style={styles.stage} onLayout={onLayout}>
       <Image source={{ uri: shot.uri }} style={StyleSheet.absoluteFill} contentFit="contain" />
 
       {fit
-        ? placements.map((place) => {
-            const frames = place.lines
-              .map((i) => lines[i]?.frame)
-              .filter((f): f is NonNullable<typeof f> => Boolean(f));
-            if (!frames.length) return null;
-            const on = place.sentence === selected;
-
+        ? words.map((word, i) => {
+            const on = shown ? i >= shown.from && i <= shown.to : false;
+            const isAnchor = anchor === i && !selection;
             return (
               <Tap
-                key={place.sentence}
-                onPress={() => onSelect(place.sentence)}
+                key={i}
+                onPress={() => onTapWord(i)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={place.sentence}
-                style={StyleSheet.absoluteFill}>
-                {frames.map((f, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.band,
-                      on ? styles.bandOn : null,
-                      {
-                        left: fit.dx + f.x * fit.scale,
-                        top: fit.dy + f.y * fit.scale,
-                        width: f.width * fit.scale,
-                        height: f.height * fit.scale,
-                      },
-                    ]}
-                  />
-                ))}
-              </Tap>
+                accessibilityLabel={word.text}
+                accessibilityHint={
+                  anchor === null ? '여기서부터 고르기' : '여기까지 고르기'
+                }
+                style={[
+                  styles.word,
+                  on ? styles.wordOn : null,
+                  isAnchor ? styles.wordAnchor : null,
+                  {
+                    left: fit.dx + word.frame.x * fit.scale,
+                    top: fit.dy + word.frame.y * fit.scale,
+                    width: word.frame.width * fit.scale,
+                    height: word.frame.height * fit.scale,
+                  },
+                ]}
+              />
             );
           })
         : null}
+
+      {/* 무엇을 하면 되는지 한 줄. 짚기 전에는 시작을, 짚은 뒤에는 끝을 말한다. */}
+      <View style={styles.hint} pointerEvents="none">
+        <AppText style={styles.hintText}>
+          {anchor === null && !selection
+            ? '막힌 곳의 첫 낱말을 눌러주세요'
+            : !selection
+              ? '이제 끝 낱말을 눌러주세요'
+              : shown?.widened
+                ? '문장 전체로 넓혔어요 · 다시 고르려면 아무 낱말이나'
+                : '다시 고르려면 아무 낱말이나 눌러주세요'}
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -131,23 +158,31 @@ function TypesetPage({
           );
         })}
       </Quote>
-      <AppText style={styles.hint}>사진에서 읽어낸 글이에요 · 물어볼 문장을 눌러보세요</AppText>
+      <AppText style={styles.hintText2}>
+        사진에서 읽어낸 글이에요 · 물어볼 문장을 눌러보세요
+      </AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   stage: { flex: 1, backgroundColor: ink(1), overflow: 'hidden' },
-  /** 글자 위에 얹는 띠. 사진을 가리지 않을 만큼만 옅다. */
-  band: {
-    position: 'absolute',
-    borderRadius: 3,
-    backgroundColor: accent(0.18),
-  },
-  bandOn: {
-    backgroundColor: accent(0.42),
-    borderWidth: 1.5,
-    borderColor: color.primary,
+
+  /** 낱말 한 칸. 안 고른 것은 눌리는 자리라는 것만 아주 옅게 알린다. */
+  word: { position: 'absolute', borderRadius: 3, backgroundColor: accent(0.08) },
+  wordOn: { backgroundColor: accent(0.42) },
+  /** 첫 낱말만 짚어둔 상태 — 여기서 시작한다는 표시 */
+  wordAnchor: { backgroundColor: accent(0.5), borderWidth: 1.5, borderColor: color.primary },
+
+  hint: { position: 'absolute', left: 0, right: 0, bottom: 12, alignItems: 'center' },
+  hintText: {
+    ...type.caption1,
+    color: color.text.onInk,
+    backgroundColor: ink(0.72),
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
 
   paper: {
@@ -162,5 +197,5 @@ const styles = StyleSheet.create({
   flow: { fontSize: 16, lineHeight: 28 },
   plainText: { color: color.text.body },
   pickedText: { color: color.primary, backgroundColor: accent(0.12), fontWeight: '600' },
-  hint: { ...type.caption2, color: color.text.meta },
+  hintText2: { ...type.caption2, color: color.text.meta },
 });

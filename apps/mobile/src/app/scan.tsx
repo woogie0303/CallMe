@@ -11,7 +11,8 @@ import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
 import type { ApiAskView } from '@/shared/api/types';
 import { color, gutter, ink, type } from '@/shared/config';
 import { alignSentences, type SentencePlacement } from '@/shared/ocr/align';
-import { available, readLines, type OcrLine } from '@/shared/ocr/text-extractor';
+import { selectWords, type Selection } from '@/shared/ocr/selection';
+import { available, readLines, type OcrWord } from '@/shared/ocr/text-extractor';
 import { ActionButton, AppText, HeaderAction, ScreenHeader, Tap } from '@/shared/ui';
 import { AskSheet, type SheetPhase } from '@/widgets/capture/ui/ask-sheet';
 import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
@@ -39,8 +40,11 @@ export default function ScanScreen() {
   const camera = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [shot, setShot] = useState<Shot | null>(null);
-  const [lines, setLines] = useState<OcrLine[]>([]);
+  const [words, setWords] = useState<OcrWord[]>([]);
   const [places, setPlaces] = useState<SentencePlacement[]>([]);
+  /** 첫 낱말만 짚어둔 상태 — 끝을 누르면 범위가 정해진다 */
+  const [anchor, setAnchor] = useState<number | null>(null);
+  const [range, setRange] = useState<Selection | null>(null);
   const [rough, setRough] = useState(false);
   const [reading, setReading] = useState(false);
 
@@ -76,12 +80,22 @@ export default function ScanScreen() {
       const read = await readLines(photo.uri);
       if (!read.lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
-      const result = await split.mutateAsync(read.lines.map((l) => l.text));
       setShot({ uri: photo.uri, width: photo.width, height: photo.height });
-      setLines(read.lines);
-      /** 서버가 이어 준 문장을 원래 줄에 다시 맞춘다 — 사진 위에 얹으려면 필요하다 */
-      setPlaces(alignSentences(read.lines, result.sentences));
-      setRough(result.rough);
+      setWords(read.words);
+
+      /**
+       * 낱말 좌표가 오면 서버에 문장을 나눠달라고 하지 않는다 — 짚는 사람이
+       * 어디서 막혔는지 이미 알고 있어서, 모델이 한 번 더 나눌 이유가 없다.
+       * 좌표가 없을 때만 예전처럼 줄을 보내 문장으로 이어 받는다.
+       */
+      if (!read.words.length) {
+        const result = await split.mutateAsync(read.lines.map((l) => l.text));
+        setPlaces(alignSentences(read.lines, result.sentences));
+        setRough(result.rough);
+      } else {
+        setPlaces([]);
+        setRough(false);
+      }
     } catch (error) {
       Alert.alert('다시 찍어볼까요', error instanceof Error ? error.message : '');
     } finally {
@@ -91,7 +105,7 @@ export default function ScanScreen() {
 
   const retake = () => {
     setShot(null);
-    setLines([]);
+    setWords([]);
     setPlaces([]);
     closeSheet();
   };
@@ -100,6 +114,31 @@ export default function ScanScreen() {
     setPicked(undefined);
     setAnswer(null);
     setKeep(new Set());
+    setAnchor(null);
+    setRange(null);
+  };
+
+  /**
+   * 첫 낱말 → 끝 낱말 순으로 한 번씩. 범위가 정해진 뒤에 또 누르면 처음부터
+   * 다시 고른다 — 고쳐 고르려고 취소 버튼을 따로 찾게 만들지 않는다.
+   */
+  const tapWord = (index: number) => {
+    if (range) {
+      setRange(null);
+      setAnchor(index);
+      setPicked(undefined);
+      setAnswer(null);
+      return;
+    }
+    if (anchor === null) {
+      setAnchor(index);
+      return;
+    }
+    const next = selectWords(words, anchor, index);
+    if (!next) return;
+    setRange(next);
+    setAnchor(null);
+    setPicked(next.text);
   };
 
   const ask = async () => {
@@ -209,21 +248,24 @@ export default function ScanScreen() {
       <ScreenHeader
         leading="back"
         onLeadingPress={retake}
-        title={picked ? undefined : '물어볼 문장을 짚어보세요'}
+        title={picked ? undefined : '막힌 곳을 짚어보세요'}
         trailing={<HeaderAction label="다시 찍기" tone={color.text.meta} onPress={retake} />}
       />
 
       <View style={styles.stage}>
         <PhotoPicker
           shot={shot}
-          lines={lines}
+          words={words}
           placements={places}
+          selection={range}
+          anchor={anchor}
+          onTapWord={tapWord}
           selected={picked}
-          onSelect={(s) => {
-            if (s === picked) return;
+          onSelectSentence={(sentence) => {
+            if (sentence === picked) return;
             setAnswer(null);
             setKeep(new Set());
-            setPicked(s);
+            setPicked(sentence);
           }}
         />
       </View>
