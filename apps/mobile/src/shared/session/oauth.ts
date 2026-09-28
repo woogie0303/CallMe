@@ -1,5 +1,6 @@
 import { applicationId } from 'expo-application';
 import * as Crypto from 'expo-crypto';
+import { Platform } from 'react-native';
 
 import { api } from '@/shared/api/client';
 import type { ProviderName, SignInResult } from '@/shared/api/types';
@@ -62,6 +63,13 @@ type GoogleSdk = {
     { type: 'success'; data: { idToken: string | null } } | { type: 'cancelled' }
   >;
 };
+type AppleSdk = {
+  AppleAuthenticationScope: { FULL_NAME: number; EMAIL: number };
+  signInAsync: (p: { requestedScopes: number[] }) => Promise<{
+    identityToken: string | null;
+    fullName: { givenName: string | null; familyName: string | null; nickname: string | null } | null;
+  }>;
+};
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const SDK = {
@@ -94,6 +102,14 @@ const SDK = {
       return null;
     }
   })(),
+  apple: ((): AppleSdk | null => {
+    if (Platform.OS !== 'ios') return null;
+    try {
+      return require('expo-apple-authentication') as AppleSdk;
+    } catch {
+      return null;
+    }
+  })(),
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -121,6 +137,13 @@ const NAVER_CLIENT_ID = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID;
 /** 네이버 SDK가 앱에서 요구한다 — 이 값은 번들에 박힌다(네이버 설계상 피할 수 없다) */
 const NAVER_CLIENT_SECRET = process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+/**
+ * Apple 로그인은 **유료 개발자 계정**에서만 켤 수 있는 권한이 필요하다. 무료 개인
+ * 팀으로 지은 빌드에 그 권한을 넣으면 빌드가 실패하므로, 켜도 되는 빌드에서만
+ * `true`로 둔다. `app.config.js`가 같은 값을 보고 권한을 넣는다 — 둘이 어긋나면
+ * 버튼은 눌리는데 시스템 창이 뜨지 않는다.
+ */
+const APPLE_SIGN_IN = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
 
 /**
  * 키도 있고 모듈도 들어 있어야 쓸 수 있다. 둘 중 하나라도 없으면 버튼은
@@ -139,6 +162,11 @@ let ready = false;
 export function prepareSocialSignIn(): void {
   if (ready) return;
   ready = true;
+
+  tryInit('apple', () => {
+    if (!SDK.apple) throw new Error('없음');
+    if (!APPLE_SIGN_IN) throw new Error('권한 없음');
+  });
 
   tryInit('kakao', () => {
     if (!SDK.kakaoCore || !SDK.kakaoUser) throw new Error('없음');
@@ -209,6 +237,7 @@ function cancelled(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return (
     code === 'SIGN_IN_CANCELLED' ||
+    code === 'ERR_REQUEST_CANCELED' ||
     code === '-5' ||
     /cancel/i.test(message) ||
     /user_cancel/i.test(message)
@@ -237,10 +266,41 @@ export async function signInWith(provider: ProviderName): Promise<SignInResult> 
 }
 
 /** 서버로 보낼 것 — 가능한 곳에서는 idToken, 아니면 accessToken */
-type ProviderToken = { idToken: string } | { accessToken: string };
+type ProviderToken = ({ idToken: string } | { accessToken: string }) & { nickname?: string };
 
+/**
+ * Apple이 준 이름을 한 줄로. 한글 이름은 성과 이름을 붙여 쓰고(강동욱), 그 밖에는
+ * 이름 먼저 띄어 쓴다(John Smith).
+ */
+function joinName(given: string | null, family: string | null): string | undefined {
+  if (!given && !family) return undefined;
+  const hangul = /[가-힣]/.test(`${given ?? ''}${family ?? ''}`);
+  return hangul
+    ? `${family ?? ''}${given ?? ''}`
+    : [given, family].filter(Boolean).join(' ');
+}
 
 async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
+  if (provider === 'apple') {
+    const sdk = SDK.apple;
+    if (!sdk) throw new SignInFailed('이 빌드에 Apple 로그인이 없어요.', { provider });
+    const credential = await sdk.signInAsync({
+      requestedScopes: [sdk.AppleAuthenticationScope.FULL_NAME, sdk.AppleAuthenticationScope.EMAIL],
+    });
+    if (!credential.identityToken) {
+      throw new SignInFailed('Apple이 identityToken을 주지 않았어요.', { provider });
+    }
+    /**
+     * 이름은 **처음 로그인할 때만** 온다. 두 번째부터는 비어 있고, 서버는 이미
+     * 저장해 둔 이름을 쓴다.
+     */
+    const name = credential.fullName;
+    return {
+      idToken: credential.identityToken,
+      nickname: name?.nickname ?? joinName(name?.givenName ?? null, name?.familyName ?? null),
+    };
+  }
+
   if (provider === 'kakao') {
     /**
      * nonce를 넘겨야 카카오가 idToken을 준다(OIDC). 없으면 액세스 토큰만 오고,

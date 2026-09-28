@@ -6,7 +6,7 @@
 export type Level = '입문' | '중급' | '고급';
 export type Register = '구어체' | '중립' | '문어체';
 export type ItemStatus = '헷갈려요' | '외웠어요';
-export type ProviderName = 'kakao' | 'naver' | 'google';
+export type ProviderName = 'kakao' | 'naver' | 'google' | 'apple';
 
 export type ReaderView = {
   id: string;
