@@ -17,12 +17,12 @@ SplashScreen.preventAutoHideAsync();
  */
 export default function RootLayout() {
   return (
-    <SessionProvider>
-      <QueryProvider>
+    <QueryProvider>
+      <SessionProvider>
         <StatusBar style="dark" />
         <Gate />
-      </QueryProvider>
-    </SessionProvider>
+      </SessionProvider>
+    </QueryProvider>
   );
 }
 

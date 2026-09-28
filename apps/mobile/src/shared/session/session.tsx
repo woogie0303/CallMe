@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { api, Unauthenticated } from '@/shared/api/client';
@@ -41,13 +42,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading');
   const [reader, setReader] = useState<ReaderView | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const enter = useCallback(async (result: SignInResult) => {
-    await saveTokens(result);
-    setReader(result.reader);
-    setProblem(null);
-    setStatus('in');
-  }, []);
+  const enter = useCallback(
+    async (result: SignInResult) => {
+      await saveTokens(result);
+      /**
+       * 캐시는 독자 하나만 안다는 전제로 쌓인다(쿼리 키에 독자 id가 없다).
+       * 비우지 않으면 방금 로그아웃한 사람의 책·서랍이 새로 들어온 사람
+       * 화면에 그대로 남는다 — 서버는 매번 옳게 답해도 화면이 그걸 무시하고
+       * 캐시부터 보여주기 때문이다.
+       */
+      queryClient.clear();
+      setReader(result.reader);
+      setProblem(null);
+      setStatus('in');
+    },
+    [queryClient],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -118,11 +130,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           }).catch(() => undefined);
         }
         await clearTokens();
+        queryClient.clear();
         setReader(null);
         setStatus('out');
       },
     }),
-    [status, reader, problem, enter],
+    [status, reader, problem, enter, queryClient],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
