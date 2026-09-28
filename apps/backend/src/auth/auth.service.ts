@@ -27,8 +27,23 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
+  /**
+   * 앱이 토큰을 들고 오면 그 토큰이 우리 앱 것인지 대조하고(`verify`), 브라우저
+   * 동의 화면을 거쳐 인가 코드를 들고 오면 토큰으로 바꾼다(`exchange`).
+   * 어느 쪽이든 그다음은 같다 — 프로필로 독자를 찾거나 만든다.
+   */
   async signIn(provider: ProviderName, dto: ExchangeCodeDto): Promise<SignInResult> {
-    const profile = await PROVIDERS[provider].exchange(dto, this.configFor(provider));
+    const config = this.configFor(provider);
+    const impl = PROVIDERS[provider];
+
+    const profile = dto.idToken
+      ? await impl.verify({ idToken: dto.idToken }, config)
+      : dto.accessToken
+        ? await impl.verify({ accessToken: dto.accessToken }, config)
+        : await impl.exchange(
+            { code: dto.code!, redirectUri: dto.redirectUri!, codeVerifier: dto.codeVerifier, state: dto.state },
+            config,
+          );
     const reader = await this.findOrCreate(provider, profile);
     const issued = await this.tokens.issue(reader.id as string);
 
@@ -84,7 +99,13 @@ export class AuthService {
       );
     }
 
-    return { clientId, clientSecret: this.config.get<string>(`${key}_CLIENT_SECRET`) };
+    return {
+      clientId,
+      clientSecret: this.config.get<string>(`${key}_CLIENT_SECRET`),
+      /** 앱이 네이티브 SDK로 받아온 토큰을 대조할 때 쓴다 — 카카오만 해당 */
+      nativeAppKey: this.config.get<string>(`${key}_NATIVE_APP_KEY`),
+      appId: this.config.get<string>(`${key}_APP_ID`),
+    };
   }
 }
 

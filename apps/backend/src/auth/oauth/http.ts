@@ -52,3 +52,23 @@ async function read<T>(provider: string, response: Response): Promise<T> {
     throw new BadGatewayException(`${provider}의 응답을 읽지 못했어요.`);
   }
 }
+
+/**
+ * JWT의 가운데 조각을 읽는다. **서명을 확인하지 않는다** — 그건 제공자의
+ * 검증 엔드포인트가 한다. 여기서는 그 엔드포인트에 무엇을 물어볼지 정하려고
+ * 미리 들여다보는 용도로만 쓴다.
+ */
+export function peekJwt<T>(token: string): T | null {
+  const body = token.split('.')[1];
+  if (!body) return null;
+  try {
+    return JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** 제공자가 토큰을 거절했을 때 — 독자 잘못이 아니라 위조이거나 만료다 */
+export function rejectToken(provider: string, why: string): never {
+  throw new UnauthorizedException(`${provider} 로그인에 실패했어요. ${why}`);
+}
