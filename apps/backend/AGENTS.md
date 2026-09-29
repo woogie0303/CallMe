@@ -26,7 +26,7 @@ src/
   sentences/  책에서 옮겨 적은 줄
   items/      어휘 항목과 만남 — 재회가 일어나는 곳
   asks/       문장을 통째로 묻는 일 (anthropic/ 안에 모델 호출 하나)
-  retells/    챕터를 제 말로 옮겨 적은 것과 고쳐준 문장
+  retells/    챕터를 제 말로 옮겨 적어 남긴 것
   reading/    하루에 몇 쪽 읽었는지 — 진도가 앞으로 갈 때 저절로 쌓인다
 ```
 
@@ -95,11 +95,9 @@ DELETE /api/asks/:id              질문만 지운다. 문장은 남는다
 
 GET    /api/reading/week          이레치 날짜와 쪽수 · 읽은 날 · 연속 일수
 
-GET    /api/retells/quota          질문과 따로 센다
-POST   /api/retells                옮겨 적은 글은 답을 못 받아도 남는다
+POST   /api/retells                옮겨 적은 글을 남긴다
 GET    /api/retells ?bookId=
 GET    /api/retells/:id
-POST   /api/retells/:id/resolve
 DELETE /api/retells/:id
 
 POST   /api/items                 담기 — 이미 있으면 재회로 돌아온다

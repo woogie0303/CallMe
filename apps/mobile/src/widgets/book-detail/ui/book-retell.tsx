@@ -39,13 +39,8 @@ export function BookRetell({
         <Quote numberOfLines={3} style={styles.draft}>
           {session.draft}
         </Quote>
-        <AppText style={styles.meta}>
-          {session.status === 'pending'
-            ? `아직 답을 기다리는 중이에요 · ${session.pendingReason ?? ''}`
-            : `고쳐준 곳 ${session.revisions.length}군데 · 쓸 수 있었던 표현 ${session.missedTerms.length}개`}
-        </AppText>
       </AltPanel>
-      <ActionButton label="고친 문장 다시 보기" variant="subtle" onPress={onOpen} />
+      <ActionButton label="새로 옮겨 적기" variant="subtle" onPress={onOpen} />
     </View>
   );
 }
@@ -55,6 +50,5 @@ const styles = StyleSheet.create({
   panel: { padding: 16, gap: 8 },
   chapter: { ...type.caption1, color: color.text.meta },
   draft: { fontSize: 14, lineHeight: 21, color: color.text.body },
-  meta: { ...type.caption2, color: color.text.meta },
   empty: { gap: 4 },
 });
