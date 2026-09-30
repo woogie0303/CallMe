@@ -59,7 +59,7 @@ export function DrawerList({
       {isPending ? (
         <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
       ) : error ? (
-        <EmptyState mark="quiet" title="목록을 불러오지 못했어요" body={error.message} />
+        <EmptyState mark="blocked" title="목록을 불러오지 못했어요" body={error.message} />
       ) : rows.length ? (
         <View style={styles.list}>
           {rows.map((row) => (
@@ -95,7 +95,7 @@ export function DrawerList({
         </View>
       ) : (
         <EmptyState
-          mark={needle ? 'quiet' : 'sentence'}
+          mark={needle ? 'not-found' : 'empty'}
           title={
             needle
               ? `'${query}'와 맞는 문장이 없어요`

@@ -76,7 +76,7 @@ export default function ReadingReportScreen() {
           <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
         ) : !allPages ? (
           <EmptyState
-            mark="quiet"
+            mark="no-history"
             title="아직 읽은 기록이 없어요"
             body="읽은 데까지 표시를 옮기면 그만큼이 여기 쌓여요."
           />

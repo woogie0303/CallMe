@@ -8,7 +8,7 @@ import { useReader } from '@/entities/reader/api/reader.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, gutter, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
-import { ActionButton, AltPanel, AppText, DisclosureRow, ProgressBar } from '@/shared/ui';
+import { ActionButton, AltPanel, AppText, DisclosureRow, Mark, ProgressBar } from '@/shared/ui';
 
 /**
  * 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들.
@@ -64,11 +64,16 @@ export default function MyScreen() {
             </AppText>
           </View>
           <ProgressBar value={quota ? quota.used / Math.max(1, quota.limit) : 0} />
-          <AppText style={styles.quotaHint}>
-            {left > 0
-              ? `${left}번 남았어요. 다 써도 문장은 그대로 담겨요.`
-              : '다 쓰셨어요. 담은 문장은 다음 달에 자동으로 풀려요.'}
-          </AppText>
+          {left > 0 ? (
+            <AppText style={styles.quotaHint}>{`${left}번 남았어요. 다 써도 문장은 그대로 담겨요.`}</AppText>
+          ) : (
+            <View style={styles.quotaDone}>
+              <Mark name="quota-done" size={40} />
+              <AppText style={styles.quotaHint}>
+                다 쓰셨어요. 담은 문장은 다음 달에 자동으로 풀려요.
+              </AppText>
+            </View>
+          )}
         </AltPanel>
 
         <AltPanel style={styles.statsPanel}>
@@ -81,6 +86,17 @@ export default function MyScreen() {
         <View style={styles.exit}>
           <ActionButton label="로그아웃" variant="subtle" onPress={confirmSignOut} />
         </View>
+
+        {/* 개발 빌드에서만 — 캐릭터 9개를 한 번에 확인하는 자리, 출시에는 안 나간다 */}
+        {__DEV__ ? (
+          <View style={styles.exit}>
+            <ActionButton
+              label="캐릭터 9개 보기 (dev)"
+              variant="subtle"
+              onPress={() => router.push('/dev-marks')}
+            />
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -106,7 +122,8 @@ const styles = StyleSheet.create({
   quotaHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   quotaLabel: { ...type.label2, fontWeight: '700', color: color.text.primary },
   quotaValue: { ...type.label2, color: color.text.meta },
-  quotaHint: { ...type.caption2, color: color.text.secondary },
+  quotaHint: { ...type.caption2, color: color.text.secondary, flex: 1 },
+  quotaDone: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
   statsPanel: { padding: 18, gap: 14 },
   row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },

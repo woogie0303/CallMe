@@ -22,7 +22,7 @@ export { PageInput } from './page-input';
 export { PageThumb } from './page-thumb';
 export { ProgressBar } from './progress-bar';
 export { EmptyState } from './empty-state';
-export { Mark, type MarkName } from './marks';
+export { Mark, MARK_NAMES, type MarkName } from './marks';
 export { HeaderAction, ScreenHeader } from './screen-header';
 export { SectionHeader } from './section-header';
 export { SectionSwitch, type SectionOption } from './section-switch';

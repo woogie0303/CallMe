@@ -6,7 +6,7 @@ import { Mark, type MarkName } from './marks';
 
 /**
  * 데이터가 없는 자리. 글만 있으면 화면이 덜 만들어진 것처럼 보인다 —
- * 표시 하나를 먼저 두고, 그 아래에 짧게만 적는다.
+ * 캐릭터를 먼저 두고, 그 아래에 짧게만 적는다.
  */
 export function EmptyState({
   mark,
@@ -22,7 +22,7 @@ export function EmptyState({
 }) {
   return (
     <View style={[styles.wrap, compact ? styles.compact : null]}>
-      <Mark name={mark} size={compact ? 44 : 56} />
+      <Mark name={mark} size={compact ? 84 : 112} />
       <AppText style={styles.title}>{title}</AppText>
       {body ? <AppText style={styles.body}>{body}</AppText> : null}
     </View>

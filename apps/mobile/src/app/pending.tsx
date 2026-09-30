@@ -6,7 +6,7 @@ import { usePendingAsks, useAskQuota, useResolveAsk } from '@/entities/ask/api/a
 import { toBook } from '@/entities/book/api/book.api';
 import { color, gutter, type } from '@/shared/config';
 import { savedLabel } from '@/shared/lib/date';
-import { ActionButton, AltPanel, AppText, Icon, InkPanel, ScreenHeader } from '@/shared/ui';
+import { ActionButton, AltPanel, AppText, Icon, InkPanel, Mark, ScreenHeader } from '@/shared/ui';
 import { PendingList } from '@/widgets/pending-asks/ui/pending-list';
 
 /**
@@ -34,6 +34,7 @@ export default function PendingScreen() {
         style={styles.scroll}>
         {/* 마지막 하나를 풀고 나면 0개가 된다 — 그때 '0개가 기다린다'고 하지 않는다 */}
         <InkPanel style={styles.hero}>
+          <Mark name={pending.length ? 'waiting' : 'empty'} size={88} />
           <AppText style={styles.heroTitle}>
             {pending.length
               ? `문장 ${pending.length}개가\n답을 기다리고 있어요`

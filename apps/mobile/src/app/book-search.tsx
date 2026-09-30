@@ -85,13 +85,13 @@ export default function BookSearchScreen() {
             <View style={styles.empty}>
               {isError ? (
                 <EmptyState
-                  mark="quiet"
+                  mark="blocked"
                   title="책 검색이 잠시 막혔어요"
                   body="잠시 뒤에 다시 찾아보시거나, 직접 입력해 주세요."
                 />
               ) : (
                 <EmptyState
-                  mark="quiet"
+                  mark="no-results"
                   title="찾는 책이 없어요"
                   body="원문 제목이나 지은이 영문 표기로 다시 찾아보세요."
                 />
