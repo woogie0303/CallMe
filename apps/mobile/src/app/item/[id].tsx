@@ -28,6 +28,9 @@ export default function ItemScreen() {
             detail={detail}
             twinTerm={twin?.item.term}
             onOpenItem={(next) => router.push({ pathname: '/item/[id]', params: { id: next } })}
+            onOpenSentence={(sentenceId) =>
+              router.push({ pathname: '/sentence/[id]', params: { id: sentenceId } })
+            }
           />
         ) : (
           <AppText style={styles.missing}>

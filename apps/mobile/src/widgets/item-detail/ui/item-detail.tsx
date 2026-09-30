@@ -1,11 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
 import { toBook } from '@/entities/book/api/book.api';
-import { SpineEdge } from '@/entities/book/ui/spine-edge';
+import { CoverThumb } from '@/entities/book/ui/cover-thumb';
 import type { ApiItemDetail } from '@/shared/api/types';
 import { accent, color, type } from '@/shared/config';
 import { daysBetween, gapLabel, savedLabel } from '@/shared/lib/date';
-import { AltPanel, AppText, Chip, Icon, InkPanel, Quote, Tap, emphasis } from '@/shared/ui';
+import { AltPanel, AppText, Icon, InkPanel, Quote, Tap, emphasis } from '@/shared/ui';
 
 /**
  * 항목 하나의 전부. 위에는 뜻, 아래에는 이걸 만난 문장들이 시간순으로 선다 —
@@ -15,11 +15,14 @@ export function ItemDetail({
   detail,
   twinTerm,
   onOpenItem,
+  onOpenSentence,
 }: {
   detail: ApiItemDetail;
   /** 헷갈리는 짝의 표제형. 짝이 있을 때만 따로 받아온다. */
   twinTerm?: string;
   onOpenItem?: (id: string) => void;
+  /** 만난 문장을 누르면 서랍에서 누른 것과 같은 문장 화면으로 간다 */
+  onOpenSentence?: (sentenceId: string) => void;
 }) {
   const { item } = detail;
   /** 문장을 못 찾은 만남은 그릴 것이 없다 */
@@ -47,8 +50,8 @@ export function ItemDetail({
             <Icon name="clock" size={14} color={color.primary} />
             <AppText style={styles.gapText}>
               {books.length > 1 ? `${books.length}권에서 ` : ''}
-              {encounters.length}번 만났어요 —{' '}
-              <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 또 헷갈렸어요
+              {encounters.length}번 만났어요 — 처음 담은 뒤{' '}
+              <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 다시 만났어요
             </AppText>
           </View>
         ) : null}
@@ -56,23 +59,31 @@ export function ItemDetail({
 
       <View style={styles.section}>
         <AppText style={styles.sectionTitle}>만난 문장</AppText>
-        {encounters.map((encounter, i) => (
-          <View key={encounter.sentenceId} style={styles.card}>
-            <SpineEdge book={toBook(encounter.book)} />
+        {encounters.map((encounter) => (
+          <Tap
+            key={encounter.sentenceId}
+            style={styles.card}
+            onPress={() => onOpenSentence?.(encounter.sentenceId)}
+            accessibilityRole="button"
+            accessibilityLabel={encounter.sentence.text}
+            accessibilityHint="눌러서 이 문장 보기">
+            <CoverThumb book={toBook(encounter.book)} style={styles.thumb} />
             <View style={styles.cardBody}>
-              <View style={styles.cardHead}>
-                <AppText style={styles.ordinal}>{i === 0 ? '처음' : '재회'}</AppText>
-                <AppText style={styles.when}>{savedLabel(encounter.savedAt)}</AppText>
-              </View>
               <Quote style={styles.sentence}>{encounter.sentence.text}</Quote>
               <AppText style={styles.source}>
-                {encounter.book.title} · p.{encounter.sentence.page}
+                {[
+                  encounter.book.title,
+                  encounter.sentence.page ? `p.${encounter.sentence.page}` : null,
+                  savedLabel(encounter.savedAt),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </AppText>
               {encounter.sentence.note ? (
                 <AppText style={styles.note}>{encounter.sentence.note}</AppText>
               ) : null}
             </View>
-          </View>
+          </Tap>
         ))}
       </View>
 
@@ -89,14 +100,6 @@ export function ItemDetail({
         </Tap>
       ) : null}
 
-      <View style={styles.statusRow}>
-        <Chip label={item.status} tone={item.status === '외웠어요' ? 'positive' : 'primary'} />
-        <AppText style={styles.statusHint}>
-          {item.status === '외웠어요'
-            ? '외웠다고 표시해뒀어요'
-            : '아직 헷갈려요 — 다시 만나면 알려드릴게요'}
-        </AppText>
-      </View>
     </View>
   );
 }
@@ -144,10 +147,8 @@ const styles = StyleSheet.create({
     borderColor: color.border.subtle,
     overflow: 'hidden',
   },
+  thumb: { marginTop: 14, marginLeft: 14 },
   cardBody: { flex: 1, gap: 6, paddingVertical: 14, paddingHorizontal: 14, minWidth: 0 },
-  cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  ordinal: { ...type.caption2, fontWeight: '700', color: color.text.meta },
-  when: { ...type.caption2, color: color.text.assistive },
   sentence: { fontSize: 15, lineHeight: 23, color: color.text.primary },
   source: { ...type.caption2, color: color.text.meta },
   note: { ...type.caption1, color: color.text.secondary, marginTop: 2 },
@@ -158,6 +159,4 @@ const styles = StyleSheet.create({
   twinLabel: { flex: 1, ...type.label2, fontWeight: '700', color: color.text.primary },
   twinNote: { ...type.label2, lineHeight: 21, color: color.text.secondary },
 
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  statusHint: { ...type.caption1, color: color.text.assistive },
 });

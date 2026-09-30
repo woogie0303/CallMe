@@ -47,6 +47,11 @@ export class ListAsksQuery {
   @IsIn(ASK_STATUSES)
   status?: AskStatus;
 
+  /** 문장 하나에 붙은 질문 — 문장 상세 화면이 번역과 후보를 가져올 때 */
+  @IsOptional()
+  @IsMongoId()
+  sentenceId?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

@@ -32,7 +32,7 @@ export type SentenceCardData = {
   id: string;
   text: string;
   page?: number;
-  /** 왼쪽 4px 엣지의 색이 여기서 온다 */
+  /** 카드의 표지 썸네일(없으면 책등 색)이 여기서 온다 */
   book?: Book;
   /** 물어본 적이 있는지 — 없으면 밑줄도 번역도 없고, 대신 물어볼 수 있다 */
   asked: boolean;
@@ -40,6 +40,8 @@ export type SentenceCardData = {
   pending?: boolean;
   translation?: string;
   marks: SentenceMark[];
+  /** 하트를 켰는지 — 켜면 표현이 있어도 '마음에 들었던 문장'에 선다 */
+  favorite?: boolean;
   /** 언제 담았는지 — 이미 사람이 읽을 말로 옮겨진 것 */
   savedLabel?: string;
   /** 정렬용 원본 시각. 두 원천을 시간 하나로 합칠 때 쓴다. */

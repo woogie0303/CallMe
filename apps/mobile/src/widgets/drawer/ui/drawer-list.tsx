@@ -2,43 +2,45 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useSentenceFeed } from '@/entities/sentence/api/feed.api';
-import type { SentenceCardData } from '@/entities/sentence/model/types';
 import { SentenceCard } from '@/entities/sentence/ui/sentence-card';
 import { color, type } from '@/shared/config';
 import { AppText, EmptyState, Tap } from '@/shared/ui';
-import { DrawerFilterRow, type DrawerFilter } from './drawer-filter';
+import { DRAWER_MATCH, DrawerFilterRow, type DrawerFilter } from './drawer-filter';
 
-const MATCH: Record<DrawerFilter, (row: SentenceCardData) => boolean> = {
-  '아직 안 물어봤어요': (s) => !s.asked,
-  '표현이 있어요': (s) => s.marks.length > 0,
-  '다시 만났어요': (s) => s.marks.some((m) => (m.met ?? 0) > 1),
+const EMPTY: Record<DrawerFilter, string> = {
+  liked: '아직 마음에 들어 담아둔 문장이 없어요',
+  items: '아직 표현을 담은 문장이 없어요',
+  again: '아직 같은 표현을 두 번 만난 적이 없어요',
 };
 
 /**
  * 서랍 — 담아둔 문장이 시간순으로 쌓인다(ADR-0004).
  *
- * 항목이 아니라 문장이 한 줄씩 선다. 표현은 문장 안의 밑줄이고, 밑줄을 누르면
- * 그 표현이 만난 모든 문장으로 간다 — 재회가 보이는 자리는 거기다.
+ * 항목이 아니라 문장이 한 줄씩 선다. 표현은 문장 안의 밑줄이다. 줄을 누르면 그
+ * 문장 화면으로 가고, 뜻·표현·재회는 거기서 본다 — 목록은 훑어보는 자리다.
  *
  * 거르는 일은 앞에서 한다. 갈래가 전부 같은 목록을 다르게 보는 것뿐이라,
  * 갈래를 바꿀 때마다 서버에 다시 물어보면 이미 손에 있는 걸 또 받는 셈이다.
  */
 export function DrawerList({
   query,
-  onOpenItem,
-  onAsk,
-  onDelete,
+  onOpen,
 }: {
   /** 검색어 — 문장이나 번역에 들어 있으면 남긴다. 갈래와 함께 걸린다. */
   query?: string;
-  onOpenItem?: (itemId: string) => void;
-  onAsk?: (sentenceId: string) => void;
-  onDelete?: (sentenceId: string) => void;
+  /** liked — '마음에 들었던 문장' 갈래에서 눌렀는지. 문장 화면이 그걸 보고 모양을 고른다. */
+  onOpen?: (sentenceId: string, liked: boolean) => void;
 }) {
-  const [filter, setFilter] = useState<DrawerFilter | undefined>();
+  const [picked, setPicked] = useState<DrawerFilter>();
   const { feed, isPending, error, hasMore, loadingMore, loadMore } = useSentenceFeed();
 
-  const byFilter = filter ? feed.filter(MATCH[filter]) : feed;
+  /**
+   * 고르기 전에는 표현이 담긴 쪽을 먼저 편다 — 서랍의 요지가 거기 있다. 다만
+   * 아직 담은 표현이 하나도 없으면 빈 갈래를 먼저 보이지 않고 문장 쪽을 편다.
+   */
+  const filter: DrawerFilter =
+    picked ?? (feed.some(DRAWER_MATCH.items) || !feed.length ? 'items' : 'liked');
+  const byFilter = feed.filter(DRAWER_MATCH[filter]);
   const needle = query?.trim().toLowerCase();
   /** 번역까지 뒤지는 이유 — 영어가 기억 안 날 때 한국어로 찾는 길은 있어야 한다 */
   const rows = needle
@@ -52,7 +54,7 @@ export function DrawerList({
 
   return (
     <View style={styles.wrap}>
-      <DrawerFilterRow value={filter} onChange={setFilter} />
+      <DrawerFilterRow value={filter} onChange={setPicked} count={byFilter.length} />
 
       {isPending ? (
         <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
@@ -64,19 +66,18 @@ export function DrawerList({
             <SentenceCard
               key={row.id}
               data={row}
-              onOpenItem={onOpenItem}
-              onAsk={onAsk}
-              onDelete={onDelete}
+              onOpen={(id) => onOpen?.(id, filter === 'liked')}
+              showMet={filter === 'again'}
             />
           ))}
 
           {/*
             서버가 한 번에 내주는 만큼만 받아온다 — 예전에는 전 기록이 한
             응답에 실려 왔고, 오래 쓴 독자에서 가장 먼저 깨질 자리였다.
-            거르는 중에는 숨긴다: 손에 있는 것만 걸러 보여주는 것이라
-            '더 보기'가 갈래에 맞는 줄을 더 가져온다는 뜻이 되지 않는다.
+            갈래는 손에 있는 것만 걸러 보여주는 것이라, '더 보기'는 모든
+            갈래에 줄을 더 가져온다. 검색 중에는 숨긴다.
           */}
-          {hasMore && !filter && !needle ? (
+          {hasMore && !needle ? (
             <Tap
               style={styles.more}
               onPress={loadMore}
@@ -98,15 +99,11 @@ export function DrawerList({
           title={
             needle
               ? `'${query}'와 맞는 문장이 없어요`
-              : filter === '다시 만났어요'
-                ? '아직 같은 표현을 두 번 만난 적이 없어요'
-                : filter === '아직 안 물어봤어요'
-                  ? '물어볼 문장이 남아 있지 않아요'
-                  : filter
-                    ? '아직 이 갈래에 담아둔 문장이 없어요'
-                    : '아직 담아둔 문장이 없어요'
+              : feed.length
+                ? EMPTY[filter]
+                : '아직 담아둔 문장이 없어요'
           }
-          body={needle || filter ? undefined : '읽다 막힌 쪽을 찍어서 문장을 담아보세요.'}
+          body={needle || feed.length ? undefined : '읽다 막힌 쪽을 찍어서 문장을 담아보세요.'}
         />
       )}
     </View>

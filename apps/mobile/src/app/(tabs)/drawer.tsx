@@ -1,15 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useCreateAsk } from '@/entities/ask/api/ask.api';
-import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useSentenceFeed } from '@/entities/sentence/api/feed.api';
-import { useDeleteSentence } from '@/entities/sentence/api/sentence.api';
-import { deleteImpact, deleteMessage } from '@/entities/sentence/lib/delete-impact';
 import { color, gutter, type } from '@/shared/config';
-import { AppText, Icon, Tap, emphasis } from '@/shared/ui';
+import { AppText, Icon, Tap } from '@/shared/ui';
 import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
 
 /**
@@ -22,55 +18,15 @@ import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
 export default function DrawerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { feed } = useSentenceFeed();
-  const ask = useCreateAsk();
-  const remove = useDeleteSentence();
-  /** 문장→항목 방향 API가 없어서, 무엇이 함께 사라지는지는 항목 목록을 뒤집어 센다 */
-  const { data: items = [] } = useItems();
-  const unasked = feed.filter((s) => !s.asked).length;
-  const again = feed.filter((s) => s.marks.some((m) => (m.met ?? 0) > 1)).length;
-  /** 답을 기다리는 문장 — 할 일이라 문장이 사는 곳에서 말을 건다 */
-  const waiting = feed.filter((s) => s.pending).length;
+  const { feed, waiting: waitingRows } = useSentenceFeed();
+  /** 답을 기다리는 문장 — 목록엔 없고, 할 일이라 서랍 위에서 말을 건다 */
+  const waiting = waitingRows.length;
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
 
   const closeSearch = () => {
     setSearching(false);
     setQuery('');
-  };
-
-  /** 담아둔 문장을 지금 묻는다 — 문장을 새로 만들지 않고 그 줄에 답을 붙인다 */
-  const askLater = async (sentenceId: string) => {
-    if (ask.isPending) return;
-    try {
-      await ask.mutateAsync({ sentenceId });
-    } catch (error) {
-      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
-    }
-  };
-
-  /**
-   * 지우기는 문장만 지우지 않는다 — 그 문장이 마지막 만남이던 표현은 서랍에서
-   * 함께 사라진다. 묻기 전에 무엇이 사라지는지 세어서 이름까지 말한다.
-   */
-  const confirmDelete = (sentenceId: string) => {
-    if (remove.isPending) return;
-    const impact = deleteImpact(sentenceId, items);
-
-    Alert.alert('이 문장을 지울까요?', deleteMessage(impact), [
-      { text: '그대로 둘게요', style: 'cancel' },
-      {
-        text: '지우기',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(sentenceId);
-          } catch (error) {
-            Alert.alert('지우지 못했어요', error instanceof Error ? error.message : '');
-          }
-        },
-      },
-    ]);
   };
 
   return (
@@ -92,10 +48,7 @@ export default function DrawerScreen() {
           <View style={styles.headText}>
             <AppText style={styles.title}>서랍</AppText>
             <AppText style={styles.summary}>
-              문장 {feed.length}개{unasked > 0 ? ` · 아직 안 물어본 건 ${unasked}개` : ''}
-              {again > 0 ? (
-                <AppText style={emphasis(color.primary)}> · 다시 만난 건 {again}개</AppText>
-              ) : null}
+              문장 {feed.length}개
             </AppText>
           </View>
         )}
@@ -130,9 +83,12 @@ export default function DrawerScreen() {
 
         <DrawerList
           query={query}
-          onOpenItem={(id) => router.push({ pathname: '/item/[id]', params: { id } })}
-          onAsk={askLater}
-          onDelete={confirmDelete}
+          onOpen={(id, liked) =>
+            router.push({
+              pathname: '/sentence/[id]',
+              params: liked ? { id, from: 'liked' } : { id },
+            })
+          }
         />
       </ScrollView>
     </View>

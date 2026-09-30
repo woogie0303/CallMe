@@ -8,6 +8,7 @@ import { Reader } from '../readers/reader.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
 import { Ask, type AskDocument, type Candidate } from './ask.schema';
 import { ModelUnavailable } from '../common/claude';
+import { assertPageInBook } from '../common/page-in-book';
 import { AnswerService, type Answer } from './anthropic/answer.service';
 import { roughSplit, SplitService } from './anthropic/split.service';
 import type { CreateAskDto, ListAsksQuery } from './dto/ask.dto';
@@ -90,6 +91,7 @@ export class AsksService {
   private async capture(owner: Types.ObjectId, dto: CreateAskDto) {
     const book = await this.books.findOne({ _id: dto.bookId, readerId: owner });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
+    assertPageInBook(book, dto.page);
 
     const sentence = await this.sentences.create({
       readerId: owner,
@@ -124,6 +126,7 @@ export class AsksService {
   async list(readerId: string, query: ListAsksQuery): Promise<AskView[]> {
     const filter: Record<string, unknown> = { readerId: new Types.ObjectId(readerId) };
     if (query.status) filter.status = query.status;
+    if (query.sentenceId) filter.sentenceId = new Types.ObjectId(query.sentenceId);
 
     const asks = await this.asks
       .find(filter)

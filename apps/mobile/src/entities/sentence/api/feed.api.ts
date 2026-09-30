@@ -21,7 +21,7 @@ const MAX = 200;
  * 담아둔 문장은 `/sentences?liked=true`에만 있다.
  *
  * `/books`를 따로 받는 이유는 `GET /sentences`가 책을 붙여주지 않아서다.
- * 책등 색이 출처를 대신하는 디자인이라 책이 없으면 줄이 어디서 왔는지 사라진다.
+ * 표지(없으면 책등 색)가 출처를 대신하는 디자인이라 책이 없으면 줄이 어디서 왔는지 사라진다.
  * 합치는 규칙 자체는 `lib/feed.ts`에 있다.
  */
 export function useSentenceFeed() {
@@ -42,12 +42,19 @@ export function useSentenceFeed() {
   const books = useBooks();
   const items = useItems();
 
-  const feed = buildFeed({
+  const all = buildFeed({
     asks: asks.data ?? [],
     liked: liked.data ?? [],
     books: books.data ?? [],
     items: items.data ?? [],
   });
+  /**
+   * 답을 기다리는 문장은 서랍 목록에 세우지 않는다. 서랍 위의 "문장 N개가 답을
+   * 기다리고 있어요"를 누르면 모두 모여 있다 — 목록에도 섞어 두면 같은 문장이 두
+   * 군데에 서고, 아직 뜻도 표현도 없는 줄이 서랍을 채운다. 답이 오면 목록으로 온다.
+   */
+  const feed = all.filter((row) => !row.pending);
+  const waiting = all.filter((row) => row.pending);
   const settled = !asks.isPending && !liked.isPending;
 
   /** 어느 한쪽이라도 상한만큼 받아왔으면 더 있을 수 있다 */
@@ -56,7 +63,9 @@ export function useSentenceFeed() {
 
   return {
     /** 담아둔 문장이 없으면 개발 빌드에서만 가짜 열 줄. 배포에는 안 돈다. */
-    feed: __DEV__ && settled && !feed.length ? sampleFeed() : feed,
+    feed: __DEV__ && settled && !all.length ? sampleFeed() : feed,
+    /** 답을 기다리는 문장 — 목록 대신 서랍 위 한 줄이 알린다 */
+    waiting,
     isPending: asks.isPending || liked.isPending,
     error: asks.error ?? liked.error ?? null,
     hasMore: settled && brimming && limit < MAX,

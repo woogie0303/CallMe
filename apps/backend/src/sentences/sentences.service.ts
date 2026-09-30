@@ -2,11 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Ask } from '../asks/ask.schema';
+import { assertPageInBook } from '../common/page-in-book';
 import { Book } from '../books/book.schema';
 import { LexicalItem } from '../items/lexical-item.schema';
 import { Sentence, type SentenceDocument } from './sentence.schema';
 import type {
   CreateSentenceDto,
+  CreateThoughtDto,
   ListSentencesQuery,
   UpdateSentenceDto,
 } from './dto/sentence.dto';
@@ -28,8 +30,9 @@ export class SentencesService {
 
   async create(readerId: string, dto: CreateSentenceDto): Promise<SentenceDocument> {
     const owner = new Types.ObjectId(readerId);
-    const book = await this.books.exists({ _id: dto.bookId, readerId: owner });
+    const book = await this.books.findOne({ _id: dto.bookId, readerId: owner });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
+    assertPageInBook(book, dto.page);
 
     return this.sentences.create({
       ...dto,
@@ -45,6 +48,9 @@ export class SentencesService {
    *
    * 물어본 문장도 뺀다. 몰라서 물어놓고 아직 아무것도 안 고른 문장은 '좋아서
    * 담아둔 줄'이 아니라 답을 기다리는 줄이다.
+   *
+   * 다만 하트(`favorite`)를 켠 문장은 표현이 딸려 있어도 들어온다 — 독자가
+   * 직접 마음에 든다고 한 줄이다.
    */
   async list(readerId: string, query: ListSentencesQuery): Promise<SentenceDocument[]> {
     const owner = new Types.ObjectId(readerId);
@@ -54,7 +60,10 @@ export class SentencesService {
     if (query.liked) {
       const claimed = await this.items.distinct('encounters.sentenceId', { readerId: owner });
       const asked = await this.asks.distinct('sentenceId', { readerId: owner });
-      filter._id = { $nin: [...claimed, ...asked] };
+      filter.$or = [
+        { _id: { $nin: [...claimed, ...asked] } },
+        { favorite: true },
+      ];
     }
 
     return this.sentences
@@ -78,9 +87,43 @@ export class SentencesService {
     id: string,
     dto: UpdateSentenceDto,
   ): Promise<SentenceDocument> {
+    if (dto.page !== undefined) {
+      const current = await this.find(readerId, id);
+      const book = await this.books.findById(current.bookId);
+      if (book) assertPageInBook(book, dto.page);
+    }
     const sentence = await this.sentences.findOneAndUpdate(
       { _id: id, readerId: new Types.ObjectId(readerId) },
       dto,
+      { new: true },
+    );
+    if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
+    return sentence;
+  }
+
+  /** 생각 하나를 단다 — 맨 아래에 */
+  async addThought(
+    readerId: string,
+    id: string,
+    dto: CreateThoughtDto,
+  ): Promise<SentenceDocument> {
+    const sentence = await this.sentences.findOneAndUpdate(
+      { _id: id, readerId: new Types.ObjectId(readerId) },
+      { $push: { thoughts: { text: dto.text } } },
+      { new: true },
+    );
+    if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
+    return sentence;
+  }
+
+  async removeThought(
+    readerId: string,
+    id: string,
+    thoughtId: string,
+  ): Promise<SentenceDocument> {
+    const sentence = await this.sentences.findOneAndUpdate(
+      { _id: id, readerId: new Types.ObjectId(readerId) },
+      { $pull: { thoughts: { _id: new Types.ObjectId(thoughtId) } } },
       { new: true },
     );
     if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');

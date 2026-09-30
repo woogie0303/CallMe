@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { ObjectIdPipe } from '../common/object-id.pipe';
 import {
   CreateSentenceDto,
+  CreateThoughtDto,
   ListSentencesQuery,
   UpdateSentenceDto,
 } from './dto/sentence.dto';
@@ -46,6 +47,24 @@ export class SentencesController {
     @Body() dto: UpdateSentenceDto,
   ) {
     return this.sentences.update(readerId, id, dto);
+  }
+
+  @Post(':id/thoughts')
+  addThought(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+    @Body() dto: CreateThoughtDto,
+  ) {
+    return this.sentences.addThought(readerId, id, dto);
+  }
+
+  @Delete(':id/thoughts/:thoughtId')
+  removeThought(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+    @Param('thoughtId', ObjectIdPipe) thoughtId: string,
+  ) {
+    return this.sentences.removeThought(readerId, id, thoughtId);
   }
 
   @Delete(':id')

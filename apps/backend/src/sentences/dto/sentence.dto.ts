@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -43,6 +44,17 @@ export class UpdateSentenceDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  favorite?: boolean;
+}
+
+export class CreateThoughtDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(1000)
+  text!: string;
 }
 
 export class ListSentencesQuery {
@@ -50,7 +62,7 @@ export class ListSentencesQuery {
   @IsMongoId()
   bookId?: string;
 
-  /** true면 어휘 항목이 딸리지 않은 문장만 — 그냥 좋아서 담아둔 줄 */
+  /** true면 마음에 든 문장만 — 항목이 딸리지 않은 줄과, 하트를 켠 줄 */
   @IsOptional()
   @ToBoolean()
   @IsBoolean()

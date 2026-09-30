@@ -13,7 +13,7 @@ import type { SentenceCardData, SentenceMark } from '../model/types';
  * 아무것도 부르지 않는다(그래서 `toBook`도 쓰지 않고 `books`로 받아 맞춘다).
  *
  * 책은 언제나 `books`에서 찾는다. 질문 응답에도 책이 붙어 오지만 출처가 둘이면
- * 같은 책이 두 모양으로 그려질 수 있고, 책등 색이 곧 출처인 디자인에서 그건
+ * 같은 책이 두 모양으로 그려질 수 있고, 표지·책등 색이 곧 출처인 디자인에서 그건
  * 같은 책을 다른 책으로 보이게 만든다.
  */
 export function buildFeed(input: {
@@ -36,6 +36,7 @@ export function buildFeed(input: {
         page: view.sentence.page,
         book: byId.get(view.sentence.bookId),
         asked: true,
+        favorite: view.sentence.favorite,
         pending: !answered,
         translation: answered ? view.ask.translation : undefined,
         marks: marks.get(view.sentence._id) ?? [],
@@ -47,7 +48,7 @@ export function buildFeed(input: {
 
   /**
    * 그냥 담아둔 문장 — 서버가 책을 붙여주지 않아서 여기서 맞춘다.
-   * 책을 못 찾아도 버리지 않는다: 책등 색만 없을 뿐 문장은 내 것이다.
+   * 책을 못 찾아도 버리지 않는다: 표지만 없을 뿐 문장은 내 것이다.
    */
   const kept: SentenceCardData[] = input.liked.map((s) => ({
     id: s._id,
@@ -55,6 +56,7 @@ export function buildFeed(input: {
     page: s.page,
     book: byId.get(s.bookId),
     asked: false,
+    favorite: s.favorite,
     marks: marks.get(s._id) ?? [],
     savedLabel: savedLabel(s.createdAt),
     savedAt: s.createdAt,

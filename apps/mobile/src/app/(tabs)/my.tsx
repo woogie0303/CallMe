@@ -25,7 +25,6 @@ export default function MyScreen() {
   const { data: items = [] } = useItems();
   const { data: quota } = useAskQuota();
   const { data: week } = useReadingWeek();
-  const confused = items.filter((i) => i.status === '헷갈려요').length;
   const again = items.filter((i) => i.met > 1).length;
   const left = quota?.remaining ?? 0;
 
@@ -74,7 +73,6 @@ export default function MyScreen() {
 
         <AltPanel style={styles.statsPanel}>
           <Row label="담아둔 표현" value={`${items.length}개`} />
-          <Row label="아직 헷갈리는 표현" value={`${confused}개`} />
           <Row label="다시 만난 표현" value={`${again}개`} />
           <Row label="이번 주에 읽은 날" value={`${week?.days ?? 0}일`} />
         </AltPanel>
