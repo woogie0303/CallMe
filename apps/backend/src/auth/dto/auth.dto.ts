@@ -1,4 +1,11 @@
-import { IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 /**
  * 들어오는 길이 둘이다.

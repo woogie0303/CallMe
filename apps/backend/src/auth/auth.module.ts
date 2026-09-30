@@ -6,7 +6,10 @@ import { Reader, ReaderSchema } from '../readers/reader.schema';
 import { AuthController } from './auth.controller';
 import { DevLoginController } from './dev-login.controller';
 import { AuthService } from './auth.service';
-import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenSchema,
+} from './schemas/refresh-token.schema';
 import { TokenService } from './token.service';
 
 @Module({

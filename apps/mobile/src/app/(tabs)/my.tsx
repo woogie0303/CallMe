@@ -8,7 +8,14 @@ import { useReader } from '@/entities/reader/api/reader.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, gutter, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
-import { ActionButton, AltPanel, AppText, DisclosureRow, Mark, ProgressBar } from '@/shared/ui';
+import {
+  ActionButton,
+  AltPanel,
+  AppText,
+  DisclosureRow,
+  Mark,
+  ProgressBar,
+} from '@/shared/ui';
 
 /**
  * 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들.
@@ -48,7 +55,8 @@ export default function MyScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         <DisclosureRow
           eyebrow="내 레벨"
           title={reader?.level ?? '—'}
@@ -63,9 +71,13 @@ export default function MyScreen() {
               {quota?.used ?? 0} / {quota?.limit ?? 0}
             </AppText>
           </View>
-          <ProgressBar value={quota ? quota.used / Math.max(1, quota.limit) : 0} />
+          <ProgressBar
+            value={quota ? quota.used / Math.max(1, quota.limit) : 0}
+          />
           {left > 0 ? (
-            <AppText style={styles.quotaHint}>{`${left}번 남았어요. 다 써도 문장은 그대로 담겨요.`}</AppText>
+            <AppText
+              style={styles.quotaHint}
+            >{`${left}번 남았어요. 다 써도 문장은 그대로 담겨요.`}</AppText>
           ) : (
             <View style={styles.quotaDone}>
               <Mark name="quota-done" size={40} />
@@ -84,7 +96,11 @@ export default function MyScreen() {
 
         {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}
         <View style={styles.exit}>
-          <ActionButton label="로그아웃" variant="subtle" onPress={confirmSignOut} />
+          <ActionButton
+            label="로그아웃"
+            variant="subtle"
+            onPress={confirmSignOut}
+          />
         </View>
 
         {/* 개발 빌드에서만 — 캐릭터 9개를 한 번에 확인하는 자리, 출시에는 안 나간다 */}
@@ -119,14 +135,22 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 12 },
 
   quotaPanel: { padding: 18, gap: 10 },
-  quotaHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  quotaHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   quotaLabel: { ...type.label2, fontWeight: '700', color: color.text.primary },
   quotaValue: { ...type.label2, color: color.text.meta },
   quotaHint: { ...type.caption2, color: color.text.secondary, flex: 1 },
   quotaDone: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
   statsPanel: { padding: 18, gap: 14 },
-  row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   rowLabel: { ...type.label1, color: color.text.secondary },
   rowValue: { ...type.label1, fontWeight: '700', color: color.text.primary },
 

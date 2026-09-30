@@ -21,7 +21,10 @@ type Me = {
 export const naver: OAuthProvider = {
   name: 'naver',
 
-  async exchange(input: CodeExchange, config: ProviderConfig): Promise<OAuthProfile> {
+  async exchange(
+    input: CodeExchange,
+    config: ProviderConfig,
+  ): Promise<OAuthProfile> {
     const token = await postForm<TokenResponse>(
       '네이버',
       'https://nid.naver.com/oauth2.0/token',
@@ -69,7 +72,8 @@ export const naver: OAuthProvider = {
    * 고치는 길: 네이버가 OIDC(id_token)를 열어주면 `aud`를 대조할 수 있다.
    */
   async verify(input: TokenExchange): Promise<OAuthProfile> {
-    if (!('accessToken' in input)) rejectToken('네이버', '액세스 토큰이 필요해요.');
+    if (!('accessToken' in input))
+      rejectToken('네이버', '액세스 토큰이 필요해요.');
 
     const me = await getJson<Me>(
       '네이버',

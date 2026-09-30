@@ -22,4 +22,4 @@ monorepo.
 - **No dictionary API is integrated at all.** There is no free official EN→KO dictionary:
   국립국어원's API is Korean-headword (wrong direction), Naver's are unofficial scrapers,
   Papago's open API was terminated 2025-03-20, and dictionaryapi.dev returns English
-  definitions — and ranked the *cheque* sense of `make out` first when tested.
+  definitions — and ranked the _cheque_ sense of `make out` first when tested.

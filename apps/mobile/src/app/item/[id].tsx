@@ -16,20 +16,33 @@ export default function ItemScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="서랍" />
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="서랍"
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {isPending ? (
-          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+          <ActivityIndicator
+            style={styles.spinner}
+            color={color.text.assistive}
+          />
         ) : detail ? (
           <ItemDetail
             detail={detail}
             twinTerm={twin?.item.term}
-            onOpenItem={(next) => router.push({ pathname: '/item/[id]', params: { id: next } })}
+            onOpenItem={(next) =>
+              router.push({ pathname: '/item/[id]', params: { id: next } })
+            }
             onOpenSentence={(sentenceId) =>
-              router.push({ pathname: '/sentence/[id]', params: { id: sentenceId } })
+              router.push({
+                pathname: '/sentence/[id]',
+                params: { id: sentenceId },
+              })
             }
           />
         ) : (
@@ -47,5 +60,10 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingBottom: 32 },
   spinner: { paddingTop: 40 },
-  missing: { ...type.label1, color: color.text.secondary, paddingTop: 40, textAlign: 'center' },
+  missing: {
+    ...type.label1,
+    color: color.text.secondary,
+    paddingTop: 40,
+    textAlign: 'center',
+  },
 });

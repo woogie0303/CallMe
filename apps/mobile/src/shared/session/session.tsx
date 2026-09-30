@@ -1,9 +1,20 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import { api, Unauthenticated } from '@/shared/api/client';
 import { clearTokens, readTokens, saveTokens } from '@/shared/api/tokens';
-import type { ProviderName, ReaderView, SignInResult } from '@/shared/api/types';
+import type {
+  ProviderName,
+  ReaderView,
+  SignInResult,
+} from '@/shared/api/types';
 import { devSignIn, prepareSocialSignIn, signInWith } from './oauth';
 
 type Status = 'loading' | 'in' | 'out';
@@ -29,7 +40,8 @@ const SessionContext = createContext<Session | null>(null);
  *
  * 배포 빌드에서는 __DEV__가 거짓이라 절대 돌지 않는다.
  */
-const AUTO_DEV_LOGIN = __DEV__ && process.env.EXPO_PUBLIC_DEV_AUTOLOGIN !== 'false';
+const AUTO_DEV_LOGIN =
+  __DEV__ && process.env.EXPO_PUBLIC_DEV_AUTOLOGIN !== 'false';
 
 /**
  * 로그인한 사람 하나. 화면은 이걸 통해서만 '지금 누구인지'를 안다.
@@ -138,7 +150,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [status, reader, problem, enter, queryClient],
   );
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 export function useSession(): Session {

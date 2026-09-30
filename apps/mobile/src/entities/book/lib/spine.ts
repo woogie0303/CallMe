@@ -18,7 +18,8 @@ const SPINES: readonly (readonly [string, string])[] = [
 
 export function spineFor(title: string): readonly [string, string] {
   let seed = 0;
-  for (const char of title.trim()) seed = (seed * 31 + char.charCodeAt(0)) % 100_003;
+  for (const char of title.trim())
+    seed = (seed * 31 + char.charCodeAt(0)) % 100_003;
   return SPINES[seed % SPINES.length];
 }
 

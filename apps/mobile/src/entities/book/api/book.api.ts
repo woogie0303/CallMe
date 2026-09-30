@@ -68,10 +68,12 @@ export function useReadingBooks() {
         books.find((book) => book.pinned) ??
         [...books].sort((a, b) => time(b.createdAt) - time(a.createdAt))[0];
       const rest = books.filter((book) => book !== hero).sort(byLastRead);
-      return (hero ? [{ ...hero, pinned: true }, ...rest] : rest).map((raw) => ({
-        book: toBook(raw),
-        progress: raw,
-      }));
+      return (hero ? [{ ...hero, pinned: true }, ...rest] : rest).map(
+        (raw) => ({
+          book: toBook(raw),
+          progress: raw,
+        }),
+      );
     },
   });
 }
@@ -109,7 +111,11 @@ export function useCreateBook() {
       const [from, to] = spineFor(input.title);
       return api<ApiBook>('/books', {
         method: 'POST',
-        body: { ...input, spine: [from, to], startedAt: new Date().toISOString() },
+        body: {
+          ...input,
+          spine: [from, to],
+          startedAt: new Date().toISOString(),
+        },
       });
     },
     onSuccess: () => {
@@ -152,7 +158,13 @@ export function useDeleteBook() {
     mutationFn: (id: string) =>
       api<{ deletedSentences: number }>(`/books/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      for (const key of [booksKey, ['reading'], ['sentences'], ['items'], ['asks']]) {
+      for (const key of [
+        booksKey,
+        ['reading'],
+        ['sentences'],
+        ['items'],
+        ['asks'],
+      ]) {
         client.invalidateQueries({ queryKey: key });
       }
     },
@@ -177,7 +189,10 @@ export function useBookSearch(query: string) {
   return useQuery({
     queryKey: ['books', 'search', query],
     enabled: query.trim().length > 1,
-    queryFn: () => api<BookSearchResult[]>(`/books/search?q=${encodeURIComponent(query.trim())}`),
+    queryFn: () =>
+      api<BookSearchResult[]>(
+        `/books/search?q=${encodeURIComponent(query.trim())}`,
+      ),
     /** 같은 말을 다시 치면 캐시로 즉시 보여준다 — 검색은 왔다 갔다 하는 화면이다 */
     staleTime: 60_000,
   });

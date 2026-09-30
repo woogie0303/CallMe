@@ -1,6 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
@@ -40,7 +47,9 @@ export default function AskScreen() {
    * 손대기 전까지는 지난번에 적은 쪽이 들어가 있어서 대개 확인만 하면 된다.
    */
   const lastPage =
-    (current?.book.id === book?.id ? current?.progress.currentPage : undefined) ??
+    (current?.book.id === book?.id
+      ? current?.progress.currentPage
+      : undefined) ??
     book?.currentPage ??
     0;
   const [pageEdit, setPageText] = useState<string | undefined>(params.page);
@@ -103,9 +112,16 @@ export default function AskScreen() {
   const keepOnly = async () => {
     if (!book || !sentence.trim() || !page) return;
     try {
-      await keepSentence.mutateAsync({ bookId: book.id, text: sentence.trim(), page });
+      await keepSentence.mutateAsync({
+        bookId: book.id,
+        text: sentence.trim(),
+        page,
+      });
       recordPage();
-      router.replace({ pathname: '/book/[id]', params: { id: book.id, tab: 'liked' } });
+      router.replace({
+        pathname: '/book/[id]',
+        params: { id: book.id, tab: 'liked' },
+      });
     } catch (error) {
       Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
     }
@@ -114,7 +130,8 @@ export default function AskScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScreenHeader
         leading="close"
         onLeadingPress={() => router.back()}
@@ -130,21 +147,30 @@ export default function AskScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <SentenceField
           value={sentence}
           onChangeText={setSentence}
           onCapture={() =>
-            router.replace(book ? { pathname: '/scan', params: { bookId: book.id } } : '/scan')
+            router.replace(
+              book
+                ? { pathname: '/scan', params: { bookId: book.id } }
+                : '/scan',
+            )
           }
           page={pageText}
           onChangePage={setPageText}
         />
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
         {tooFar ? (
-          <AppText style={styles.needPage}>이 책은 {book?.pages}쪽까지예요.</AppText>
+          <AppText style={styles.needPage}>
+            이 책은 {book?.pages}쪽까지예요.
+          </AppText>
         ) : sentence.trim() && !page ? (
-          <AppText style={styles.needPage}>몇 쪽인지 적어야 담을 수 있어요.</AppText>
+          <AppText style={styles.needPage}>
+            몇 쪽인지 적어야 담을 수 있어요.
+          </AppText>
         ) : null}
       </ScrollView>
 
@@ -174,8 +200,12 @@ const styles = StyleSheet.create({
   quota: { ...type.caption1, fontWeight: '600', color: color.text.meta },
   quotaOut: { color: color.status.cautionary },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: gutter, paddingTop: 4, paddingBottom: 24, gap: 18 },
-
+  content: {
+    paddingHorizontal: gutter,
+    paddingTop: 4,
+    paddingBottom: 24,
+    gap: 18,
+  },
 
   needPage: { ...type.caption1, color: color.status.cautionary, marginTop: -8 },
   footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },

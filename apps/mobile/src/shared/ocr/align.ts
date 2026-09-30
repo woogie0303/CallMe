@@ -25,7 +25,10 @@ export type SentencePlacement = {
  * 공백은 무시하고 맞춘다. 서버가 줄을 이으면서 줄바꿈을 공백으로 바꾸거나
  * 이중 공백을 줄이기 때문에, 글자 그대로 찾으면 대부분 빗나간다.
  */
-export function alignSentences(lines: OcrLine[], sentences: string[]): SentencePlacement[] {
+export function alignSentences(
+  lines: OcrLine[],
+  sentences: string[],
+): SentencePlacement[] {
   /** 이어 붙인 글에서 각 줄이 차지한 구간 */
   const spans: { start: number; end: number }[] = [];
   let joined = '';

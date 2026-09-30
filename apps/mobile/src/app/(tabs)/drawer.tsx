@@ -47,24 +47,28 @@ export default function DrawerScreen() {
         ) : (
           <View style={styles.headText}>
             <AppText style={styles.title}>서랍</AppText>
-            <AppText style={styles.summary}>
-              문장 {feed.length}개
-            </AppText>
+            <AppText style={styles.summary}>문장 {feed.length}개</AppText>
           </View>
         )}
         <Tap
           hitSlop={12}
           onPress={() => (searching ? closeSearch() : setSearching(true))}
           accessibilityRole="button"
-          accessibilityLabel={searching ? '검색 닫기' : '문장 검색'}>
-          <Icon name={searching ? 'close' : 'search'} size={21} color={color.text.primary} />
+          accessibilityLabel={searching ? '검색 닫기' : '문장 검색'}
+        >
+          <Icon
+            name={searching ? 'close' : 'search'}
+            size={21}
+            color={color.text.primary}
+          />
         </Tap>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {/*
           기다리는 문장은 오류가 아니라 상태다(ADR-0003). 그래서 경고처럼
           붉게 세우지 않고, 여기서 이어서 할 수 있는 일로만 알린다.
@@ -74,9 +78,12 @@ export default function DrawerScreen() {
             style={styles.waiting}
             onPress={() => router.push('/pending')}
             accessibilityRole="button"
-            accessibilityLabel={`답을 기다리는 문장 ${waiting}개 보기`}>
+            accessibilityLabel={`답을 기다리는 문장 ${waiting}개 보기`}
+          >
             <Icon name="clock" size={15} color={color.primary} />
-            <AppText style={styles.waitingText}>문장 {waiting}개가 답을 기다리고 있어요</AppText>
+            <AppText style={styles.waitingText}>
+              문장 {waiting}개가 답을 기다리고 있어요
+            </AppText>
             <Icon name="chevronRight" size={14} color={color.primary} />
           </Tap>
         ) : null}
@@ -135,5 +142,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: color.primaryBg,
   },
-  waitingText: { flex: 1, ...type.label2, fontWeight: '600', color: color.primary },
+  waitingText: {
+    flex: 1,
+    ...type.label2,
+    fontWeight: '600',
+    color: color.primary,
+  },
 });

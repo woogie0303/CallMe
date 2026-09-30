@@ -1,6 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCreateBook } from '@/entities/book/api/book.api';
@@ -9,7 +16,13 @@ import { color, gutter } from '@/shared/config';
 import { ActionButton, ScreenHeader } from '@/shared/ui';
 import { BookAdd, type BookDraft } from '@/widgets/book-add/ui/book-add';
 
-type Params = { title?: string; author?: string; pages?: string; cover?: string; genre?: Genre };
+type Params = {
+  title?: string;
+  author?: string;
+  pages?: string;
+  cover?: string;
+  genre?: Genre;
+};
 
 /**
  * 02 책 등록 — 읽고 있는 책을 서가에 들인다.
@@ -43,7 +56,8 @@ export default function BookAddScreen() {
 
   /** 제목·지은이·전체 쪽수가 있어야 시작할 수 있다 — 지금 몇 쪽인지는 없어도 된다 */
   /** 전체 쪽수보다 더 읽을 수는 없다 — 서버도 한 번 더 막는다 */
-  const tooFar = Number(draft.pages) > 0 && Number(draft.currentPage) > Number(draft.pages);
+  const tooFar =
+    Number(draft.pages) > 0 && Number(draft.currentPage) > Number(draft.pages);
   const ready =
     !tooFar &&
     draft.title.trim().length > 0 &&
@@ -65,21 +79,30 @@ export default function BookAddScreen() {
       /** 등록하고 나면 그 책으로 들어간다 — 담기 시작하는 자리가 거기다 */
       router.replace({ pathname: '/book/[id]', params: { id: book._id } });
     } catch (error) {
-      Alert.alert('책을 들이지 못했어요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '책을 들이지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="책 추가" />
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="책 추가"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <BookAdd draft={draft} onChange={setDraft} tooFar={tooFar} />
       </ScrollView>
 

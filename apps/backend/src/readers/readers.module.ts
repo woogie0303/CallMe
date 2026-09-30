@@ -6,7 +6,10 @@ import { ReadersController } from './readers.controller';
 import { ReadersService } from './readers.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Reader.name, schema: ReaderSchema }]), AuthModule],
+  imports: [
+    MongooseModule.forFeature([{ name: Reader.name, schema: ReaderSchema }]),
+    AuthModule,
+  ],
   controllers: [ReadersController],
   providers: [ReadersService],
 })

@@ -56,7 +56,13 @@ export function SentenceDetail({
       {/* 출처 — 어느 책 몇 쪽에서 담았는지 */}
       <View style={styles.source}>
         {row.book ? (
-          <BookCover book={row.book} width={44} height={64} radius={6} showTitle={false} />
+          <BookCover
+            book={row.book}
+            width={44}
+            height={64}
+            radius={6}
+            showTitle={false}
+          />
         ) : null}
         <View style={styles.sourceText}>
           <AppText numberOfLines={2} style={styles.bookTitle}>
@@ -68,7 +74,10 @@ export function SentenceDetail({
             </AppText>
           ) : null}
           <AppText style={styles.meta}>
-            {[row.page ? `p.${row.page}` : null, row.savedLabel ? `${row.savedLabel} 담음` : null]
+            {[
+              row.page ? `p.${row.page}` : null,
+              row.savedLabel ? `${row.savedLabel} 담음` : null,
+            ]
               .filter(Boolean)
               .join(' · ')}
           </AppText>
@@ -107,10 +116,15 @@ export function SentenceDetail({
             onPress={() => setReveal((v) => !v)}
             accessibilityRole="button"
             accessibilityState={{ expanded: reveal }}
-            style={styles.revealRow}>
-            <AppText style={styles.revealLabel}>{reveal ? '뜻 닫기' : '뜻 보기'}</AppText>
+            style={styles.revealRow}
+          >
+            <AppText style={styles.revealLabel}>
+              {reveal ? '뜻 닫기' : '뜻 보기'}
+            </AppText>
           </Tap>
-          {reveal ? <AppText style={styles.translationText}>{row.translation}</AppText> : null}
+          {reveal ? (
+            <AppText style={styles.translationText}>{row.translation}</AppText>
+          ) : null}
         </View>
       ) : null}
 
@@ -126,7 +140,8 @@ export function SentenceDetail({
                 style={styles.itemRow}
                 onPress={() => onOpenItem(item.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`${item.term}, 만난 문장 모두 보기`}>
+                accessibilityLabel={`${item.term}, 만난 문장 모두 보기`}
+              >
                 <View style={styles.itemText}>
                   <Quote style={styles.term}>{item.term}</Quote>
                   <AppText style={styles.meaning}>{item.meaning}</AppText>
@@ -156,7 +171,8 @@ export function SentenceDetail({
                 <AppText style={styles.meaning}>{candidate.meaning}</AppText>
                 {candidate.existing ? (
                   <AppText style={styles.others}>
-                    서랍에 있어요 · {candidate.existing.met}번 만남 — 담으면 또 만난 거예요
+                    서랍에 있어요 · {candidate.existing.met}번 만남 — 담으면 또
+                    만난 거예요
                   </AppText>
                 ) : null}
               </View>
@@ -165,7 +181,8 @@ export function SentenceDetail({
                 onPress={() => onSave(candidate)}
                 disabled={savingTerm !== undefined}
                 accessibilityRole="button"
-                accessibilityLabel={`${candidate.term} 담기`}>
+                accessibilityLabel={`${candidate.term} 담기`}
+              >
                 <AppText style={styles.saveLabel}>
                   {savingTerm === candidate.term ? '담는 중' : '담기'}
                 </AppText>
@@ -214,7 +231,12 @@ const styles = StyleSheet.create({
   translationText: { ...type.body2Reading, color: color.text.body },
 
   section: { gap: 4 },
-  sectionTitle: { ...type.caption1, fontWeight: '700', color: color.text.secondary, marginBottom: 4 },
+  sectionTitle: {
+    ...type.caption1,
+    fontWeight: '700',
+    color: color.text.secondary,
+    marginBottom: 4,
+  },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -224,7 +246,12 @@ const styles = StyleSheet.create({
     borderBottomColor: color.border.subtle,
   },
   itemText: { flex: 1, minWidth: 0, gap: 4 },
-  term: { fontSize: 16, lineHeight: 22, fontWeight: '600', color: color.text.primary },
+  term: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: color.text.primary,
+  },
   meaning: { ...type.label2, lineHeight: 20, color: color.text.body },
   others: { ...type.caption2, color: color.primary },
 
@@ -235,5 +262,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.primaryTint,
   },
   saveLabel: { ...type.caption1, fontWeight: '700', color: color.primary },
-
 });

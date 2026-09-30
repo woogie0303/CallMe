@@ -10,15 +10,17 @@ import {
 } from '@nestjs/common';
 import { CurrentReader } from '../common/current-reader.decorator';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
-import { PROVIDERS as PROVIDER_NAMES, type ProviderName } from '../readers/reader.schema';
+import {
+  PROVIDERS as PROVIDER_NAMES,
+  type ProviderName,
+} from '../readers/reader.schema';
 import { AuthService } from './auth.service';
 import { ExchangeCodeDto, RefreshDto } from './dto/auth.dto';
 import { TokenService } from './token.service';
 
-const ProviderEnum = Object.fromEntries(PROVIDER_NAMES.map((p) => [p, p])) as Record<
-  ProviderName,
-  ProviderName
->;
+const ProviderEnum = Object.fromEntries(
+  PROVIDER_NAMES.map((p) => [p, p]),
+) as Record<ProviderName, ProviderName>;
 
 /**
  * 회원가입과 로그인이 같은 문 하나로 들어온다. 처음 온 소셜 계정이면 독자를

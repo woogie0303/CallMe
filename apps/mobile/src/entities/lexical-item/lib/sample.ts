@@ -29,7 +29,12 @@ const BOOKS: Book[] = [
   mockBook('normal', 'Normal People', 'Sally Rooney', 266),
 ];
 
-function mockBook(id: string, title: string, author: string, pages: number): Book {
+function mockBook(
+  id: string,
+  title: string,
+  author: string,
+  pages: number,
+): Book {
   return { id: `sample-${id}`, title, author, pages, spine: spineFor(title) };
 }
 
@@ -76,7 +81,8 @@ const SEEDS: Seed[] = [
     term: 'come to terms with',
     surface: 'come to terms with',
     meaning: '(힘든 일을) 받아들이게 되다',
-    sentence: 'She had never quite come to terms with what happened that summer.',
+    sentence:
+      'She had never quite come to terms with what happened that summer.',
     page: 152,
     book: BOOKS[1],
     met: 2,

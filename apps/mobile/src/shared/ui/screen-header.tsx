@@ -36,7 +36,9 @@ export function ScreenHeader({
     );
 
   return (
-    <View style={[styles.row, { paddingTop: insets.top + 6, paddingBottom: gap }]}>
+    <View
+      style={[styles.row, { paddingTop: insets.top + 6, paddingBottom: gap }]}
+    >
       <View style={styles.side}>
         {lead ? (
           <Tap
@@ -45,8 +47,13 @@ export function ScreenHeader({
             accessibilityRole="button"
             /* 그림뿐인 단추라 읽어줄 이름을 따로 준다 */
             accessibilityLabel={
-              leading === 'back' ? '뒤로' : leading === 'close' ? '닫기' : undefined
-            }>
+              leading === 'back'
+                ? '뒤로'
+                : leading === 'close'
+                  ? '닫기'
+                  : undefined
+            }
+          >
             {lead}
           </Tap>
         ) : null}
@@ -80,8 +87,15 @@ export function HeaderAction({
   onPress?: () => void;
 }) {
   return (
-    <Tap hitSlop={12} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      <AppText style={[type.label2, { fontWeight: '600', color: tone }]}>{label}</AppText>
+    <Tap
+      hitSlop={12}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <AppText style={[type.label2, { fontWeight: '600', color: tone }]}>
+        {label}
+      </AppText>
     </Tap>
   );
 }

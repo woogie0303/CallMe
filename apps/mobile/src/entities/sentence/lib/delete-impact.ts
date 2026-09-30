@@ -18,12 +18,17 @@ export type DeleteImpact = {
  *
  * 문장→항목 방향 API가 없어서 항목 목록을 뒤집어 센다.
  */
-export function deleteImpact(sentenceId: string, items: ItemSummary[]): DeleteImpact {
+export function deleteImpact(
+  sentenceId: string,
+  items: ItemSummary[],
+): DeleteImpact {
   const removed: string[] = [];
   const kept: string[] = [];
 
   for (const item of items) {
-    const meets = item.encounters.filter((met) => met.sentenceId === sentenceId).length;
+    const meets = item.encounters.filter(
+      (met) => met.sentenceId === sentenceId,
+    ).length;
     if (!meets) continue;
     /** 이 문장이 그 항목의 마지막 만남이면 항목도 같이 간다 */
     if (meets >= item.encounters.length) removed.push(item.term);
@@ -37,7 +42,10 @@ export function deleteImpact(sentenceId: string, items: ItemSummary[]): DeleteIm
 const SHOWN = 3;
 
 function name(terms: string[]): string {
-  const head = terms.slice(0, SHOWN).map((t) => `‘${t}’`).join(', ');
+  const head = terms
+    .slice(0, SHOWN)
+    .map((t) => `‘${t}’`)
+    .join(', ');
   const rest = terms.length - SHOWN;
   return rest > 0 ? `${head} 외 ${rest}개` : head;
 }

@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  SlideInDown,
+  SlideOutDown,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { color, gutter, ink } from '../config';
@@ -23,7 +27,8 @@ export function SheetPanel({ children }: { children: ReactNode }) {
     <Animated.View
       entering={SlideInDown.duration(240)}
       exiting={SlideOutDown.duration(160)}
-      style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
+      style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
+    >
       {/* 닫기 표시 대신 여기가 '내릴 수 있다'고 말한다 */}
       <View style={styles.grip} />
       <View style={styles.options}>{children}</View>
@@ -35,9 +40,18 @@ export function SheetPanel({ children }: { children: ReactNode }) {
  * 바깥이 곧 닫기다. 눈에는 그림자일 뿐이지만 스크린 리더에는 단추여야
  * 한다 — 닫기 표시가 없으니 여기 말고는 나갈 길을 읽어줄 데가 없다.
  */
-export function SheetBackdrop({ onClose, hint }: { onClose: () => void; hint?: string }) {
+export function SheetBackdrop({
+  onClose,
+  hint,
+}: {
+  onClose: () => void;
+  hint?: string;
+}) {
   return (
-    <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
+    <Animated.View
+      entering={FadeIn.duration(180)}
+      style={StyleSheet.absoluteFill}
+    >
       <Tap
         style={StyleSheet.absoluteFill}
         onPress={onClose}
@@ -60,7 +74,12 @@ export function OptionSheet({
   children: ReactNode;
 }) {
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+    >
       <View style={styles.root}>
         {visible ? (
           <>

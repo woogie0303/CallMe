@@ -49,19 +49,28 @@ export class AsksController {
   }
 
   @Get(':id')
-  find(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  find(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.asks.find(readerId, id);
   }
 
   /** 기다리던 질문을 다시 물어본다 */
   @Post(':id/resolve')
   @HttpCode(200)
-  resolve(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  resolve(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.asks.resolve(readerId, id);
   }
 
   @Delete(':id')
-  remove(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  remove(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.asks.remove(readerId, id);
   }
 }

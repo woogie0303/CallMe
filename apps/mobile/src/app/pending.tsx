@@ -2,11 +2,23 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { usePendingAsks, useAskQuota, useResolveAsk } from '@/entities/ask/api/ask.api';
+import {
+  usePendingAsks,
+  useAskQuota,
+  useResolveAsk,
+} from '@/entities/ask/api/ask.api';
 import { toBook } from '@/entities/book/api/book.api';
 import { color, gutter, type } from '@/shared/config';
 import { savedLabel } from '@/shared/lib/date';
-import { ActionButton, AltPanel, AppText, Icon, InkPanel, Mark, ScreenHeader } from '@/shared/ui';
+import {
+  ActionButton,
+  AltPanel,
+  AppText,
+  Icon,
+  InkPanel,
+  Mark,
+  ScreenHeader,
+} from '@/shared/ui';
 import { PendingList } from '@/widgets/pending-asks/ui/pending-list';
 
 /**
@@ -26,12 +38,17 @@ export default function PendingScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="기다리는 문장" />
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="기다리는 문장"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {/* 마지막 하나를 풀고 나면 0개가 된다 — 그때 '0개가 기다린다'고 하지 않는다 */}
         <InkPanel style={styles.hero}>
           <Mark name={pending.length ? 'waiting' : 'empty'} size={88} />
@@ -69,11 +86,14 @@ export default function PendingScreen() {
         <AltPanel style={styles.rewarded}>
           <View style={styles.rewardedHead}>
             <Icon name="sparkle" size={15} color={color.primary} />
-            <AppText style={styles.rewardedTitle}>지금 바로 풀고 싶다면</AppText>
+            <AppText style={styles.rewardedTitle}>
+              지금 바로 풀고 싶다면
+            </AppText>
             <AppText style={styles.soon}>준비 중</AppText>
           </View>
           <AppText style={styles.rewardedBody}>
-            광고를 한 번 보면 질문 3번이 더 생겨요. 읽는 중엔 광고가 나오지 않아요.
+            광고를 한 번 보면 질문 3번이 더 생겨요. 읽는 중엔 광고가 나오지
+            않아요.
           </AppText>
         </AltPanel>
       </ScrollView>
@@ -90,7 +110,8 @@ export default function PendingScreen() {
           variant={pending.length && left > 0 ? 'primary' : 'ink'}
           loading={resolve.isPending}
           onPress={() => {
-            if (pending.length && left > 0 && oldest) resolve.mutate(oldest.ask._id);
+            if (pending.length && left > 0 && oldest)
+              resolve.mutate(oldest.ask._id);
             else router.back();
           }}
         />
@@ -104,11 +125,21 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 16 },
   hero: { padding: 22, gap: 10 },
-  heroTitle: { ...type.heading1, fontWeight: '700', color: color.text.onInk, lineHeight: 30 },
+  heroTitle: {
+    ...type.heading1,
+    fontWeight: '700',
+    color: color.text.onInk,
+    lineHeight: 30,
+  },
   heroBody: { ...type.label2, lineHeight: 21, color: color.text.onInkMuted },
   rewarded: { padding: 16, gap: 10 },
   rewardedHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  rewardedTitle: { flex: 1, ...type.label2, fontWeight: '700', color: color.text.primary },
+  rewardedTitle: {
+    flex: 1,
+    ...type.label2,
+    fontWeight: '700',
+    color: color.text.primary,
+  },
   soon: { ...type.caption2, fontWeight: '600', color: color.text.meta },
   rewardedBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
   footer: { paddingHorizontal: gutter, paddingTop: 12 },

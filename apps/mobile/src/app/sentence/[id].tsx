@@ -24,7 +24,10 @@ import {
   useSentence,
   useSentenceAsk,
 } from '@/entities/sentence/api/sentence.api';
-import { deleteImpact, deleteMessage } from '@/entities/sentence/lib/delete-impact';
+import {
+  deleteImpact,
+  deleteMessage,
+} from '@/entities/sentence/lib/delete-impact';
 import { buildFeed } from '@/entities/sentence/lib/feed';
 import type { ApiCandidate } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
@@ -40,7 +43,10 @@ import {
   TrashIcon,
 } from '@/shared/ui';
 import { SentenceDetail } from '@/widgets/sentence-detail/ui/sentence-detail';
-import { ThoughtInput, ThoughtThread } from '@/widgets/sentence-thoughts/ui/thought-thread';
+import {
+  ThoughtInput,
+  ThoughtThread,
+} from '@/widgets/sentence-thoughts/ui/thought-thread';
 
 /**
  * 문장 하나 — 서랍에서 줄을 누르면 온다.
@@ -102,7 +108,10 @@ export default function SentenceScreen() {
       await addThought.mutateAsync(text);
     } catch (error) {
       stickToEnd.current = false;
-      Alert.alert('남기지 못했어요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '남기지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
       throw error;
     }
   };
@@ -116,7 +125,10 @@ export default function SentenceScreen() {
         onPress: () =>
           removeThought.mutate(thoughtId, {
             onError: (error) =>
-              Alert.alert('지우지 못했어요', error instanceof Error ? error.message : ''),
+              Alert.alert(
+                '지우지 못했어요',
+                error instanceof Error ? error.message : '',
+              ),
           }),
       },
     ]);
@@ -142,7 +154,9 @@ export default function SentenceScreen() {
   /** 누르는 즉시 바뀐 것처럼 보인다 — 서버가 돌아올 때까지 기다리면 두 번 누르게 된다 */
   const hearted =
     always ||
-    (favorite.isPending ? favorite.variables.favorite : Boolean(sentence.data?.favorite));
+    (favorite.isPending
+      ? favorite.variables.favorite
+      : Boolean(sentence.data?.favorite));
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -164,7 +178,10 @@ export default function SentenceScreen() {
       { id, favorite: next },
       {
         onError: (error) =>
-          Alert.alert('바꾸지 못했어요', error instanceof Error ? error.message : ''),
+          Alert.alert(
+            '바꾸지 못했어요',
+            error instanceof Error ? error.message : '',
+          ),
       },
     );
   };
@@ -191,11 +208,15 @@ export default function SentenceScreen() {
   };
 
   /** 이 문장을 만난 항목 — 밑줄(surface)이 없어도 담은 것이면 다 */
-  const saved = items.filter((item) => item.encounters.some((met) => met.sentenceId === id));
+  const saved = items.filter((item) =>
+    item.encounters.some((met) => met.sentenceId === id),
+  );
   const savedTerms = new Set(saved.map((item) => item.term));
   const candidates =
     view?.ask.status === 'answered'
-      ? view.ask.candidates.filter((candidate) => !savedTerms.has(candidate.term))
+      ? view.ask.candidates.filter(
+          (candidate) => !savedTerms.has(candidate.term),
+        )
       : [];
 
   const askNow = async () => {
@@ -235,7 +256,10 @@ export default function SentenceScreen() {
       await remove.mutateAsync(id);
       router.back();
     } catch (error) {
-      Alert.alert('지우지 못했어요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '지우지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
     }
   };
 
@@ -269,7 +293,8 @@ export default function SentenceScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       {/*
         문장 전체에 대한 일(묻기·마음에 든 문장·지우기)은 ⋮ 하나로 접는다 — 책 화면과
         같은 시트다. 한동안 아이콘 셋이 머리에 나란히 섰는데, 문장보다 아이콘이 먼저
@@ -287,7 +312,8 @@ export default function SentenceScreen() {
               hitSlop={10}
               onPress={() => setMenuOpen(true)}
               accessibilityRole="button"
-              accessibilityLabel="이 문장 더 보기">
+              accessibilityLabel="이 문장 더 보기"
+            >
               <MoreIcon size={22} color={color.text.primary} />
             </Tap>
           )
@@ -303,9 +329,13 @@ export default function SentenceScreen() {
           stickToEnd.current = false;
           scroll.current?.scrollToEnd({ animated: true });
         }}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {sentence.isPending ? (
-          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+          <ActivityIndicator
+            style={styles.spinner}
+            color={color.text.assistive}
+          />
         ) : row ? (
           <SentenceDetail
             row={row}
@@ -314,7 +344,9 @@ export default function SentenceScreen() {
             candidates={candidates}
             onSave={saveCandidate}
             savingTerm={savingTerm}
-            onOpenItem={(itemId) => router.push({ pathname: '/item/[id]', params: { id: itemId } })}
+            onOpenItem={(itemId) =>
+              router.push({ pathname: '/item/[id]', params: { id: itemId } })
+            }
             expressions={!threadMode}
           />
         ) : (
@@ -379,7 +411,9 @@ export default function SentenceScreen() {
                   color={hearted ? color.primary : color.text.primary}
                 />
               }
-              title={hearted ? '마음에 든 문장에서 빼기' : '마음에 든 문장에 넣기'}
+              title={
+                hearted ? '마음에 든 문장에서 빼기' : '마음에 든 문장에 넣기'
+              }
               body={
                 hearted
                   ? '담은 표현에는 그대로 남아요.'
@@ -419,5 +453,10 @@ const styles = StyleSheet.create({
     borderTopColor: color.border.subtle,
   },
   spinner: { paddingTop: 40 },
-  missing: { ...type.label1, color: color.text.secondary, paddingTop: 40, textAlign: 'center' },
+  missing: {
+    ...type.label1,
+    color: color.text.secondary,
+    paddingTop: 40,
+    textAlign: 'center',
+  },
 });

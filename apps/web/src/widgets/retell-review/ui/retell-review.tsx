@@ -49,7 +49,10 @@ export function RetellReview() {
           </div>
         </div>
 
-        <div className="hidden self-stretch bg-(--border-on-ink) lg:block" aria-hidden />
+        <div
+          className="hidden self-stretch bg-(--border-on-ink) lg:block"
+          aria-hidden
+        />
 
         <div className="flex flex-col items-start gap-3 lg:items-center">
           <button

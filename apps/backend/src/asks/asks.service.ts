@@ -50,7 +50,9 @@ export class AsksService {
    * 모델이 답하지 않아도 빈손으로 돌려보내지 않는다. 거칠게라도 이어서 준다 —
    * 찍는 일이 실패하면 읽던 흐름이 거기서 끊긴다.
    */
-  async split(lines: string[]): Promise<{ sentences: string[]; rough: boolean }> {
+  async split(
+    lines: string[],
+  ): Promise<{ sentences: string[]; rough: boolean }> {
     const cleaned = lines.map((line) => line.trim()).filter(Boolean);
     if (!cleaned.length) return { sentences: [], rough: false };
 
@@ -84,7 +86,11 @@ export class AsksService {
       status: 'pending',
     });
 
-    return { ask: await this.attempt(readerId, ask, sentence, book), sentence, book };
+    return {
+      ask: await this.attempt(readerId, ask, sentence, book),
+      sentence,
+      book,
+    };
   }
 
   /** 새로 옮겨 적은 문장 — 묻기 전에 먼저 저장된다 */
@@ -105,10 +111,16 @@ export class AsksService {
 
   /** 이미 담아둔 문장 — 책은 그 문장이 알고 있다 */
   private async reuse(owner: Types.ObjectId, sentenceId: string) {
-    const sentence = await this.sentences.findOne({ _id: sentenceId, readerId: owner });
+    const sentence = await this.sentences.findOne({
+      _id: sentenceId,
+      readerId: owner,
+    });
     if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
 
-    const book = await this.books.findOne({ _id: sentence.bookId, readerId: owner });
+    const book = await this.books.findOne({
+      _id: sentence.bookId,
+      readerId: owner,
+    });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
 
     return { sentence, book };
@@ -118,15 +130,23 @@ export class AsksService {
   async resolve(readerId: string, id: string): Promise<AskView> {
     const { ask, sentence, book } = await this.find(readerId, id);
     if (ask.status === 'answered') return { ask, sentence, book };
-    if (!sentence || !book) throw new NotFoundException('그 문장을 찾지 못했어요.');
+    if (!sentence || !book)
+      throw new NotFoundException('그 문장을 찾지 못했어요.');
 
-    return { ask: await this.attempt(readerId, ask, sentence, book), sentence, book };
+    return {
+      ask: await this.attempt(readerId, ask, sentence, book),
+      sentence,
+      book,
+    };
   }
 
   async list(readerId: string, query: ListAsksQuery): Promise<AskView[]> {
-    const filter: Record<string, unknown> = { readerId: new Types.ObjectId(readerId) };
+    const filter: Record<string, unknown> = {
+      readerId: new Types.ObjectId(readerId),
+    };
     if (query.status) filter.status = query.status;
-    if (query.sentenceId) filter.sentenceId = new Types.ObjectId(query.sentenceId);
+    if (query.sentenceId)
+      filter.sentenceId = new Types.ObjectId(query.sentenceId);
 
     const asks = await this.asks
       .find(filter)
@@ -137,7 +157,10 @@ export class AsksService {
   }
 
   async find(readerId: string, id: string): Promise<AskView> {
-    const ask = await this.asks.findOne({ _id: id, readerId: new Types.ObjectId(readerId) });
+    const ask = await this.asks.findOne({
+      _id: id,
+      readerId: new Types.ObjectId(readerId),
+    });
     if (!ask) throw new NotFoundException('그 질문을 찾지 못했어요.');
     const [view] = await this.attach([ask]);
     return view;
@@ -157,7 +180,12 @@ export class AsksService {
       answeredAt: { $gte: startOfMonth(now) },
     });
 
-    return { used, limit, remaining: Math.max(0, limit - used), resetsOn: startOfNextMonth(now) };
+    return {
+      used,
+      limit,
+      remaining: Math.max(0, limit - used),
+      resetsOn: startOfNextMonth(now),
+    };
   }
 
   /** 질문만 지운다. 옮겨 적은 문장은 남는다 — 답이 필요 없어졌을 뿐이다. */
@@ -222,7 +250,10 @@ export class AsksService {
 
     const owner = new Types.ObjectId(readerId);
     const terms = candidates.map((candidate) => candidate.term);
-    const existing = await this.items.find({ readerId: owner, term: { $in: terms } });
+    const existing = await this.items.find({
+      readerId: owner,
+      term: { $in: terms },
+    });
     const byTerm = new Map(existing.map((item) => [item.term, item]));
 
     /** 마지막으로 만난 문장이 어느 책이었는지까지 한 번에 붙인다 */
@@ -230,17 +261,21 @@ export class AsksService {
       const last = item.encounters[item.encounters.length - 1];
       return last ? [last.sentenceId] : [];
     });
-    const sentences = await this.sentences.find({ _id: { $in: lastSentenceIds } });
+    const sentences = await this.sentences.find({
+      _id: { $in: lastSentenceIds },
+    });
     const books = await this.books.find({
       _id: { $in: sentences.map((sentence) => sentence.bookId) },
     });
-    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
-    const titleById = new Map(books.map((b) => [b.id as string, b.title]));
+    const sentenceById = new Map(sentences.map((s) => [s.id, s]));
+    const titleById = new Map(books.map((b) => [b.id, b.title]));
 
     return candidates.map((candidate) => {
       const item = byTerm.get(candidate.term);
       const last = item?.encounters[item.encounters.length - 1];
-      const sentence = last ? sentenceById.get(last.sentenceId.toString()) : undefined;
+      const sentence = last
+        ? sentenceById.get(last.sentenceId.toString())
+        : undefined;
 
       return {
         term: candidate.term,
@@ -252,7 +287,9 @@ export class AsksService {
           ? {
               met: item.encounters.length,
               lastSavedAt: last?.savedAt,
-              lastBookTitle: sentence ? titleById.get(sentence.bookId.toString()) : undefined,
+              lastBookTitle: sentence
+                ? titleById.get(sentence.bookId.toString())
+                : undefined,
             }
           : undefined,
       };
@@ -270,15 +307,17 @@ export class AsksService {
       _id: { $in: sentences.map((sentence) => sentence.bookId) },
     });
 
-    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
-    const bookById = new Map(books.map((b) => [b.id as string, b]));
+    const sentenceById = new Map(sentences.map((s) => [s.id, s]));
+    const bookById = new Map(books.map((b) => [b.id, b]));
 
     return asks.map((ask) => {
       const sentence = sentenceById.get(ask.sentenceId.toString()) ?? null;
       return {
         ask,
         sentence,
-        book: sentence ? (bookById.get(sentence.bookId.toString()) ?? null) : null,
+        book: sentence
+          ? (bookById.get(sentence.bookId.toString()) ?? null)
+          : null,
       };
     });
   }

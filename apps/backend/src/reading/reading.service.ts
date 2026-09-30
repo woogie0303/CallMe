@@ -99,7 +99,9 @@ export class ReadingService {
       { $match: { readerId: owner, day: { $gte: from } } },
       { $group: { _id: '$day', pages: { $sum: '$pages' } } },
     ]);
-    const pagesByDay = new Map(rows.map((row) => [startOfDay(row._id).getTime(), row.pages]));
+    const pagesByDay = new Map(
+      rows.map((row) => [startOfDay(row._id).getTime(), row.pages]),
+    );
 
     const days: ReadingDay[] = [];
     for (let i = 0; i < WINDOW; i += 1) {
@@ -122,12 +124,21 @@ export class ReadingService {
    * 읽었나'를 보기 좋은 단위이고, 그 너머(작년 이맘때 등)는 이 화면이 답할
    * 질문이 아니다 — 이전·다음 버튼으로 달을 옮기면 늘 그 달 전체를 새로 받는다.
    */
-  async month(readerId: string, year: number, month: number): Promise<ReadingDay[]> {
+  async month(
+    readerId: string,
+    year: number,
+    month: number,
+  ): Promise<ReadingDay[]> {
     const from = new Date(year, month - 1, 1);
     const to = new Date(year, month, 1);
 
     const rows = await this.logs.aggregate<{ _id: Date; pages: number }>([
-      { $match: { readerId: new Types.ObjectId(readerId), day: { $gte: from, $lt: to } } },
+      {
+        $match: {
+          readerId: new Types.ObjectId(readerId),
+          day: { $gte: from, $lt: to },
+        },
+      },
       { $group: { _id: '$day', pages: { $sum: '$pages' } } },
     ]);
     const pagesByDay = new Map(
@@ -185,7 +196,11 @@ export class ReadingService {
    */
   private async streak(readerId: Types.ObjectId, today: Date): Promise<number> {
     const read = await this.logs
-      .find({ readerId, day: { $gte: addDays(today, -LOOKBACK) }, pages: { $gt: 0 } })
+      .find({
+        readerId,
+        day: { $gte: addDays(today, -LOOKBACK) },
+        pages: { $gt: 0 },
+      })
       .distinct('day');
 
     const seen = new Set(read.map((day: Date) => startOfDay(day).getTime()));

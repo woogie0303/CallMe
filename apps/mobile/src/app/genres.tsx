@@ -44,8 +44,12 @@ export default function ReadingReportScreen() {
 
   /** 달 비교는 year*12+month 한 수로 — 해가 바뀌는 12월→1월에도 그대로 맞는다 */
   const here = year * 12 + month;
-  const canPrev = range ? here > range.first.year * 12 + range.first.month : false;
-  const canNext = range ? here < range.last.year * 12 + range.last.month : false;
+  const canPrev = range
+    ? here > range.first.year * 12 + range.first.month
+    : false;
+  const canNext = range
+    ? here < range.last.year * 12 + range.last.month
+    : false;
 
   const prevMonth = () => {
     if (month === 1) {
@@ -66,14 +70,22 @@ export default function ReadingReportScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="읽기 기록" />
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="읽기 기록"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {genres.isPending ? (
-          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+          <ActivityIndicator
+            style={styles.spinner}
+            color={color.text.assistive}
+          />
         ) : !allPages ? (
           <EmptyState
             mark="no-history"
@@ -96,7 +108,8 @@ export default function ReadingReportScreen() {
                 <GenreCloud shares={shares} />
               ) : (
                 <AppText style={styles.quiet}>
-                  장르를 정한 책이 아직 없어요. 책을 등록할 때 장르를 고르면 여기 모여요.
+                  장르를 정한 책이 아직 없어요. 책을 등록할 때 장르를 고르면
+                  여기 모여요.
                 </AppText>
               )}
             </View>
@@ -131,16 +144,28 @@ function Stat({ value, label }: { value: string; label: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: gutter, paddingTop: 8, paddingBottom: 40, gap: 24 },
+  content: {
+    paddingHorizontal: gutter,
+    paddingTop: 8,
+    paddingBottom: 40,
+    gap: 24,
+  },
   spinner: { paddingTop: 40 },
 
   stats: { flexDirection: 'row', alignItems: 'center' },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
   statValue: { ...type.heading2, fontWeight: '700', color: color.text.primary },
   statLabel: { ...type.caption2, color: color.text.meta, textAlign: 'center' },
-  statRule: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: color.border.default },
+  statRule: {
+    width: StyleSheet.hairlineWidth,
+    height: 32,
+    backgroundColor: color.border.default,
+  },
 
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.border.default },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border.default,
+  },
 
   section: { gap: 16 },
   sectionTitle: { ...type.heading2, color: color.text.primary },

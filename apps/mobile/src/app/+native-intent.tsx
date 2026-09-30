@@ -12,7 +12,12 @@
  * 가지 않는다 — 앱이 켜져 있으면 지금 화면 그대로, 꺼져 있다가 이 주소로 켜졌으면
  * 처음 화면으로. 로그인이 끝나 세션이 바뀌면 화면은 `_layout`의 문(Gate)이 옮긴다.
  */
-export function redirectSystemPath({ path }: { path: string; initial: boolean }): string | null {
+export function redirectSystemPath({
+  path,
+}: {
+  path: string;
+  initial: boolean;
+}): string | null {
   return isSignInCallback(path) ? null : path;
 }
 

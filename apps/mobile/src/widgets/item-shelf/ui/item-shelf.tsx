@@ -24,14 +24,21 @@ export function ItemShelf({
 }) {
   return (
     <View style={styles.wrap}>
-      {title !== null ? <SectionHeader title={title} aside={`${items.length}개`} /> : null}
+      {title !== null ? (
+        <SectionHeader title={title} aside={`${items.length}개`} />
+      ) : null}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={{ marginRight: -bleed }}
-        contentContainerStyle={[styles.rail, { paddingRight: bleed }]}>
+        contentContainerStyle={[styles.rail, { paddingRight: bleed }]}
+      >
         {items.map((item) => (
-          <ItemCard key={item.id} item={item} onPress={() => onPressItem?.(item.id)} />
+          <ItemCard
+            key={item.id}
+            item={item}
+            onPress={() => onPressItem?.(item.id)}
+          />
         ))}
       </ScrollView>
     </View>

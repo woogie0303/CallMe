@@ -1,9 +1,9 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View } from 'react-native';
 
-import type { Book } from "@/entities/book/model/types";
-import { BookCover } from "@/entities/book/ui/book-cover";
-import type { ReadingProgress } from "@/entities/reading/model/types";
-import { color, shadow, type } from "@/shared/config";
+import type { Book } from '@/entities/book/model/types';
+import { BookCover } from '@/entities/book/ui/book-cover';
+import type { ReadingProgress } from '@/entities/reading/model/types';
+import { color, shadow, type } from '@/shared/config';
 import {
   AppText,
   CameraIcon,
@@ -11,7 +11,7 @@ import {
   ProgressBar,
   Quote,
   Tap,
-} from "@/shared/ui";
+} from '@/shared/ui';
 
 /**
  * 책 한 권을 크게 세우는 판. 홈의 '읽고 있는 책'과 책 화면의 머리가 이걸
@@ -59,8 +59,8 @@ export function BookHero({
           <Tap
             onPress={onPressBook}
             style={styles.titleBlock}
-            accessibilityRole={onPressBook ? "button" : undefined}
-            accessibilityLabel={`${book.pinned ? "홈에 고정한 책, " : ""}${book.title}, ${book.author}`}
+            accessibilityRole={onPressBook ? 'button' : undefined}
+            accessibilityLabel={`${book.pinned ? '홈에 고정한 책, ' : ''}${book.title}, ${book.author}`}
           >
             <Quote style={styles.title}>{book.title}</Quote>
             <AppText style={styles.author}>{book.author}</AppText>
@@ -117,8 +117,8 @@ export function BookHero({
         style={styles.progress}
         onPress={onPressProgress}
         disabled={!onPressProgress}
-        accessibilityRole={onPressProgress ? "button" : undefined}
-        accessibilityHint={onPressProgress ? "읽은 쪽 기록하기" : undefined}
+        accessibilityRole={onPressProgress ? 'button' : undefined}
+        accessibilityHint={onPressProgress ? '읽은 쪽 기록하기' : undefined}
         accessibilityLabel={
           progress && measured
             ? `${progress.totalPages}쪽 중 ${progress.currentPage}쪽까지 읽었어요`
@@ -134,12 +134,12 @@ export function BookHero({
               {measured
                 ? `p.${progress.currentPage} / ${progress.totalPages} · ${Math.round(ratio * 100)}%`
                 : `p.${progress.currentPage}`}
-              {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ""}
+              {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ''}
             </AppText>
           </>
         ) : (
           <AppText style={styles.progressLabel}>
-            {book.pages ? `${book.pages}p` : ""}
+            {book.pages ? `${book.pages}p` : ''}
           </AppText>
         )}
       </Tap>
@@ -155,37 +155,37 @@ const styles = StyleSheet.create({
    * 왼쪽 칸을 표지 높이만큼 늘리고, 그 안에서 제목은 위·버튼은 아래로 벌린다.
    * 표지의 윗변·밑변과 글이 같은 선에서 만나 네모 하나로 읽힌다.
    */
-  row: { flexDirection: "row", gap: 16, alignItems: "stretch" },
-  left: { flex: 1, minWidth: 0, alignSelf: "flex-end", gap: 16 },
+  row: { flexDirection: 'row', gap: 16, alignItems: 'stretch' },
+  left: { flex: 1, minWidth: 0, alignSelf: 'flex-end', gap: 16 },
   /** 표지는 제 높이(200)만 쓴다 — stretch에 딸려 늘어나지 않게 못 박는다 */
-  coverTap: { alignSelf: "flex-start" },
+  coverTap: { alignSelf: 'flex-start' },
   titleBlock: { gap: 4 },
   pinned: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 3,
     marginBottom: 2,
   },
-  pinnedLabel: { ...type.caption2, fontWeight: "700", color: color.primary },
+  pinnedLabel: { ...type.caption2, fontWeight: '700', color: color.primary },
   title: {
     fontSize: 24,
     lineHeight: 31,
-    fontWeight: "600",
+    fontWeight: '600',
     color: color.text.primary,
     letterSpacing: -0.3,
   },
   author: { ...type.label2, color: color.text.secondary },
 
   actions: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 8,
   },
   /** 이름이 붙은 쪽이 주된 행동이다 */
   capture: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 7,
     height: 44,
     paddingHorizontal: 14,
@@ -193,13 +193,13 @@ const styles = StyleSheet.create({
     backgroundColor: color.primary,
     ...shadow.primary,
   },
-  captureLabel: { ...type.label2, fontWeight: "700", color: color.text.onInk },
+  captureLabel: { ...type.label2, fontWeight: '700', color: color.text.onInk },
   /** 곁의 길 — 찍을 수 없을 때 손으로 적는다 */
   write: {
     width: 44,
     height: 44,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 14,
     backgroundColor: color.primaryTint,
   },

@@ -15,7 +15,12 @@ export function ProgressBar({
   fill?: string;
 }) {
   return (
-    <View style={[styles.track, { height, borderRadius: height / 2, backgroundColor: track }]}>
+    <View
+      style={[
+        styles.track,
+        { height, borderRadius: height / 2, backgroundColor: track },
+      ]}
+    >
       <View
         style={{
           width: `${Math.min(1, Math.max(0, value)) * 100}%`,

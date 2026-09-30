@@ -12,7 +12,10 @@ export class RetellsService {
     @InjectModel(Book.name) private readonly books: Model<Book>,
   ) {}
 
-  async create(readerId: string, dto: CreateRetellDto): Promise<RetellDocument> {
+  async create(
+    readerId: string,
+    dto: CreateRetellDto,
+  ): Promise<RetellDocument> {
     const owner = new Types.ObjectId(readerId);
     const book = await this.books.findOne({ _id: dto.bookId, readerId: owner });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
@@ -26,7 +29,9 @@ export class RetellsService {
   }
 
   list(readerId: string, query: ListRetellsQuery): Promise<RetellDocument[]> {
-    const filter: Record<string, unknown> = { readerId: new Types.ObjectId(readerId) };
+    const filter: Record<string, unknown> = {
+      readerId: new Types.ObjectId(readerId),
+    };
     if (query.bookId) filter.bookId = new Types.ObjectId(query.bookId);
     return this.retells.find(filter).sort({ createdAt: -1 }).exec();
   }

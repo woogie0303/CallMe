@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Book, type BookDocument } from '../books/book.schema';
@@ -62,7 +66,10 @@ export class ItemsService {
    */
   async save(readerId: string, dto: SaveItemDto): Promise<SaveResult> {
     const owner = new Types.ObjectId(readerId);
-    const sentence = await this.sentences.findOne({ _id: dto.sentenceId, readerId: owner });
+    const sentence = await this.sentences.findOne({
+      _id: dto.sentenceId,
+      readerId: owner,
+    });
     if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
 
     const term = dto.term.trim();
@@ -74,7 +81,13 @@ export class ItemsService {
         term,
         meaning: dto.meaning,
         register: dto.register,
-        encounters: [{ sentenceId: sentence._id, surface: dto.surface, savedAt: new Date() }],
+        encounters: [
+          {
+            sentenceId: sentence._id,
+            surface: dto.surface,
+            savedAt: new Date(),
+          },
+        ],
       });
       return { item: created, reencountered: false };
     }
@@ -88,7 +101,11 @@ export class ItemsService {
     const first = existing.encounters[0];
     const savedAt = new Date();
 
-    existing.encounters.push({ sentenceId: sentence._id, surface: dto.surface, savedAt });
+    existing.encounters.push({
+      sentenceId: sentence._id,
+      surface: dto.surface,
+      savedAt,
+    });
     existing.status = '헷갈려요';
     await existing.save();
 
@@ -118,14 +135,16 @@ export class ItemsService {
     if (!items.length) return [];
 
     const sentences = await this.sentences.find({
-      _id: { $in: items.flatMap((item) => item.encounters.map((e) => e.sentenceId)) },
+      _id: {
+        $in: items.flatMap((item) => item.encounters.map((e) => e.sentenceId)),
+      },
     });
     const books = await this.books.find({
       _id: { $in: sentences.map((sentence) => sentence.bookId) },
     });
 
-    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
-    const bookById = new Map(books.map((b) => [b.id as string, b]));
+    const sentenceById = new Map(sentences.map((s) => [s.id, s]));
+    const bookById = new Map(books.map((b) => [b.id, b]));
 
     return items.map((item) => {
       const met = item.encounters.flatMap((encounter) => {
@@ -135,7 +154,7 @@ export class ItemsService {
       const crossed = new Map<string, BookDocument>();
       for (const sentence of met) {
         const book = bookById.get(sentence.bookId.toString());
-        if (book) crossed.set(book.id as string, book);
+        if (book) crossed.set(book.id, book);
       }
       const last = met[met.length - 1];
 
@@ -144,18 +163,27 @@ export class ItemsService {
         item,
         books: [...crossed.values()],
         latest: last
-          ? { sentence: last, book: bookById.get(last.bookId.toString()) ?? null }
+          ? {
+              sentence: last,
+              book: bookById.get(last.bookId.toString()) ?? null,
+            }
           : null,
         gapDays:
           encounters.length > 1
-            ? daysBetween(encounters[0].savedAt, encounters[encounters.length - 1].savedAt)
+            ? daysBetween(
+                encounters[0].savedAt,
+                encounters[encounters.length - 1].savedAt,
+              )
             : undefined,
       };
     });
   }
 
   async find(readerId: string, id: string): Promise<LexicalItemDocument> {
-    const item = await this.items.findOne({ _id: id, readerId: new Types.ObjectId(readerId) });
+    const item = await this.items.findOne({
+      _id: id,
+      readerId: new Types.ObjectId(readerId),
+    });
     if (!item) throw new NotFoundException('그 표현을 찾지 못했어요.');
     return item;
   }
@@ -170,23 +198,28 @@ export class ItemsService {
     id: string,
   ): Promise<{ item: LexicalItemDocument; encounters: ResolvedEncounter[] }> {
     const item = await this.find(readerId, id);
-    const sentenceIds = item.encounters.map((encounter) => encounter.sentenceId);
+    const sentenceIds = item.encounters.map(
+      (encounter) => encounter.sentenceId,
+    );
 
     const sentences = await this.sentences.find({ _id: { $in: sentenceIds } });
     const books = await this.books.find({
       _id: { $in: sentences.map((sentence) => sentence.bookId) },
     });
 
-    const sentenceById = new Map(sentences.map((s) => [s.id as string, s]));
-    const bookById = new Map(books.map((b) => [b.id as string, b]));
+    const sentenceById = new Map(sentences.map((s) => [s.id, s]));
+    const bookById = new Map(books.map((b) => [b.id, b]));
 
     const encounters = item.encounters.map((encounter) => {
-      const sentence = sentenceById.get(encounter.sentenceId.toString()) ?? null;
+      const sentence =
+        sentenceById.get(encounter.sentenceId.toString()) ?? null;
       return {
         sentenceId: encounter.sentenceId,
         savedAt: encounter.savedAt,
         sentence,
-        book: sentence ? (bookById.get(sentence.bookId.toString()) ?? null) : null,
+        book: sentence
+          ? (bookById.get(sentence.bookId.toString()) ?? null)
+          : null,
       };
     });
 
@@ -214,10 +247,17 @@ export class ItemsService {
   ): Promise<LexicalItemDocument> {
     const owner = new Types.ObjectId(readerId);
     const item = await this.find(readerId, id);
-    const sentence = await this.sentences.findOne({ _id: dto.sentenceId, readerId: owner });
+    const sentence = await this.sentences.findOne({
+      _id: dto.sentenceId,
+      readerId: owner,
+    });
     if (!sentence) throw new NotFoundException('그 문장을 찾지 못했어요.');
 
-    if (item.encounters.some((encounter) => encounter.sentenceId.equals(sentence._id))) {
+    if (
+      item.encounters.some((encounter) =>
+        encounter.sentenceId.equals(sentence._id),
+      )
+    ) {
       throw new ConflictException('이미 이 문장에서 담아둔 표현이에요.');
     }
 
@@ -242,7 +282,9 @@ export class ItemsService {
     const item = await this.find(readerId, id);
     const target = new Types.ObjectId(sentenceId);
 
-    if (!item.encounters.some((encounter) => encounter.sentenceId.equals(target))) {
+    if (
+      !item.encounters.some((encounter) => encounter.sentenceId.equals(target))
+    ) {
       throw new NotFoundException('그 문장에서 담은 기록이 없어요.');
     }
 

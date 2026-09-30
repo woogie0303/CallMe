@@ -53,7 +53,8 @@ function EditForm({ book }: { book: Book }) {
     genre: book.genre,
   });
 
-  const tooFar = Number(draft.pages) > 0 && Number(draft.currentPage) > Number(draft.pages);
+  const tooFar =
+    Number(draft.pages) > 0 && Number(draft.currentPage) > Number(draft.pages);
   const ready =
     !tooFar &&
     draft.title.trim().length > 0 &&
@@ -73,21 +74,30 @@ function EditForm({ book }: { book: Book }) {
       });
       router.back();
     } catch (error) {
-      Alert.alert('고치지 못했어요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '고치지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="책 수정" />
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="책 수정"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <BookAdd
           draft={draft}
           onChange={setDraft}
@@ -99,7 +109,12 @@ function EditForm({ book }: { book: Book }) {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <ActionButton label="저장하기" disabled={!ready} loading={update.isPending} onPress={save} />
+        <ActionButton
+          label="저장하기"
+          disabled={!ready}
+          loading={update.isPending}
+          onPress={save}
+        />
       </View>
     </KeyboardAvoidingView>
   );

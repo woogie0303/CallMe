@@ -1,4 +1,9 @@
-import { StyleSheet, TextInput, type StyleProp, type TextStyle } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 
 import { color, type } from '../config';
 

@@ -35,7 +35,11 @@ const ENDS = /[.!?…]["'”’»)\]]*$/;
  * 넓힐 경계를 못 찾으면(마침표가 안 읽혔거나 한 쪽이 한 문장일 때) 짚은
  * 그대로 쓴다. 넓히지 못했다고 묻지 못하게 하는 것이 더 나쁘다.
  */
-export function selectWords(words: OcrWord[], a: number, b: number): Selection | null {
+export function selectWords(
+  words: OcrWord[],
+  a: number,
+  b: number,
+): Selection | null {
   if (!words.length) return null;
 
   /** 둘 다 같은 범위로 가둔다 — 한쪽만 가두면 lo가 hi를 넘어 null이 된다 */
@@ -63,7 +67,11 @@ export function selectWords(words: OcrWord[], a: number, b: number): Selection |
  * 짚는 중일 때 미리 보여줄 범위. 첫 낱말만 짚은 상태에서는 아직 넓히지 않는다 —
  * 끝을 정하기도 전에 문장이 통째로 칠해지면 무엇을 고르는 중인지 알 수 없다.
  */
-export function previewWords(words: OcrWord[], a: number, b?: number): Selection | null {
+export function previewWords(
+  words: OcrWord[],
+  a: number,
+  b?: number,
+): Selection | null {
   if (b === undefined) {
     const word = words[a];
     return word ? { from: a, to: a, text: word.text, widened: false } : null;

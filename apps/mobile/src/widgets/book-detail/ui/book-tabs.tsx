@@ -27,6 +27,11 @@ export function BookTabs({
   counts?: Partial<Record<BookTab, number>>;
 }) {
   return (
-    <SectionSwitch options={TABS} value={value} onChange={onChange} count={counts?.[value]} />
+    <SectionSwitch
+      options={TABS}
+      value={value}
+      onChange={onChange}
+      count={counts?.[value]}
+    />
   );
 }

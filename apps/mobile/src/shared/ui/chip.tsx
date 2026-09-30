@@ -12,11 +12,19 @@ const TONES: Record<Tone, { bg: string; fg: string }> = {
 };
 
 /** 사실 하나를 담는 작은 라벨 — 303p, 소설, 난이도 중, 구어체. */
-export function Chip({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
+export function Chip({
+  label,
+  tone = 'neutral',
+}: {
+  label: string;
+  tone?: Tone;
+}) {
   const t = TONES[tone];
   return (
     <View style={[styles.chip, { backgroundColor: t.bg }]}>
-      <AppText style={[type.caption2, styles.label, { color: t.fg }]}>{label}</AppText>
+      <AppText style={[type.caption2, styles.label, { color: t.fg }]}>
+        {label}
+      </AppText>
     </View>
   );
 }

@@ -10,7 +10,10 @@ import { AppTabBar } from '@/widgets/app-tab-bar/ui/app-tab-bar';
  */
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <AppTabBar {...props} />}>
+    <Tabs
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <AppTabBar {...props} />}
+    >
       <Tabs.Screen name="index" options={{ title: '홈' }} />
       <Tabs.Screen name="drawer" options={{ title: '서랍' }} />
       <Tabs.Screen name="my" options={{ title: '마이' }} />

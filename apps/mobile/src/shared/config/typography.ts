@@ -57,7 +57,10 @@ function t(
 }
 
 /** 램프 위에 굵기만 얹을 때 — 크기·행간은 그대로 둔다. */
-export const bold = (style: TextStyle, fontWeight: TextStyle['fontWeight'] = '700'): TextStyle => ({
+export const bold = (
+  style: TextStyle,
+  fontWeight: TextStyle['fontWeight'] = '700',
+): TextStyle => ({
   ...style,
   fontWeight,
 });

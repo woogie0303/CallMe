@@ -42,10 +42,9 @@ export function SentenceCard({
       onPress={() => onOpen?.(data.id)}
       accessibilityRole="button"
       accessibilityLabel={data.text}
-      accessibilityHint="눌러서 뜻과 표현 보기">
-      {data.book ? (
-        <CoverThumb book={data.book} />
-      ) : null}
+      accessibilityHint="눌러서 뜻과 표현 보기"
+    >
+      {data.book ? <CoverThumb book={data.book} /> : null}
 
       <View style={styles.body}>
         <Quote numberOfLines={4} style={styles.sentence}>

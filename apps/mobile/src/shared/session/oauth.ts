@@ -44,7 +44,9 @@ import type { ProviderName, SignInResult } from '@/shared/api/types';
  */
 type KakaoCore = { initializeKakaoSDK: (key: string) => void };
 type KakaoUser = {
-  login: (opts?: { nonce?: string }) => Promise<{ accessToken: string; idToken?: string }>;
+  login: (opts?: {
+    nonce?: string;
+  }) => Promise<{ accessToken: string; idToken?: string }>;
 };
 type NaverSdk = {
   initialize: (p: {
@@ -54,20 +56,28 @@ type NaverSdk = {
     /** 네이버 앱에서 돌아올 URL 스킴 — iOS에서는 이게 없으면 돌아오지 못한다 */
     serviceUrlSchemeIOS?: string;
   }) => void;
-  login: () => Promise<{ successResponse?: { accessToken: string }; failureResponse?: unknown }>;
+  login: () => Promise<{
+    successResponse?: { accessToken: string };
+    failureResponse?: unknown;
+  }>;
 };
 type GoogleSdk = {
   configure: (p: { iosClientId?: string }) => void;
   hasPlayServices: () => Promise<boolean>;
   signIn: () => Promise<
-    { type: 'success'; data: { idToken: string | null } } | { type: 'cancelled' }
+    | { type: 'success'; data: { idToken: string | null } }
+    | { type: 'cancelled' }
   >;
 };
 type AppleSdk = {
   AppleAuthenticationScope: { FULL_NAME: number; EMAIL: number };
   signInAsync: (p: { requestedScopes: number[] }) => Promise<{
     identityToken: string | null;
-    fullName: { givenName: string | null; familyName: string | null; nickname: string | null } | null;
+    fullName: {
+      givenName: string | null;
+      familyName: string | null;
+      nickname: string | null;
+    } | null;
   }>;
 };
 
@@ -89,15 +99,20 @@ const SDK = {
   })(),
   naver: ((): NaverSdk | null => {
     try {
-      return (require('@react-native-seoul/naver-login') as { default: NaverSdk }).default;
+      return (
+        require('@react-native-seoul/naver-login') as { default: NaverSdk }
+      ).default;
     } catch {
       return null;
     }
   })(),
   google: ((): GoogleSdk | null => {
     try {
-      return (require('@react-native-google-signin/google-signin') as { GoogleSignin: GoogleSdk })
-        .GoogleSignin;
+      return (
+        require('@react-native-google-signin/google-signin') as {
+          GoogleSignin: GoogleSdk;
+        }
+      ).GoogleSignin;
     } catch {
       return null;
     }
@@ -204,7 +219,9 @@ export function prepareSocialSignIn(): void {
   });
 
   if (__DEV__) {
-    const off = (['kakao', 'naver', 'google'] as ProviderName[]).filter((p) => !live[p]);
+    const off = (['kakao', 'naver', 'google'] as ProviderName[]).filter(
+      (p) => !live[p],
+    );
     if (off.length) {
       console.log(
         `[oauth] 이 빌드에서 못 쓰는 로그인: ${off.join(', ')} — 개발 빌드(expo run:ios)가 필요해요.`,
@@ -244,8 +261,11 @@ function cancelled(error: unknown): boolean {
   );
 }
 
-export async function signInWith(provider: ProviderName): Promise<SignInResult> {
-  if (!configured(provider)) throw new Error(`${provider} 로그인이 아직 설정되지 않았어요.`);
+export async function signInWith(
+  provider: ProviderName,
+): Promise<SignInResult> {
+  if (!configured(provider))
+    throw new Error(`${provider} 로그인이 아직 설정되지 않았어요.`);
   prepareSocialSignIn();
 
   try {
@@ -256,23 +276,31 @@ export async function signInWith(provider: ProviderName): Promise<SignInResult> 
       body: token,
     });
   } catch (error) {
-    if (error instanceof SignInCancelled || error instanceof SignInFailed) throw error;
+    if (error instanceof SignInCancelled || error instanceof SignInFailed)
+      throw error;
     if (cancelled(error)) throw new SignInCancelled();
     throw new SignInFailed(
-      error instanceof Error ? error.message : `${provider} 로그인을 마치지 못했어요.`,
+      error instanceof Error
+        ? error.message
+        : `${provider} 로그인을 마치지 못했어요.`,
       { provider, raw: String(error).slice(0, 300) },
     );
   }
 }
 
 /** 서버로 보낼 것 — 가능한 곳에서는 idToken, 아니면 accessToken */
-type ProviderToken = ({ idToken: string } | { accessToken: string }) & { nickname?: string };
+type ProviderToken = ({ idToken: string } | { accessToken: string }) & {
+  nickname?: string;
+};
 
 /**
  * Apple이 준 이름을 한 줄로. 한글 이름은 성과 이름을 붙여 쓰고(강동욱), 그 밖에는
  * 이름 먼저 띄어 쓴다(John Smith).
  */
-function joinName(given: string | null, family: string | null): string | undefined {
+function joinName(
+  given: string | null,
+  family: string | null,
+): string | undefined {
   if (!given && !family) return undefined;
   const hangul = /[가-힣]/.test(`${given ?? ''}${family ?? ''}`);
   return hangul
@@ -283,12 +311,18 @@ function joinName(given: string | null, family: string | null): string | undefin
 async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
   if (provider === 'apple') {
     const sdk = SDK.apple;
-    if (!sdk) throw new SignInFailed('이 빌드에 Apple 로그인이 없어요.', { provider });
+    if (!sdk)
+      throw new SignInFailed('이 빌드에 Apple 로그인이 없어요.', { provider });
     const credential = await sdk.signInAsync({
-      requestedScopes: [sdk.AppleAuthenticationScope.FULL_NAME, sdk.AppleAuthenticationScope.EMAIL],
+      requestedScopes: [
+        sdk.AppleAuthenticationScope.FULL_NAME,
+        sdk.AppleAuthenticationScope.EMAIL,
+      ],
     });
     if (!credential.identityToken) {
-      throw new SignInFailed('Apple이 identityToken을 주지 않았어요.', { provider });
+      throw new SignInFailed('Apple이 identityToken을 주지 않았어요.', {
+        provider,
+      });
     }
     /**
      * 이름은 **처음 로그인할 때만** 온다. 두 번째부터는 비어 있고, 서버는 이미
@@ -297,7 +331,9 @@ async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
     const name = credential.fullName;
     return {
       idToken: credential.identityToken,
-      nickname: name?.nickname ?? joinName(name?.givenName ?? null, name?.familyName ?? null),
+      nickname:
+        name?.nickname ??
+        joinName(name?.givenName ?? null, name?.familyName ?? null),
     };
   }
 
@@ -307,7 +343,8 @@ async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
      * 그러면 서버가 '우리 앱 것인지'를 대조할 방법이 사라진다.
      */
     const sdk = SDK.kakaoUser;
-    if (!sdk) throw new SignInFailed('이 빌드에 카카오 로그인이 없어요.', { provider });
+    if (!sdk)
+      throw new SignInFailed('이 빌드에 카카오 로그인이 없어요.', { provider });
     const nonce = Crypto.randomUUID();
     const token = await sdk.login({ nonce });
     if (token.idToken) return { idToken: token.idToken };
@@ -316,7 +353,8 @@ async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
 
   if (provider === 'naver') {
     const sdk = SDK.naver;
-    if (!sdk) throw new SignInFailed('이 빌드에 네이버 로그인이 없어요.', { provider });
+    if (!sdk)
+      throw new SignInFailed('이 빌드에 네이버 로그인이 없어요.', { provider });
     const result = await sdk.login();
     const accessToken = result.successResponse?.accessToken;
     if (!accessToken) {
@@ -329,7 +367,8 @@ async function tokenFrom(provider: ProviderName): Promise<ProviderToken> {
   }
 
   const sdk = SDK.google;
-  if (!sdk) throw new SignInFailed('이 빌드에 구글 로그인이 없어요.', { provider });
+  if (!sdk)
+    throw new SignInFailed('이 빌드에 구글 로그인이 없어요.', { provider });
   await sdk.hasPlayServices();
   const result = await sdk.signIn();
   const idToken = result.type === 'success' ? result.data.idToken : null;

@@ -17,7 +17,9 @@ export async function postForm<T>(
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+    },
     body: form,
   });
 
@@ -41,9 +43,13 @@ async function read<T>(provider: string, response: Response): Promise<T> {
 
   if (!response.ok) {
     if (response.status === 400 || response.status === 401) {
-      throw new UnauthorizedException(`${provider} 로그인에 실패했어요. 다시 시도해 주세요.`);
+      throw new UnauthorizedException(
+        `${provider} 로그인에 실패했어요. 다시 시도해 주세요.`,
+      );
     }
-    throw new BadGatewayException(`${provider}가 응답하지 않아요: ${text.slice(0, 200)}`);
+    throw new BadGatewayException(
+      `${provider}가 응답하지 않아요: ${text.slice(0, 200)}`,
+    );
   }
 
   try {

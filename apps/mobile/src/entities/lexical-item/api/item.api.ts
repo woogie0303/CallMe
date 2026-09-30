@@ -56,7 +56,10 @@ function toSummary(row: ApiItemSummary): ItemSummary {
     meaning: row.item.meaning,
     status: row.item.status,
     met: row.item.encounters.length,
-    encounters: row.item.encounters.map((e) => ({ sentenceId: e.sentenceId, surface: e.surface })),
+    encounters: row.item.encounters.map((e) => ({
+      sentenceId: e.sentenceId,
+      surface: e.surface,
+    })),
     gapDays: row.gapDays,
     books: row.books.map(toBook),
     latest: row.latest
@@ -87,7 +90,9 @@ export function useItems(params?: {
   return useQuery({
     queryKey: [...itemsKey, query],
     queryFn: async () => {
-      const rows = (await api<ApiItemSummary[]>(`/items${query ? `?${query}` : ''}`)).map(toSummary);
+      const rows = (
+        await api<ApiItemSummary[]>(`/items${query ? `?${query}` : ''}`)
+      ).map(toSummary);
       /** 담아둔 것이 없으면 개발 빌드에서만 가짜 열 줄을 그린다. 배포에는 안 돈다. */
       if (__DEV__ && !rows.length && !query) return sampleItems();
       return rows;
@@ -134,7 +139,11 @@ export function useUpdateItem(id: string) {
  */
 export function useTodayItem() {
   const query = useItems();
-  const confused = (query.data ?? []).filter((item) => item.status === '헷갈려요');
-  const today = [...confused].sort((a, b) => (b.gapDays ?? 0) - (a.gapDays ?? 0))[0];
+  const confused = (query.data ?? []).filter(
+    (item) => item.status === '헷갈려요',
+  );
+  const today = [...confused].sort(
+    (a, b) => (b.gapDays ?? 0) - (a.gapDays ?? 0),
+  )[0];
   return { ...query, today };
 }

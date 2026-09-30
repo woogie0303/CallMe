@@ -7,7 +7,10 @@ export const quotaKey = ['asks', 'quota'] as const;
 
 /** 이번 달 남은 질문. 다 써도 문장은 그대로 담긴다. */
 export function useAskQuota() {
-  return useQuery({ queryKey: quotaKey, queryFn: () => api<ApiQuota>('/asks/quota') });
+  return useQuery({
+    queryKey: quotaKey,
+    queryFn: () => api<ApiQuota>('/asks/quota'),
+  });
 }
 
 /** 답을 기다리는 문장들 */
@@ -34,8 +37,7 @@ export function useAsk(id?: string) {
  *   보내야 같은 글이 두 줄이 되지 않는다. 책과 쪽수는 그 문장이 이미 안다.
  */
 export type AskInput =
-  | { bookId: string; text: string; page?: number }
-  | { sentenceId: string };
+  { bookId: string; text: string; page?: number } | { sentenceId: string };
 
 /**
  * 문장을 통째로 묻는다. 답을 못 받아도 실패가 아니다 — 문장은 저장되고
@@ -44,7 +46,8 @@ export type AskInput =
 export function useCreateAsk() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: AskInput) => api<ApiAskView>('/asks', { method: 'POST', body }),
+    mutationFn: (body: AskInput) =>
+      api<ApiAskView>('/asks', { method: 'POST', body }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['sentences'] });
@@ -74,7 +77,8 @@ export function useSplitLines() {
 export function useResolveAsk() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api<ApiAskView>(`/asks/${id}/resolve`, { method: 'POST' }),
+    mutationFn: (id: string) =>
+      api<ApiAskView>(`/asks/${id}/resolve`, { method: 'POST' }),
     onSuccess: () => client.invalidateQueries({ queryKey: asksKey }),
   });
 }

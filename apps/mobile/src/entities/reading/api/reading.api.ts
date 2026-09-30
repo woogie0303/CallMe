@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
 import type { ApiBook } from '@/shared/api/types';
-import type { GenreShare, ReadingCalendarDay, ReadingWeek } from '../model/types';
+import type {
+  GenreShare,
+  ReadingCalendarDay,
+  ReadingWeek,
+} from '../model/types';
 
 type ApiGenreStat = { genre: string; pages: number };
 
@@ -70,7 +74,10 @@ export function useGenreStats() {
     queryFn: async (): Promise<GenreShare[]> => {
       const rows = await api<ApiGenreStat[]>('/reading/genres');
       const total = rows.reduce((sum, row) => sum + row.pages, 0);
-      const [known, unknown] = partition(rows, (row) => row.genre !== '장르 없음');
+      const [known, unknown] = partition(
+        rows,
+        (row) => row.genre !== '장르 없음',
+      );
       return [...known, ...unknown].map((row) => ({
         genre: row.genre,
         pages: row.pages,
@@ -95,7 +102,9 @@ export function useReadingRange() {
   return useQuery({
     queryKey: [...readingKey, 'range'],
     queryFn: async () => {
-      const range = await api<{ first: string; last: string }>('/reading/range');
+      const range = await api<{ first: string; last: string }>(
+        '/reading/range',
+      );
       const first = new Date(range.first);
       const last = new Date(range.last);
       return {
@@ -117,7 +126,10 @@ export function useReadingMonth(year: number, month: number) {
       const rows = await api<{ date: string; pages: number }[]>(
         `/reading/days?year=${year}&month=${month}`,
       );
-      return rows.map((row) => ({ date: new Date(row.date), pages: row.pages }));
+      return rows.map((row) => ({
+        date: new Date(row.date),
+        pages: row.pages,
+      }));
     },
   });
 }
@@ -127,7 +139,10 @@ export function useUpdateProgress(bookId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (currentPage: number) =>
-      api<ApiBook>(`/books/${bookId}`, { method: 'PATCH', body: { currentPage } }),
+      api<ApiBook>(`/books/${bookId}`, {
+        method: 'PATCH',
+        body: { currentPage },
+      }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['books'] });
       client.invalidateQueries({ queryKey: readingKey });

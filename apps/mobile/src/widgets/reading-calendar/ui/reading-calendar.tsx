@@ -45,28 +45,42 @@ export function ReadingCalendar({
   onNextMonth: () => void;
 }) {
   /** 누른 날 — 어느 달에서 눌렀는지를 함께 들고 있어서, 달이 바뀌면 저절로 사라진다 */
-  const [picked, setPicked] = useState<{ key: string; day: ReadingCalendarDay } | null>(null);
+  const [picked, setPicked] = useState<{
+    key: string;
+    day: ReadingCalendarDay;
+  } | null>(null);
   const monthKey = `${year}-${month}`;
   const shown = picked?.key === monthKey ? picked.day : null;
 
   const now = new Date();
   const today = now.toDateString();
-  const label = year === now.getFullYear() ? `${month}월` : `${year}년 ${month}월`;
+  const label =
+    year === now.getFullYear() ? `${month}월` : `${year}년 ${month}월`;
 
   /** 그 달의 칸 — 서버를 기다리지 않고 달만으로 정한다 */
   const count = new Date(year, month, 0).getDate();
-  const pagesByDate = new Map((days ?? []).map((day) => [day.date.toDateString(), day.pages]));
-  const monthDays: ReadingCalendarDay[] = Array.from({ length: count }, (_, i) => {
-    const date = new Date(year, month - 1, i + 1);
-    return { date, pages: pagesByDate.get(date.toDateString()) ?? 0 };
-  });
+  const pagesByDate = new Map(
+    (days ?? []).map((day) => [day.date.toDateString(), day.pages]),
+  );
+  const monthDays: ReadingCalendarDay[] = Array.from(
+    { length: count },
+    (_, i) => {
+      const date = new Date(year, month - 1, i + 1);
+      return { date, pages: pagesByDate.get(date.toDateString()) ?? 0 };
+    },
+  );
   const most = Math.max(1, ...monthDays.map((day) => day.pages));
 
   /** 첫 줄이 일요일에서 시작하도록 앞을 비운다 */
   const lead = monthDays[0].date.getDay();
-  const cells: (ReadingCalendarDay | null)[] = [...Array(lead).fill(null), ...monthDays];
+  const cells: (ReadingCalendarDay | null)[] = [
+    ...Array(lead).fill(null),
+    ...monthDays,
+  ];
   while (cells.length % 7) cells.push(null);
-  const weeks = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7));
+  const weeks = Array.from({ length: cells.length / 7 }, (_, i) =>
+    cells.slice(i * 7, i * 7 + 7),
+  );
 
   return (
     <View style={styles.wrap}>
@@ -78,7 +92,8 @@ export function ReadingCalendar({
             onPress={onPrevMonth}
             disabled={!canPrev}
             accessibilityRole="button"
-            accessibilityLabel="이전 달">
+            accessibilityLabel="이전 달"
+          >
             <View style={styles.flip}>
               <Icon
                 name="chevronRight"
@@ -92,7 +107,8 @@ export function ReadingCalendar({
             onPress={onNextMonth}
             disabled={!canNext}
             accessibilityRole="button"
-            accessibilityLabel="다음 달">
+            accessibilityLabel="다음 달"
+          >
             <Icon
               name="chevronRight"
               size={15}
@@ -121,11 +137,14 @@ export function ReadingCalendar({
                     styles.cell,
                     { backgroundColor: shade(day.pages / most, day.pages) },
                     day.date.toDateString() === today ? styles.today : null,
-                    shown?.date.getTime() === day.date.getTime() ? styles.cellPicked : null,
+                    shown?.date.getTime() === day.date.getTime()
+                      ? styles.cellPicked
+                      : null,
                   ]}
                   onPress={() =>
                     setPicked((prev) =>
-                      prev?.key === monthKey && prev.day.date.getTime() === day.date.getTime()
+                      prev?.key === monthKey &&
+                      prev.day.date.getTime() === day.date.getTime()
                         ? null
                         : { key: monthKey, day },
                     )
@@ -143,7 +162,8 @@ export function ReadingCalendar({
 
       {shown ? (
         <AppText style={styles.pickedText}>
-          {dayLabel(shown.date)} · {shown.pages ? `${shown.pages}쪽 읽었어요` : '안 읽은 날이에요'}
+          {dayLabel(shown.date)} ·{' '}
+          {shown.pages ? `${shown.pages}쪽 읽었어요` : '안 읽은 날이에요'}
         </AppText>
       ) : null}
     </View>
@@ -166,7 +186,11 @@ function dayLabel(date: Date): string {
 const styles = StyleSheet.create({
   wrap: { gap: 14 },
 
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   /** 절(섹션) 제목 자리 — '주로 읽은 장르'와 같은 크기로 선다 */
   month: { ...type.heading2, color: color.text.primary },
   arrows: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -178,7 +202,12 @@ const styles = StyleSheet.create({
   /** 받아오는 동안은 칸을 옅게 — 도는 표시 없이 '아직 채우는 중'만 말한다 */
   gridLoading: { opacity: 0.5 },
   row: { flexDirection: 'row', gap: 6 },
-  weekday: { flex: 1, textAlign: 'center', ...type.caption2, color: color.text.meta },
+  weekday: {
+    flex: 1,
+    textAlign: 'center',
+    ...type.caption2,
+    color: color.text.meta,
+  },
   cell: { flex: 1, aspectRatio: 1, borderRadius: 7 },
   blank: { backgroundColor: 'transparent' },
   /** 오늘은 테두리로만 — 아직 안 읽었으면 다른 빈 날과 같은 색이어야 한다 */

@@ -35,7 +35,8 @@ export function BookCover({
       colors={book.spine}
       start={spineGradient.start}
       end={spineGradient.end}
-      style={[{ width, height, borderRadius: radius }, styles.cover, style]}>
+      style={[{ width, height, borderRadius: radius }, styles.cover, style]}
+    >
       {book.cover ? (
         <Image
           source={{ uri: book.cover }}
@@ -46,7 +47,12 @@ export function BookCover({
         />
       ) : null}
       {showTitle && !book.cover ? (
-        <Quote style={[styles.title, { fontSize: titleSize, lineHeight: titleSize * 1.15 }]}>
+        <Quote
+          style={[
+            styles.title,
+            { fontSize: titleSize, lineHeight: titleSize * 1.15 },
+          ]}
+        >
           {book.title}
         </Quote>
       ) : null}

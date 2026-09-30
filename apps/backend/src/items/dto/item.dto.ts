@@ -9,7 +9,12 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { REGISTERS, STATUSES, type ItemStatus, type Register } from '../lexical-item.schema';
+import {
+  REGISTERS,
+  STATUSES,
+  type ItemStatus,
+  type Register,
+} from '../lexical-item.schema';
 
 export class ConfusedWithDto {
   @IsMongoId()

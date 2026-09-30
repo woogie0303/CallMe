@@ -43,15 +43,23 @@ export default function HomeScreen() {
   const { today } = useTodayItem();
   const book = reading?.book;
 
-  const openBook = (id: string) => router.push({ pathname: '/book/[id]', params: { id } });
+  const openBook = (id: string) =>
+    router.push({ pathname: '/book/[id]', params: { id } });
 
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + gutter }]}
-      showsVerticalScrollIndicator={false}>
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + gutter },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
       {isPending ? (
-        <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+        <ActivityIndicator
+          style={styles.spinner}
+          color={color.text.assistive}
+        />
       ) : book && reading ? (
         <>
           <BookHero
@@ -64,7 +72,10 @@ export default function HomeScreen() {
             }}
             onPressBook={() => openBook(book.id)}
             onPressProgress={() =>
-              router.push({ pathname: '/progress', params: { bookId: book.id } })
+              router.push({
+                pathname: '/progress',
+                params: { bookId: book.id },
+              })
             }
             onAsk={() => router.push('/ask')}
             onCapture={() => router.push('/scan')}
@@ -75,13 +86,21 @@ export default function HomeScreen() {
             onAdd={() => router.push('/book-pick')}
           />
           {week ? (
-            <ReadingWeekChart week={week} onPress={() => router.push('/genres')} />
+            <ReadingWeekChart
+              week={week}
+              onPress={() => router.push('/genres')}
+            />
           ) : null}
           {/* 담아둔 것이 없어도 자리는 남긴다 — 비면 화면이 덜 만들어진 것처럼 보인다 */}
           {today ? (
             <TodayItem
               item={today}
-              onPress={() => router.push({ pathname: '/item/[id]', params: { id: today.id } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/item/[id]',
+                  params: { id: today.id },
+                })
+              }
             />
           ) : (
             <TodayItemEmpty />
@@ -95,7 +114,10 @@ export default function HomeScreen() {
             title="아직 읽고 있는 책이 없어요"
             body="읽던 원서를 한 권 들이면, 막힌 문장을 여기서 바로 물어볼 수 있어요."
           />
-          <ActionButton label="책 추가하기" onPress={() => router.push('/book-pick')} />
+          <ActionButton
+            label="책 추가하기"
+            onPress={() => router.push('/book-pick')}
+          />
         </View>
       )}
     </ScrollView>

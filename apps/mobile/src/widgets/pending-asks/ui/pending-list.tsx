@@ -29,7 +29,11 @@ export function PendingList({
       {asks.map((ask) => {
         const book = ask.book;
         return (
-          <Tap key={ask.id} style={styles.card} onPress={() => onPressAsk?.(ask.id)}>
+          <Tap
+            key={ask.id}
+            style={styles.card}
+            onPress={() => onPressAsk?.(ask.id)}
+          >
             {book ? <CoverThumb book={book} style={styles.thumb} /> : null}
             <View style={styles.body}>
               <Quote style={styles.text}>{ask.text}</Quote>
@@ -60,9 +64,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   thumb: { marginTop: 14, marginLeft: 14 },
-  body: { flex: 1, gap: 8, paddingVertical: 14, paddingHorizontal: 14, minWidth: 0 },
+  body: {
+    flex: 1,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    minWidth: 0,
+  },
   text: { fontSize: 15, lineHeight: 23, color: color.text.body },
-  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  foot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
   source: { ...type.caption2, color: color.text.meta },
   reason: { ...type.caption2, color: color.text.assistive },
 });

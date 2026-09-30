@@ -24,7 +24,8 @@ export function AddButton({
       style={[styles.button, style]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={label}>
+      accessibilityLabel={label}
+    >
       <Icon name="plus" size={15} color={color.text.meta} />
       <AppText style={styles.label}>{label}</AppText>
     </Tap>

@@ -2,7 +2,13 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
-import { claudeFor, logUsage, ModelUnavailable, unavailable, type Claude } from '../../common/claude';
+import {
+  claudeFor,
+  logUsage,
+  ModelUnavailable,
+  unavailable,
+  type Claude,
+} from '../../common/claude';
 
 const SplitFormat = z.object({
   sentences: z
@@ -47,7 +53,9 @@ export class SplitService {
       const response = await client.messages.parse({
         model,
         max_tokens: 16000,
-        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [
+          { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
+        ],
         messages: [{ role: 'user', content: lines.join('\n') }],
         output_config: { format: zodOutputFormat(SplitFormat) },
       });
@@ -61,7 +69,9 @@ export class SplitService {
       const parsed = response.parsed_output;
       if (!parsed) throw new ModelUnavailable('모델의 답을 읽지 못했습니다.');
 
-      return parsed.sentences.map((sentence) => sentence.trim()).filter(Boolean);
+      return parsed.sentences
+        .map((sentence) => sentence.trim())
+        .filter(Boolean);
     } catch (error) {
       throw unavailable(error, this.log);
     }

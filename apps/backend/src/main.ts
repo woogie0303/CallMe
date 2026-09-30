@@ -22,7 +22,10 @@ async function bootstrap() {
   });
 
   /** 열려 있으면 부팅할 때마다 말한다 — 조용히 켜진 채로 배포되는 일이 없게 */
-  if (process.env.ALLOW_DEV_LOGIN === 'true' && process.env.NODE_ENV !== 'production') {
+  if (
+    process.env.ALLOW_DEV_LOGIN === 'true' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
     console.warn('⚠️  개발용 로그인(POST /api/dev/login)이 열려 있습니다.');
   }
 

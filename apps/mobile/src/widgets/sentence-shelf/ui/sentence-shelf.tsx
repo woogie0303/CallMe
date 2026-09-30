@@ -38,7 +38,11 @@ export function SentenceShelf({
       {sentences.map((s) => {
         const book = s.book;
         return (
-          <Tap key={s.id} style={styles.row} onPress={() => onPressSentence?.(s.id)}>
+          <Tap
+            key={s.id}
+            style={styles.row}
+            onPress={() => onPressSentence?.(s.id)}
+          >
             {book ? <CoverThumb book={book} /> : null}
             <View style={styles.body}>
               <Quote numberOfLines={2} style={styles.text}>
@@ -46,7 +50,9 @@ export function SentenceShelf({
               </Quote>
               {book || s.page ? (
                 <AppText style={styles.source}>
-                  {[book?.title, s.page ? `p.${s.page}` : null].filter(Boolean).join(' · ')}
+                  {[book?.title, s.page ? `p.${s.page}` : null]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </AppText>
               ) : null}
             </View>

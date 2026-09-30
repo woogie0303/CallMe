@@ -55,7 +55,8 @@ function Gate() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: color.surface.base },
-      }}>
+      }}
+    >
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="(tabs)" />
       {/*

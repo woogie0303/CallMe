@@ -1,8 +1,8 @@
 # The drawer is a feed of sentences, not a list of items
 
-ADR-0001 settled what we *send* to the model: never a bare word, always the whole sentence,
+ADR-0001 settled what we _send_ to the model: never a bare word, always the whole sentence,
 because a phrase stripped of its line has no single correct Korean. This decision carries the
-same argument one step further, to what the reader *sees afterwards*. The drawer holds
+same argument one step further, to what the reader _sees afterwards_. The drawer holds
 sentences. A lexical item is no longer a row of its own — it is an underline inside the
 sentence it was met in, and it is reached by going through that sentence.
 
@@ -20,7 +20,7 @@ the Korean is the part they understand. Changing the typography of that column d
 what the eye does with it. If the sentence is the unit of asking, it has to be the unit of
 remembering too, or the app teaches one habit and then files it away as another.
 
-Adding a sentence feed *alongside* the item drawer was also considered and rejected: it leaves
+Adding a sentence feed _alongside_ the item drawer was also considered and rejected: it leaves
 the reader choosing between two doors to the same material on every visit, which is the kind
 of ambiguity that made the capture flow slow in the first place.
 
@@ -29,8 +29,8 @@ of ambiguity that made the capture flow slow in the first place.
 - **The lexical item and the re-encounter survive unchanged.** Only the entrance moves. The
   record is still one document per `(readerId, term)`, re-encounter is still created by that
   unique index, and opening an underline still shows every sentence the item was met in —
-  which is, as before, where a re-encounter becomes visible. Nothing about *Re-encounter* or
-  *Lexical Item* in `CONTEXT.md` changes.
+  which is, as before, where a re-encounter becomes visible. Nothing about _Re-encounter_ or
+  _Lexical Item_ in `CONTEXT.md` changes.
 - **A sentence saved without an ask is no longer a dead end.** Previously a liked-only sentence
   lived on its book with nothing to do; in a feed it sits next to answered sentences and can be
   asked about later. This is what forced `sentenceId?` onto `CreateAskDto` — without it, asking

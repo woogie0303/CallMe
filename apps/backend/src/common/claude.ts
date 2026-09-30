@@ -25,7 +25,10 @@ export function claudeFor(
   fallback = 'claude-sonnet-5',
 ): Claude {
   const apiKey = config.get<string>('ANTHROPIC_API_KEY');
-  if (!apiKey) log.warn(`ANTHROPIC_API_KEY가 없어 ${modelKey} 호출은 전부 대기로 남습니다.`);
+  if (!apiKey)
+    log.warn(
+      `ANTHROPIC_API_KEY가 없어 ${modelKey} 호출은 전부 대기로 남습니다.`,
+    );
 
   return {
     client: apiKey ? new Anthropic({ apiKey }) : undefined,
@@ -54,7 +57,11 @@ export function unavailable(error: unknown, log: Logger): ModelUnavailable {
 export function logUsage(
   log: Logger,
   what: string,
-  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null },
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_read_input_tokens?: number | null;
+  },
 ): void {
   log.debug(
     `${what}: in=${usage.input_tokens} cached=${usage.cache_read_input_tokens ?? 0} out=${usage.output_tokens}`,

@@ -49,11 +49,17 @@ export function PhotoPicker({
   selected?: string;
   onSelectSentence: (sentence: string) => void;
 }) {
-  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const [box, setBox] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   if (!words.length) {
     return (
-      <TypesetPage placements={placements} selected={selected} onSelect={onSelectSentence} />
+      <TypesetPage
+        placements={placements}
+        selected={selected}
+        onSelect={onSelectSentence}
+      />
     );
   }
 
@@ -65,7 +71,10 @@ export function PhotoPicker({
   /** 사진은 contain으로 들어가므로, 남는 여백만큼 밀어서 좌표를 맞춘다 */
   const fit = box
     ? (() => {
-        const scale = Math.min(box.width / shot.width, box.height / shot.height);
+        const scale = Math.min(
+          box.width / shot.width,
+          box.height / shot.height,
+        );
         return {
           scale,
           dx: (box.width - shot.width * scale) / 2,
@@ -75,11 +84,16 @@ export function PhotoPicker({
     : null;
 
   /** 지금 칠할 범위 — 아직 끝을 안 짚었으면 첫 낱말 하나만 */
-  const shown = selection ?? (anchor !== null ? previewWords(words, anchor) : null);
+  const shown =
+    selection ?? (anchor !== null ? previewWords(words, anchor) : null);
 
   return (
     <View style={styles.stage} onLayout={onLayout}>
-      <Image source={{ uri: shot.uri }} style={StyleSheet.absoluteFill} contentFit="contain" />
+      <Image
+        source={{ uri: shot.uri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="contain"
+      />
 
       {fit
         ? words.map((word, i) => {
@@ -112,8 +126,6 @@ export function PhotoPicker({
             );
           })
         : null}
-
-
     </View>
   );
 }
@@ -142,7 +154,8 @@ function TypesetPage({
               key={i}
               onPress={() => onSelect(place.sentence)}
               style={on ? styles.pickedText : styles.plainText}
-              accessibilityLabel={place.sentence}>
+              accessibilityLabel={place.sentence}
+            >
               {place.sentence}
               {i < placements.length - 1 ? '  ' : ''}
             </Quote>
@@ -164,10 +177,18 @@ const styles = StyleSheet.create({
    * 위에서 보일 만큼은. 한때 8%였는데 사진 위에서 거의 안 보여서, 인식기가
    * 못 읽은 줄과 읽었는데 안 보이는 줄을 구분할 수 없었다.
    */
-  word: { position: 'absolute', borderRadius: 3, backgroundColor: accent(0.16) },
+  word: {
+    position: 'absolute',
+    borderRadius: 3,
+    backgroundColor: accent(0.16),
+  },
   wordOn: { backgroundColor: accent(0.42) },
   /** 첫 낱말만 짚어둔 상태 — 여기서 시작한다는 표시 */
-  wordAnchor: { backgroundColor: accent(0.5), borderWidth: 1.5, borderColor: color.primary },
+  wordAnchor: {
+    backgroundColor: accent(0.5),
+    borderWidth: 1.5,
+    borderColor: color.primary,
+  },
 
   paper: {
     borderRadius: 16,
@@ -180,6 +201,10 @@ const styles = StyleSheet.create({
   },
   flow: { fontSize: 16, lineHeight: 28 },
   plainText: { color: color.text.body },
-  pickedText: { color: color.primary, backgroundColor: accent(0.12), fontWeight: '600' },
+  pickedText: {
+    color: color.primary,
+    backgroundColor: accent(0.12),
+    fontWeight: '600',
+  },
   hintText2: { ...type.caption2, color: color.text.meta },
 });

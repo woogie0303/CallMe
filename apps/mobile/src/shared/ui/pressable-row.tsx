@@ -1,4 +1,9 @@
-import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 /**
  * 누를 수 있는 영역. 눌림은 투명도로만 알린다 —
@@ -17,7 +22,10 @@ export function Tap({
     <Pressable
       {...rest}
       disabled={rest.disabled ?? !rest.onPress}
-      style={({ pressed }) => [style, pressed && live ? { opacity: 0.62 } : null]}
+      style={({ pressed }) => [
+        style,
+        pressed && live ? { opacity: 0.62 } : null,
+      ]}
     />
   );
 }

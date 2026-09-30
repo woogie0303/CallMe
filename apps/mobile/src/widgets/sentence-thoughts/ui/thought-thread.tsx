@@ -49,13 +49,16 @@ export function ThoughtThread({
                 <AppText numberOfLines={1} style={styles.name}>
                   {nickname}
                 </AppText>
-                <AppText style={styles.time}>{agoLabel(thought.createdAt)}</AppText>
+                <AppText style={styles.time}>
+                  {agoLabel(thought.createdAt)}
+                </AppText>
                 <View style={styles.spacer} />
                 <Tap
                   hitSlop={10}
                   onPress={() => onRemove(thought._id)}
                   accessibilityRole="button"
-                  accessibilityLabel="이 생각 지우기">
+                  accessibilityLabel="이 생각 지우기"
+                >
                   <View style={styles.dots}>
                     <MoreIcon size={16} color={color.text.meta} />
                   </View>
@@ -117,11 +120,16 @@ export function ThoughtInput({
         hitSlop={8}
         style={styles.send}
         accessibilityRole="button"
-        accessibilityLabel="생각 남기기">
+        accessibilityLabel="생각 남기기"
+      >
         {sending ? (
           <ActivityIndicator size="small" color={color.text.meta} />
         ) : (
-          <Icon name="send" size={18} color={ready ? color.primary : color.fill.bold} />
+          <Icon
+            name="send"
+            size={18}
+            color={ready ? color.primary : color.fill.bold}
+          />
         )}
       </Tap>
     </View>
@@ -129,7 +137,15 @@ export function ThoughtInput({
 }
 
 /** 얼굴 — 로그인한 곳의 사진이 있으면 그걸, 없으면 닉네임 첫 글자 */
-function Avatar({ nickname, uri, size = 34 }: { nickname: string; uri?: string; size?: number }) {
+function Avatar({
+  nickname,
+  uri,
+  size = 34,
+}: {
+  nickname: string;
+  uri?: string;
+  size?: number;
+}) {
   const frame = { width: size, height: size, borderRadius: size / 2 };
   return uri ? (
     <Image source={{ uri }} style={[styles.avatar, frame]} contentFit="cover" />
@@ -145,11 +161,22 @@ const styles = StyleSheet.create({
   post: { flexDirection: 'row', gap: 12 },
   rail: { alignItems: 'center', width: 34 },
   /** 얼굴과 얼굴 사이를 잇는 선 — 스레드에서 '이어지는 글'이라는 표시다 */
-  line: { flex: 1, width: 2, borderRadius: 1, marginVertical: 6, backgroundColor: color.border.default },
+  line: {
+    flex: 1,
+    width: 2,
+    borderRadius: 1,
+    marginVertical: 6,
+    backgroundColor: color.border.default,
+  },
   body: { flex: 1, minWidth: 0, gap: 4 },
   bodyGap: { paddingBottom: 18 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { ...type.label1, fontWeight: '700', color: color.text.primary, flexShrink: 1 },
+  name: {
+    ...type.label1,
+    fontWeight: '700',
+    color: color.text.primary,
+    flexShrink: 1,
+  },
   time: { ...type.label2, color: color.text.meta },
   spacer: { flex: 1 },
   /** 세로 점 셋을 눕혀 가로(⋯)로 — 스레드 글의 더 보기와 같은 모양 */
@@ -177,5 +204,10 @@ const styles = StyleSheet.create({
     maxHeight: 110,
     paddingVertical: 4,
   },
-  send: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  send: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

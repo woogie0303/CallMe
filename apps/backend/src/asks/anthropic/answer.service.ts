@@ -2,7 +2,13 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
-import { claudeFor, logUsage, ModelUnavailable, unavailable, type Claude } from '../../common/claude';
+import {
+  claudeFor,
+  logUsage,
+  ModelUnavailable,
+  unavailable,
+  type Claude,
+} from '../../common/claude';
 import { REGISTERS } from '../../items/lexical-item.schema';
 
 /**
@@ -114,7 +120,9 @@ export class AnswerService {
         model,
         max_tokens: 16000,
         /** 붙박이 부분만 캐시에 올린다 */
-        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [
+          { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
+        ],
         messages: [{ role: 'user', content: userPrompt(input) }],
         output_config: { format: zodOutputFormat(AnswerFormat) },
       });
@@ -145,7 +153,9 @@ function userPrompt(input: {
   author: string;
   page?: number;
 }): string {
-  const where = input.page ? `${input.bookTitle} p.${input.page}` : input.bookTitle;
+  const where = input.page
+    ? `${input.bookTitle} p.${input.page}`
+    : input.bookTitle;
   return [
     `독자 레벨: ${input.level}`,
     `출처: ${where} (${input.author})`,

@@ -1,12 +1,24 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { color, gutter, type } from '@/shared/config';
-import { ActionButton, AppText, ProgressBar, Quote, ScreenHeader } from '@/shared/ui';
+import {
+  ActionButton,
+  AppText,
+  ProgressBar,
+  Quote,
+  ScreenHeader,
+} from '@/shared/ui';
 
 /**
  * 읽은 데까지 표시 옮기기.
@@ -34,7 +46,8 @@ export default function ProgressScreen() {
 
   const typed = Number(page);
   const total = book?.pages ?? 0;
-  const valid = Number.isFinite(typed) && typed > 0 && (total === 0 || typed <= total);
+  const valid =
+    Number.isFinite(typed) && typed > 0 && (total === 0 || typed <= total);
   /** 적긴 적었는데 이 책에 없는 쪽수 — 빈칸과 달리 이건 이유를 말해줘야 한다 */
   const tooFar = total > 0 && Number.isFinite(typed) && typed > total;
 
@@ -47,8 +60,13 @@ export default function ProgressScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader leading="close" onLeadingPress={() => router.back()} title="읽은 데까지" />
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScreenHeader
+        leading="close"
+        onLeadingPress={() => router.back()}
+        title="읽은 데까지"
+      />
 
       <View style={styles.body}>
         {book ? (
@@ -56,7 +74,9 @@ export default function ProgressScreen() {
             <Quote numberOfLines={1} style={styles.title}>
               {book.title}
             </Quote>
-            <ProgressBar value={total ? Math.min(1, (typed || 0) / total) : 0} />
+            <ProgressBar
+              value={total ? Math.min(1, (typed || 0) / total) : 0}
+            />
           </View>
         ) : null}
 
@@ -71,7 +91,9 @@ export default function ProgressScreen() {
             placeholderTextColor={color.text.assistive}
             style={styles.input}
           />
-          <AppText style={styles.unit}>{total ? `/ ${total} 쪽` : '쪽'}</AppText>
+          <AppText style={styles.unit}>
+            {total ? `/ ${total} 쪽` : '쪽'}
+          </AppText>
         </View>
 
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
@@ -98,7 +120,12 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   body: { flex: 1, paddingHorizontal: gutter, paddingTop: 12, gap: 24 },
   head: { gap: 10 },
-  title: { fontSize: 18, lineHeight: 24, fontWeight: '600', color: color.text.primary },
+  title: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '600',
+    color: color.text.primary,
+  },
   field: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   input: {
     ...type.title2,

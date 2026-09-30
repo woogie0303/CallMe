@@ -5,7 +5,11 @@ import { AppText } from './text';
 import { Icon, type FilledIconName } from './icon';
 import { Tap } from './pressable-row';
 
-export type SectionOption<T extends string> = { value: T; icon: FilledIconName; title: string };
+export type SectionOption<T extends string> = {
+  value: T;
+  icon: FilledIconName;
+  title: string;
+};
 
 /**
  * 지금 보고 있는 갈래의 이름이 제목 자리에 그대로 서고, 갈아타는 버튼들은
@@ -49,7 +53,8 @@ export function SectionSwitch<T extends string>({
               onPress={() => onChange(option.value)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={option.title}>
+              accessibilityLabel={option.title}
+            >
               <Icon
                 name={option.icon}
                 size={16}
@@ -65,10 +70,19 @@ export function SectionSwitch<T extends string>({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { ...type.body2, fontWeight: '700', color: color.text.primary, letterSpacing: -0.15 },
+  title: {
+    ...type.body2,
+    fontWeight: '700',
+    color: color.text.primary,
+    letterSpacing: -0.15,
+  },
   aside: { ...type.caption1, color: color.text.meta },
   /** 제목과 버튼 사이를 잇는 선 — 남는 폭을 전부 가져간다 */
-  rule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: color.border.default },
+  rule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border.default,
+  },
   switch: { flexDirection: 'row', gap: 4 },
   button: {
     width: 30,

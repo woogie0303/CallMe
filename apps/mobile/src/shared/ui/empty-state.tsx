@@ -30,9 +30,19 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 10 },
+  wrap: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    gap: 10,
+  },
   compact: { paddingVertical: 20 },
-  title: { ...type.label1, fontWeight: '600', color: color.text.secondary, textAlign: 'center' },
+  title: {
+    ...type.label1,
+    fontWeight: '600',
+    color: color.text.secondary,
+    textAlign: 'center',
+  },
   body: {
     ...type.caption1,
     lineHeight: 18,

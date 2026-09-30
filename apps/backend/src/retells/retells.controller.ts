@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentReader } from '../common/current-reader.decorator';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { ObjectIdPipe } from '../common/object-id.pipe';
@@ -22,12 +31,18 @@ export class RetellsController {
   }
 
   @Get(':id')
-  find(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  find(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.retells.find(readerId, id);
   }
 
   @Delete(':id')
-  remove(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  remove(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.retells.remove(readerId, id);
   }
 }

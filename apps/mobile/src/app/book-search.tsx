@@ -1,9 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useBookSearch, type BookSearchResult } from '@/entities/book/api/book.api';
+import {
+  useBookSearch,
+  type BookSearchResult,
+} from '@/entities/book/api/book.api';
 import { spineFor } from '@/entities/book/lib/spine';
 import { BookCover } from '@/entities/book/ui/book-cover';
 import { color, gutter, type } from '@/shared/config';
@@ -53,7 +62,11 @@ export default function BookSearchScreen() {
 
   return (
     <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="책 검색하기" />
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="책 검색하기"
+      />
 
       <View style={styles.field}>
         <Icon name="search" size={17} color={color.text.assistive} />
@@ -96,7 +109,11 @@ export default function BookSearchScreen() {
                   body="원문 제목이나 지은이 영문 표기로 다시 찾아보세요."
                 />
               )}
-              <ActionButton label="직접 입력하기" variant="subtle" onPress={manual} />
+              <ActionButton
+                label="직접 입력하기"
+                variant="subtle"
+                onPress={manual}
+              />
             </View>
           )
         }
@@ -148,7 +165,12 @@ const styles = StyleSheet.create({
   input: { flex: 1, ...type.label1, color: color.text.primary },
   list: { paddingHorizontal: gutter, paddingBottom: 24, gap: 4 },
   empty: { gap: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
   rowText: { flex: 1, gap: 3, minWidth: 0 },
   rowTitle: { ...type.label1, fontWeight: '600', color: color.text.primary },
   rowMeta: { ...type.caption1, color: color.text.meta },

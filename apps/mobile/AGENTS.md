@@ -123,7 +123,7 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
 - **Xcode 26 이상이어야 한다.** Expo 57의 `expo-modules-jsi`와
   `@expo/expo-modules-macros-plugin`이 `swift-tools-version: 6.2`를 요구한다.
   Xcode 16.4(Swift 6.1)에서는 `package 'apple' is using Swift tools version
-  6.2.0`으로 패키지 해석 단계에서 죽는다.
+6.2.0`으로 패키지 해석 단계에서 죽는다.
 - **Xcode 27로 지으면 scene 생명주기를 켜야 한다.** iOS 27 SDK로 지은 앱은
   UIKit scene 생명주기가 없으면 뜨지 않는다. `expo@57.0.23+`와
   `expo-build-properties`의 `ios.enableSceneSupport`가 그 스위치고, 바꾼 뒤에는

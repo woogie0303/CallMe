@@ -35,7 +35,9 @@ export class BooksService {
   }
 
   list(readerId: string, finished?: boolean): Promise<BookDocument[]> {
-    const filter: Record<string, unknown> = { readerId: new Types.ObjectId(readerId) };
+    const filter: Record<string, unknown> = {
+      readerId: new Types.ObjectId(readerId),
+    };
     if (finished !== undefined) {
       filter.finishedAt = finished ? { $ne: null } : null;
     }
@@ -43,7 +45,10 @@ export class BooksService {
   }
 
   async find(readerId: string, id: string): Promise<BookDocument> {
-    const book = await this.books.findOne({ _id: id, readerId: new Types.ObjectId(readerId) });
+    const book = await this.books.findOne({
+      _id: id,
+      readerId: new Types.ObjectId(readerId),
+    });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
     return book;
   }
@@ -55,7 +60,11 @@ export class BooksService {
    * 진도를 옮겼는데 마지막으로 읽은 날을 주지 않았으면 오늘로 찍는다 —
    * 방금 읽었다는 뜻이니까.
    */
-  async update(readerId: string, id: string, dto: UpdateBookDto): Promise<BookDocument> {
+  async update(
+    readerId: string,
+    id: string,
+    dto: UpdateBookDto,
+  ): Promise<BookDocument> {
     const before = await this.find(readerId, id);
     /** 쪽수를 함께 고치는 중이면 새 쪽수로, 아니면 이미 있는 쪽수로 가린다 */
     assertPageInBook(
@@ -93,7 +102,10 @@ export class BooksService {
    * 그때 함께 지운다 — 어디서 만났는지 말할 수 없는 항목은 서랍에서 할 말이
    * 없기 때문이다. 그 책의 읽은 기록(쪽수)도 함께 지운다.
    */
-  async remove(readerId: string, id: string): Promise<{ deletedSentences: number }> {
+  async remove(
+    readerId: string,
+    id: string,
+  ): Promise<{ deletedSentences: number }> {
     const book = await this.find(readerId, id);
     const owner = new Types.ObjectId(readerId);
 

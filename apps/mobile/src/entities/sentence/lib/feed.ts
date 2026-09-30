@@ -75,7 +75,9 @@ export function buildFeed(input: {
   });
 
   /** 담은 순서대로 — 두 원천을 시간 하나로 합친다 */
-  return merged.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+  return merged.sort(
+    (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+  );
 }
 
 /**

@@ -27,15 +27,22 @@ type UserInfo = {
 export const google: OAuthProvider = {
   name: 'google',
 
-  async exchange(input: CodeExchange, config: ProviderConfig): Promise<OAuthProfile> {
-    const token = await postForm<TokenResponse>('구글', 'https://oauth2.googleapis.com/token', {
-      grant_type: 'authorization_code',
-      code: input.code,
-      redirect_uri: input.redirectUri,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      code_verifier: input.codeVerifier,
-    });
+  async exchange(
+    input: CodeExchange,
+    config: ProviderConfig,
+  ): Promise<OAuthProfile> {
+    const token = await postForm<TokenResponse>(
+      '구글',
+      'https://oauth2.googleapis.com/token',
+      {
+        grant_type: 'authorization_code',
+        code: input.code,
+        redirect_uri: input.redirectUri,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        code_verifier: input.codeVerifier,
+      },
+    );
 
     const profile = await getJson<UserInfo>(
       '구글',
@@ -56,7 +63,10 @@ export const google: OAuthProvider = {
    * **`aud`가 우리 클라이언트인지**를 본다 — 이게 없으면 다른 구글 앱에서 받은
    * 토큰으로도 로그인이 된다.
    */
-  async verify(input: TokenExchange, config: ProviderConfig): Promise<OAuthProfile> {
+  async verify(
+    input: TokenExchange,
+    config: ProviderConfig,
+  ): Promise<OAuthProfile> {
     if (!('idToken' in input)) rejectToken('구글', 'idToken이 필요해요.');
 
     const info = await getJson<TokenInfo>(

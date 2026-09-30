@@ -99,12 +99,20 @@ const FILLED = {
 
 export type FilledIconName = keyof typeof FILLED;
 
-export function Icon({ name, size = 20, color = INK }: IconProps & { name: FilledIconName }) {
+export function Icon({
+  name,
+  size = 20,
+  color = INK,
+}: IconProps & { name: FilledIconName }) {
   const glyph = FILLED[name];
   const body = <Path d={glyph.d} fill={color} fillRule="evenodd" />;
   return (
     <Svg width={size} height={size} viewBox={glyph.box}>
-      {'flip' in glyph && glyph.flip ? <G transform="rotate(180 12 12)">{body}</G> : body}
+      {'flip' in glyph && glyph.flip ? (
+        <G transform="rotate(180 12 12)">{body}</G>
+      ) : (
+        body
+      )}
     </Svg>
   );
 }
@@ -132,7 +140,11 @@ export function PageIcon({ size = 20, color = INK }: IconProps) {
  * 하트 — 켜면 차고, 끄면 선만 남는다. 면 아이콘 `heart`와 같은 모양이다.
  * TODO: 디자인 문서에 들어오면 교체한다.
  */
-export function HeartIcon({ size = 20, color = INK, filled }: IconProps & { filled?: boolean }) {
+export function HeartIcon({
+  size = 20,
+  color = INK,
+  filled,
+}: IconProps & { filled?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -182,7 +194,11 @@ export function MoreIcon({ size = 20, color = INK }: IconProps) {
  * 압정(📌) — 홈 맨 위에 고정한 책. 고정하면 차고, 아니면 선만 남는다.
  * TODO: 디자인 문서에 없어 여기서 그렸다. `icons/*.svg`에 들어오면 교체한다.
  */
-export function PinIcon({ size = 20, color = INK, filled }: IconProps & { filled?: boolean }) {
+export function PinIcon({
+  size = 20,
+  color = INK,
+  filled,
+}: IconProps & { filled?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -193,7 +209,12 @@ export function PinIcon({ size = 20, color = INK, filled }: IconProps & { filled
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <Path d="M12 14.5v6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path
+        d="M12 14.5v6"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -257,7 +278,12 @@ export function MicIcon({ size = 20, color = INK }: IconProps) {
         strokeWidth={1.8}
         strokeLinecap="round"
       />
-      <Path d="M12 18v3" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path
+        d="M12 18v3"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }

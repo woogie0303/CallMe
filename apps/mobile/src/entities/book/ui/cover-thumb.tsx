@@ -14,5 +14,14 @@ import { BookCover } from './book-cover';
  * 크기는 문장 카드마다 같다. 카드마다 다르면 목록을 넘길 때 표지 줄이 흔들린다.
  */
 export function CoverThumb({ book, style }: { book: Book; style?: ViewStyle }) {
-  return <BookCover book={book} width={36} height={52} radius={5} showTitle={false} style={style} />;
+  return (
+    <BookCover
+      book={book}
+      width={36}
+      height={52}
+      radius={5}
+      showTitle={false}
+      style={style}
+    />
+  );
 }

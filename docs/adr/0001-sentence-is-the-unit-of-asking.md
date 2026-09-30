@@ -21,8 +21,8 @@ of the thing that did not work.
 - **Caching answers is pointless.** Expressions repeat across readers; sentences do not, so a
   sentence-keyed cache would essentially never hit. Cost scales with usage, permanently.
   Anthropic prompt caching on the stable system prefix is the caching that still applies.
-- Cost per *item* is nonetheless low, because one call yields every candidate in the line.
+- Cost per _item_ is nonetheless low, because one call yields every candidate in the line.
 - There is no offline path. Capture must therefore always succeed and resolve later — see the
-  *Pending Ask* term in `CONTEXT.md`.
+  _Pending Ask_ term in `CONTEXT.md`.
 - Asking about a bare word is not offered during capture, because a reader always has a
   sentence in front of them.

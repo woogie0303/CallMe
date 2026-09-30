@@ -28,7 +28,13 @@ import { requireOptionalNativeModule } from 'expo';
  * `angle`(라디안, 시계 방향)이 있으면 돌리기 **전**의 네모다 — 중심을 축으로
  * 그만큼 돌려야 글자에 겹친다. 손으로 든 책은 거의 늘 기울어져 찍힌다.
  */
-export type OcrFrame = { x: number; y: number; width: number; height: number; angle?: number };
+export type OcrFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  angle?: number;
+};
 
 /** 읽어낸 줄 하나. `frame`은 주는 인식기에서만 온다. */
 export type OcrLine = {
@@ -99,7 +105,8 @@ const module = load();
 const pageReader = requireOptionalNativeModule<PageReader>('PageReader');
 
 /** 이 기기에서 사진의 글자를 읽을 수 있는지 */
-export const available: boolean = Boolean(pageReader) || Boolean(module?.isSupported);
+export const available: boolean =
+  Boolean(pageReader) || Boolean(module?.isSupported);
 
 /**
  * 사진에서 줄과 낱말을 읽어낸다.

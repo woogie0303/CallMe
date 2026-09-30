@@ -5,7 +5,15 @@ import { CoverThumb } from '@/entities/book/ui/cover-thumb';
 import type { ApiItemDetail } from '@/shared/api/types';
 import { accent, color, type } from '@/shared/config';
 import { daysBetween, gapLabel, savedLabel } from '@/shared/lib/date';
-import { AltPanel, AppText, Icon, InkPanel, Quote, Tap, emphasis } from '@/shared/ui';
+import {
+  AltPanel,
+  AppText,
+  Icon,
+  InkPanel,
+  Quote,
+  Tap,
+  emphasis,
+} from '@/shared/ui';
 
 /**
  * 항목 하나의 전부. 위에는 뜻, 아래에는 이걸 만난 문장들이 시간순으로 선다 —
@@ -27,12 +35,19 @@ export function ItemDetail({
   const { item } = detail;
   /** 문장을 못 찾은 만남은 그릴 것이 없다 */
   const encounters = detail.encounters.flatMap((met) =>
-    met.sentence && met.book ? [{ ...met, sentence: met.sentence, book: met.book }] : [],
+    met.sentence && met.book
+      ? [{ ...met, sentence: met.sentence, book: met.book }]
+      : [],
   );
   const books = uniqueBooks(encounters.map((met) => met.book));
   const gap =
     encounters.length > 1
-      ? gapLabel(daysBetween(encounters[0].savedAt, encounters[encounters.length - 1].savedAt))
+      ? gapLabel(
+          daysBetween(
+            encounters[0].savedAt,
+            encounters[encounters.length - 1].savedAt,
+          ),
+        )
       : undefined;
 
   return (
@@ -51,7 +66,8 @@ export function ItemDetail({
             <AppText style={styles.gapText}>
               {books.length > 1 ? `${books.length}권에서 ` : ''}
               {encounters.length}번 만났어요 — 처음 담은 뒤{' '}
-              <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 다시 만났어요
+              <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 다시
+              만났어요
             </AppText>
           </View>
         ) : null}
@@ -66,14 +82,17 @@ export function ItemDetail({
             onPress={() => onOpenSentence?.(encounter.sentenceId)}
             accessibilityRole="button"
             accessibilityLabel={encounter.sentence.text}
-            accessibilityHint="눌러서 이 문장 보기">
+            accessibilityHint="눌러서 이 문장 보기"
+          >
             <CoverThumb book={toBook(encounter.book)} style={styles.thumb} />
             <View style={styles.cardBody}>
               <Quote style={styles.sentence}>{encounter.sentence.text}</Quote>
               <AppText style={styles.source}>
                 {[
                   encounter.book.title,
-                  encounter.sentence.page ? `p.${encounter.sentence.page}` : null,
+                  encounter.sentence.page
+                    ? `p.${encounter.sentence.page}`
+                    : null,
                   savedLabel(encounter.savedAt),
                 ]
                   .filter(Boolean)
@@ -93,13 +112,16 @@ export function ItemDetail({
             <View style={styles.twinHead}>
               <Quote style={styles.twinTerm}>{twinTerm}</Quote>
               <AppText style={styles.twinLabel}>와는 이렇게 달라요</AppText>
-              <Icon name="chevronRight" size={14} color={color.text.assistive} />
+              <Icon
+                name="chevronRight"
+                size={14}
+                color={color.text.assistive}
+              />
             </View>
             <AppText style={styles.twinNote}>{item.confusedWith.note}</AppText>
           </AltPanel>
         </Tap>
       ) : null}
-
     </View>
   );
 }
@@ -115,15 +137,30 @@ const styles = StyleSheet.create({
   wrap: { gap: 20 },
 
   hero: { padding: 22, gap: 12 },
-  heroHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  term: { fontSize: 26, lineHeight: 32, fontWeight: '600', color: color.text.onInk, flex: 1 },
+  heroHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  term: {
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '600',
+    color: color.text.onInk,
+    flex: 1,
+  },
   register: {
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 7,
     backgroundColor: color.fill.onInkStrong,
   },
-  registerLabel: { ...type.caption2, fontWeight: '600', color: color.text.onInkMuted },
+  registerLabel: {
+    ...type.caption2,
+    fontWeight: '600',
+    color: color.text.onInkMuted,
+  },
   meaning: { ...type.body2, color: color.text.onInkBody },
   gapRow: {
     flexDirection: 'row',
@@ -135,7 +172,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: accent(0.24),
   },
-  gapText: { flex: 1, ...type.caption1, lineHeight: 17, color: color.text.onInkBody },
+  gapText: {
+    flex: 1,
+    ...type.caption1,
+    lineHeight: 17,
+    color: color.text.onInkBody,
+  },
 
   section: { gap: 10 },
   sectionTitle: { ...type.body2, fontWeight: '700', color: color.text.primary },
@@ -148,15 +190,30 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   thumb: { marginTop: 14, marginLeft: 14 },
-  cardBody: { flex: 1, gap: 6, paddingVertical: 14, paddingHorizontal: 14, minWidth: 0 },
+  cardBody: {
+    flex: 1,
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    minWidth: 0,
+  },
   sentence: { fontSize: 15, lineHeight: 23, color: color.text.primary },
   source: { ...type.caption2, color: color.text.meta },
   note: { ...type.caption1, color: color.text.secondary, marginTop: 2 },
 
   twin: { padding: 16, gap: 8 },
   twinHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  twinTerm: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: color.text.primary },
-  twinLabel: { flex: 1, ...type.label2, fontWeight: '700', color: color.text.primary },
+  twinTerm: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '600',
+    color: color.text.primary,
+  },
+  twinLabel: {
+    flex: 1,
+    ...type.label2,
+    fontWeight: '700',
+    color: color.text.primary,
+  },
   twinNote: { ...type.label2, lineHeight: 21, color: color.text.secondary },
-
 });

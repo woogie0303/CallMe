@@ -35,7 +35,8 @@ export function BookPrimer({
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel="읽기 전에 알아두면 좋은 것"
-        accessibilityHint={open ? '접기' : '펼쳐서 읽기'}>
+        accessibilityHint={open ? '접기' : '펼쳐서 읽기'}
+      >
         <Icon name="bulb" size={15} color={color.primary} />
         <AppText style={styles.label}>읽기 전에</AppText>
         <AppText style={styles.toggle}>{open ? '접기' : '펼치기'}</AppText>
@@ -44,7 +45,10 @@ export function BookPrimer({
       {open ? (
         <View style={styles.body}>
           {primer.split('\n\n').map((para, i) => (
-            <AppText key={i} style={para.startsWith('·') ? styles.bullet : styles.para}>
+            <AppText
+              key={i}
+              style={para.startsWith('·') ? styles.bullet : styles.para}
+            >
               {para}
             </AppText>
           ))}
@@ -57,11 +61,21 @@ export function BookPrimer({
 const styles = StyleSheet.create({
   panel: { padding: 16, gap: 12, borderRadius: 18 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  label: { flex: 1, ...type.label2, fontWeight: '700', color: color.text.primary },
+  label: {
+    flex: 1,
+    ...type.label2,
+    fontWeight: '700',
+    color: color.text.primary,
+  },
   toggle: { ...type.caption2, fontWeight: '600', color: color.text.meta },
   body: { gap: 10 },
   /** 앱이 하는 말이라 산세리프. 읽는 글이라 행간을 넉넉히 준다. */
   para: { ...type.label2, lineHeight: 22, color: color.text.body },
   /** 가운뎃점으로 시작하는 줄은 목록이라 조금 들여 쓴다 */
-  bullet: { ...type.label2, lineHeight: 21, color: color.text.body, paddingLeft: 2 },
+  bullet: {
+    ...type.label2,
+    lineHeight: 21,
+    color: color.text.body,
+    paddingLeft: 2,
+  },
 });

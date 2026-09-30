@@ -45,7 +45,8 @@ export function useLikedSentences(bookId?: string) {
 export function useDeleteSentence() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api<{ ok: true }>(`/sentences/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) =>
+      api<{ ok: true }>(`/sentences/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['sentences'] });
       /** 항목이 함께 사라졌을 수 있다 — 서랍의 밑줄도 다시 받는다 */
@@ -63,8 +64,12 @@ export function useAddThought(sentenceId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (text: string) =>
-      api<ApiSentence>(`/sentences/${sentenceId}/thoughts`, { method: 'POST', body: { text } }),
-    onSuccess: (sentence) => client.setQueryData(['sentences', 'one', sentenceId], sentence),
+      api<ApiSentence>(`/sentences/${sentenceId}/thoughts`, {
+        method: 'POST',
+        body: { text },
+      }),
+    onSuccess: (sentence) =>
+      client.setQueryData(['sentences', 'one', sentenceId], sentence),
   });
 }
 
@@ -72,8 +77,11 @@ export function useRemoveThought(sentenceId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (thoughtId: string) =>
-      api<ApiSentence>(`/sentences/${sentenceId}/thoughts/${thoughtId}`, { method: 'DELETE' }),
-    onSuccess: (sentence) => client.setQueryData(['sentences', 'one', sentenceId], sentence),
+      api<ApiSentence>(`/sentences/${sentenceId}/thoughts/${thoughtId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: (sentence) =>
+      client.setQueryData(['sentences', 'one', sentenceId], sentence),
   });
 }
 
@@ -82,7 +90,10 @@ export function useFavoriteSentence() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ id, favorite }: { id: string; favorite: boolean }) =>
-      api<ApiSentence>(`/sentences/${id}`, { method: 'PATCH', body: { favorite } }),
+      api<ApiSentence>(`/sentences/${id}`, {
+        method: 'PATCH',
+        body: { favorite },
+      }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['sentences'] });
       client.invalidateQueries({ queryKey: ['asks'] });

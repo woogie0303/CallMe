@@ -15,7 +15,8 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            retry: (count, error) => !(error instanceof Unauthenticated) && count < 2,
+            retry: (count, error) =>
+              !(error instanceof Unauthenticated) && count < 2,
             staleTime: 30_000,
           },
         },

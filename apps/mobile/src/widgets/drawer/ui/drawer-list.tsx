@@ -5,7 +5,11 @@ import { useSentenceFeed } from '@/entities/sentence/api/feed.api';
 import { SentenceCard } from '@/entities/sentence/ui/sentence-card';
 import { color, type } from '@/shared/config';
 import { AppText, EmptyState, Tap } from '@/shared/ui';
-import { DRAWER_MATCH, DrawerFilterRow, type DrawerFilter } from './drawer-filter';
+import {
+  DRAWER_MATCH,
+  DrawerFilterRow,
+  type DrawerFilter,
+} from './drawer-filter';
 
 const EMPTY: Record<DrawerFilter, string> = {
   liked: '아직 마음에 들어 담아둔 문장이 없어요',
@@ -32,14 +36,16 @@ export function DrawerList({
   onOpen?: (sentenceId: string, liked: boolean) => void;
 }) {
   const [picked, setPicked] = useState<DrawerFilter>();
-  const { feed, isPending, error, hasMore, loadingMore, loadMore } = useSentenceFeed();
+  const { feed, isPending, error, hasMore, loadingMore, loadMore } =
+    useSentenceFeed();
 
   /**
    * 고르기 전에는 표현이 담긴 쪽을 먼저 편다 — 서랍의 요지가 거기 있다. 다만
    * 아직 담은 표현이 하나도 없으면 빈 갈래를 먼저 보이지 않고 문장 쪽을 편다.
    */
   const filter: DrawerFilter =
-    picked ?? (feed.some(DRAWER_MATCH.items) || !feed.length ? 'items' : 'liked');
+    picked ??
+    (feed.some(DRAWER_MATCH.items) || !feed.length ? 'items' : 'liked');
   const byFilter = feed.filter(DRAWER_MATCH[filter]);
   const needle = query?.trim().toLowerCase();
   /** 번역까지 뒤지는 이유 — 영어가 기억 안 날 때 한국어로 찾는 길은 있어야 한다 */
@@ -54,12 +60,23 @@ export function DrawerList({
 
   return (
     <View style={styles.wrap}>
-      <DrawerFilterRow value={filter} onChange={setPicked} count={byFilter.length} />
+      <DrawerFilterRow
+        value={filter}
+        onChange={setPicked}
+        count={byFilter.length}
+      />
 
       {isPending ? (
-        <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+        <ActivityIndicator
+          style={styles.spinner}
+          color={color.text.assistive}
+        />
       ) : error ? (
-        <EmptyState mark="blocked" title="목록을 불러오지 못했어요" body={error.message} />
+        <EmptyState
+          mark="blocked"
+          title="목록을 불러오지 못했어요"
+          body={error.message}
+        />
       ) : rows.length ? (
         <View style={styles.list}>
           {rows.map((row) => (
@@ -84,7 +101,8 @@ export function DrawerList({
               disabled={loadingMore}
               accessibilityRole="button"
               accessibilityLabel="문장 더 보기"
-              accessibilityState={{ busy: loadingMore }}>
+              accessibilityState={{ busy: loadingMore }}
+            >
               {loadingMore ? (
                 <ActivityIndicator size="small" color={color.text.meta} />
               ) : (
@@ -103,7 +121,11 @@ export function DrawerList({
                 ? EMPTY[filter]
                 : '아직 담아둔 문장이 없어요'
           }
-          body={needle || feed.length ? undefined : '읽다 막힌 쪽을 찍어서 문장을 담아보세요.'}
+          body={
+            needle || feed.length
+              ? undefined
+              : '읽다 막힌 쪽을 찍어서 문장을 담아보세요.'
+          }
         />
       )}
     </View>

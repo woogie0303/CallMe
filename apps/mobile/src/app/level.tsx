@@ -24,17 +24,24 @@ export default function LevelScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="close" onLeadingPress={() => router.back()} title="레벨" />
+      <ScreenHeader
+        leading="close"
+        onLeadingPress={() => router.back()}
+        title="레벨"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         <View>
-          <AppText style={styles.headline}>지금 영어는{'\n'}어느 정도인가요?</AppText>
+          <AppText style={styles.headline}>
+            지금 영어는{'\n'}어느 정도인가요?
+          </AppText>
           <AppText style={styles.sub}>
-            담아둘 만한 표현을 고르는 기준과, 뜻을 얼마나 풀어 쓸지가 달라져요. 책을 한 권 끝낼
-            때마다 다시 물어볼게요.
+            담아둘 만한 표현을 고르는 기준과, 뜻을 얼마나 풀어 쓸지가 달라져요.
+            책을 한 권 끝낼 때마다 다시 물어볼게요.
           </AppText>
         </View>
 
@@ -46,15 +53,23 @@ export default function LevelScreen() {
                 key={option.value}
                 style={[styles.option, on ? styles.optionOn : null]}
                 onPress={() => setLevel(option.value)}
-                disabled={update.isPending}>
+                disabled={update.isPending}
+              >
                 <View style={styles.optionText}>
-                  <AppText style={[styles.optionTitle, on ? styles.optionTitleOn : null]}>
+                  <AppText
+                    style={[
+                      styles.optionTitle,
+                      on ? styles.optionTitleOn : null,
+                    ]}
+                  >
                     {option.value}
                   </AppText>
                   <AppText style={styles.optionBlurb}>{option.blurb}</AppText>
                 </View>
                 <View style={[styles.mark, on ? styles.markOn : null]}>
-                  {on ? <Icon name="check" size={13} color={color.text.onInk} /> : null}
+                  {on ? (
+                    <Icon name="check" size={13} color={color.text.onInk} />
+                  ) : null}
                 </View>
               </Tap>
             );
@@ -83,7 +98,12 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 24 },
   headline: { ...type.title3, color: color.text.primary, lineHeight: 33 },
-  sub: { ...type.label1, lineHeight: 22, color: color.text.secondary, marginTop: 10 },
+  sub: {
+    ...type.label1,
+    lineHeight: 22,
+    color: color.text.secondary,
+    marginTop: 10,
+  },
   options: { gap: 10 },
   option: {
     flexDirection: 'row',
@@ -95,9 +115,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.border.strong,
   },
-  optionOn: { borderWidth: 1.5, borderColor: color.primary, backgroundColor: color.primaryBgSoft },
+  optionOn: {
+    borderWidth: 1.5,
+    borderColor: color.primary,
+    backgroundColor: color.primaryBgSoft,
+  },
   optionText: { flex: 1, gap: 4 },
-  optionTitle: { ...type.headline2, fontWeight: '700', color: color.text.primary },
+  optionTitle: {
+    ...type.headline2,
+    fontWeight: '700',
+    color: color.text.primary,
+  },
   optionTitleOn: { color: color.primary },
   optionBlurb: { ...type.label2, color: color.text.secondary },
   mark: {

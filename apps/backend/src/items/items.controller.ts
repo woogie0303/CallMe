@@ -37,7 +37,10 @@ export class ItemsController {
   }
 
   @Get(':id')
-  find(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  find(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.items.findDetail(readerId, id);
   }
 
@@ -69,7 +72,10 @@ export class ItemsController {
   }
 
   @Delete(':id')
-  remove(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  remove(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.items.remove(readerId, id);
   }
 }

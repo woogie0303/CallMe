@@ -46,11 +46,13 @@ function useKeyboardHeight() {
       }
       setHeight(next);
     };
-    const show = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (e) =>
-      move(e.endCoordinates.height, e),
+    const show = Keyboard.addListener(
+      ios ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => move(e.endCoordinates.height, e),
     );
-    const hide = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', (e) =>
-      move(0, e),
+    const hide = Keyboard.addListener(
+      ios ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => move(0, e),
     );
     return () => {
       show.remove();
@@ -151,7 +153,10 @@ export function AskSheet({
     })
     .onUpdate((e) => {
       if (keyboardUp.value) return;
-      height.value = Math.max(0, Math.min(full.value, start.value - e.translationY));
+      height.value = Math.max(
+        0,
+        Math.min(full.value, start.value - e.translationY),
+      );
     })
     .onEnd((e) => {
       if (keyboardUp.value) {
@@ -188,11 +193,17 @@ export function AskSheet({
       style={[
         styles.sheet,
         raised
-          ? { top: insets.top + 8, bottom: keyboard, maxHeight: '100%', paddingBottom: 12 }
+          ? {
+              top: insets.top + 8,
+              bottom: keyboard,
+              maxHeight: '100%',
+              paddingBottom: 12,
+            }
           : { paddingBottom: insets.bottom + 12 },
         !raised && sized ? sizedStyle : null,
         !raised && sized ? styles.unbounded : null,
-      ]}>
+      ]}
+    >
       {/* 손잡이 — 막대보다 넓게 잡히도록 줄 전체가 잡는 자리다 */}
       <GestureDetector gesture={pan}>
         <View
@@ -200,7 +211,8 @@ export function AskSheet({
           accessible
           accessibilityLabel="시트 높이 조절, 끝까지 내리면 닫기"
           accessibilityActions={[{ name: 'escape' }]}
-          onAccessibilityEscape={onClose}>
+          onAccessibilityEscape={onClose}
+        >
           <View style={styles.grip} />
         </View>
       </GestureDetector>
@@ -209,7 +221,8 @@ export function AskSheet({
         style={grow ? styles.scrollGrow : styles.scroll}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.body}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <TextInput
           value={sentence}
           onChangeText={onChangeSentence}
@@ -225,14 +238,20 @@ export function AskSheet({
           <PageIcon size={17} color={color.text.meta} />
           <AppText style={styles.pageLabel}>몇 쪽이에요?</AppText>
           <View style={[styles.pageBox, tooFar ? styles.pageBoxWarn : null]}>
-            <PageInput value={page} onChangeValue={onChangePage} warn={tooFar} />
+            <PageInput
+              value={page}
+              onChangeValue={onChangePage}
+              warn={tooFar}
+            />
           </View>
         </View>
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
         {tooFar ? (
           <AppText style={styles.hint}>이 책은 {maxPage}쪽까지예요.</AppText>
         ) : !page ? (
-          <AppText style={styles.hint}>몇 쪽인지 적어야 담을 수 있어요.</AppText>
+          <AppText style={styles.hint}>
+            몇 쪽인지 적어야 담을 수 있어요.
+          </AppText>
         ) : null}
       </ScrollView>
 

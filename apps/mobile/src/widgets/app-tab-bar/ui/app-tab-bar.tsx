@@ -40,10 +40,17 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
                 target: route.key,
                 canPreventDefault: true,
               });
-              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-            }}>
+              if (!focused && !event.defaultPrevented)
+                navigation.navigate(route.name);
+            }}
+          >
             <Icon name={tab.icon} size={22} color={tint} />
-            <AppText style={[styles.label, { color: tint, fontWeight: focused ? '600' : '500' }]}>
+            <AppText
+              style={[
+                styles.label,
+                { color: tint, fontWeight: focused ? '600' : '500' },
+              ]}
+            >
               {tab.label}
             </AppText>
           </Tap>

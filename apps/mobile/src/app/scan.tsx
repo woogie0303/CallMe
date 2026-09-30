@@ -4,15 +4,29 @@ import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAskQuota, useCreateAsk, useSplitLines } from '@/entities/ask/api/ask.api';
+import {
+  useAskQuota,
+  useCreateAsk,
+  useSplitLines,
+} from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, ink, type } from '@/shared/config';
 import { alignSentences, type SentencePlacement } from '@/shared/ocr/align';
 import { selectWords, type Selection } from '@/shared/ocr/selection';
-import { available, readLines, type OcrWord } from '@/shared/ocr/text-extractor';
-import { ActionButton, AppText, HeaderAction, ScreenHeader, Tap } from '@/shared/ui';
+import {
+  available,
+  readLines,
+  type OcrWord,
+} from '@/shared/ocr/text-extractor';
+import {
+  ActionButton,
+  AppText,
+  HeaderAction,
+  ScreenHeader,
+  Tap,
+} from '@/shared/ui';
 import { AskSheet } from '@/widgets/capture/ui/ask-sheet';
 import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
 
@@ -64,14 +78,18 @@ export default function ScanScreen() {
   const moveProgress = useUpdateProgress(book?.id ?? '');
 
   const lastPage =
-    (current?.book.id === book?.id ? current?.progress.currentPage : undefined) ??
+    (current?.book.id === book?.id
+      ? current?.progress.currentPage
+      : undefined) ??
     book?.currentPage ??
     0;
   const pageText = pageEdit ?? (lastPage > 0 ? String(lastPage) : '');
   /** 책에 없는 쪽은 쪽이 아니다 — 시트가 이유를 말하고, 서버도 한 번 더 막는다 */
   const typedPage = Number(pageText);
   const page =
-    typedPage > 0 && (!book?.pages || typedPage <= book.pages) ? typedPage : undefined;
+    typedPage > 0 && (!book?.pages || typedPage <= book.pages)
+      ? typedPage
+      : undefined;
 
   /** 문장이 있는 쪽까지는 읽은 것이다 — 진도를 앞으로만 옮긴다 */
   const recordPage = () => {
@@ -89,7 +107,8 @@ export default function ScanScreen() {
       if (!photo?.uri) throw new Error('사진을 찍지 못했어요.');
 
       const read = await readLines(photo.uri);
-      if (!read.lines.length) throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
+      if (!read.lines.length)
+        throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
       /** 좌표를 준 인식기가 잰 크기가 우선이다 — 좌표가 그 크기에 기대고 있다 */
       setShot({
@@ -113,7 +132,10 @@ export default function ScanScreen() {
         setRough(false);
       }
     } catch (error) {
-      Alert.alert('다시 찍어볼까요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '다시 찍어볼까요',
+        error instanceof Error ? error.message : '',
+      );
     } finally {
       setReading(false);
     }
@@ -157,7 +179,11 @@ export default function ScanScreen() {
   const ask = async () => {
     if (!book || !picked?.trim() || !page || busy) return;
     try {
-      const view = await createAsk.mutateAsync({ bookId: book.id, text: picked.trim(), page });
+      const view = await createAsk.mutateAsync({
+        bookId: book.id,
+        text: picked.trim(),
+        page,
+      });
       recordPage();
       /**
        * 답이 왔으면 그 문장 화면에서 뜻을 편 채로 연다. 못 받았으면(질문 소진·
@@ -180,9 +206,16 @@ export default function ScanScreen() {
   const keepOnly = async () => {
     if (!book || !picked?.trim() || !page || busy) return;
     try {
-      await keepSentence.mutateAsync({ bookId: book.id, text: picked.trim(), page });
+      await keepSentence.mutateAsync({
+        bookId: book.id,
+        text: picked.trim(),
+        page,
+      });
       recordPage();
-      router.replace({ pathname: '/book/[id]', params: { id: book.id, tab: 'liked' } });
+      router.replace({
+        pathname: '/book/[id]',
+        params: { id: book.id, tab: 'liked' },
+      });
     } catch (error) {
       Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
     }
@@ -218,25 +251,38 @@ export default function ScanScreen() {
   if (!shot) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader leading="close" onLeadingPress={() => router.back()} title="페이지 촬영" />
+        <ScreenHeader
+          leading="close"
+          onLeadingPress={() => router.back()}
+          title="페이지 촬영"
+        />
 
         <View style={styles.viewfinder}>
-          <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" />
+          <CameraView
+            ref={camera}
+            style={StyleSheet.absoluteFill}
+            facing="back"
+          />
           {reading ? (
             <View style={styles.reading}>
               <ActivityIndicator color={color.text.onInk} />
-              <AppText style={styles.readingLabel}>글자를 읽는 중이에요…</AppText>
+              <AppText style={styles.readingLabel}>
+                글자를 읽는 중이에요…
+              </AppText>
             </View>
           ) : null}
         </View>
 
-        <View style={[styles.shutterRow, { paddingBottom: insets.bottom + 16 }]}>
+        <View
+          style={[styles.shutterRow, { paddingBottom: insets.bottom + 16 }]}
+        >
           <Tap
             style={styles.shutter}
             onPress={shoot}
             disabled={reading}
             accessibilityRole="button"
-            accessibilityLabel="찍기">
+            accessibilityLabel="찍기"
+          >
             <View style={styles.shutterCore} />
           </Tap>
         </View>
@@ -251,7 +297,13 @@ export default function ScanScreen() {
       <ScreenHeader
         leading="back"
         onLeadingPress={retake}
-        trailing={<HeaderAction label="다시 찍기" tone={color.text.meta} onPress={retake} />}
+        trailing={
+          <HeaderAction
+            label="다시 찍기"
+            tone={color.text.meta}
+            onPress={retake}
+          />
+        }
       />
 
       <View style={styles.stage}>
@@ -312,7 +364,11 @@ function Notice({
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="close" onLeadingPress={onBack} title="페이지 촬영" />
+      <ScreenHeader
+        leading="close"
+        onLeadingPress={onBack}
+        title="페이지 촬영"
+      />
       <View style={styles.notice}>
         <AppText style={styles.noticeTitle}>{title}</AppText>
         <AppText style={styles.noticeBody}>{body}</AppText>
@@ -366,7 +422,12 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: color.text.primary,
   },
-  shutterCore: { width: 52, height: 52, borderRadius: 26, backgroundColor: color.text.primary },
+  shutterCore: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: color.text.primary,
+  },
 
   rough: {
     ...type.caption1,

@@ -4,10 +4,7 @@ import { useMemo, useState } from 'react';
 import { Check, GraduationCap } from 'lucide-react';
 import { bookById } from '@/entities/book/model/mock';
 import { SpineEdge } from '@/entities/book/ui/book-cover';
-import {
-  EXPRESSIONS,
-  expressionById,
-} from '@/entities/expression/model/mock';
+import { EXPRESSIONS, expressionById } from '@/entities/expression/model/mock';
 import type { Expression, Register } from '@/entities/expression/model/types';
 import { cn } from '@/shared/lib/cn';
 import { on } from '@/shared/lib/label';

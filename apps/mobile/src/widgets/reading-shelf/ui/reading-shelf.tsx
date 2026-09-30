@@ -30,15 +30,22 @@ export function ReadingShelf({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.rail}>
+        contentContainerStyle={styles.rail}
+      >
         {books.map((book) => (
           <Tap
             key={book.id}
             style={styles.item}
             onPress={() => onPressBook?.(book.id)}
             accessibilityRole="button"
-            accessibilityLabel={`${book.title}, ${book.author}`}>
-            <BookCover book={book} width={COVER.width} height={COVER.height} radius={8} />
+            accessibilityLabel={`${book.title}, ${book.author}`}
+          >
+            <BookCover
+              book={book}
+              width={COVER.width}
+              height={COVER.height}
+              radius={8}
+            />
             <AppText numberOfLines={1} style={styles.title}>
               {book.title}
             </AppText>
@@ -49,7 +56,8 @@ export function ReadingShelf({
           style={styles.item}
           onPress={onAdd}
           accessibilityRole="button"
-          accessibilityLabel="읽고 있는 책 추가">
+          accessibilityLabel="읽고 있는 책 추가"
+        >
           {/* 점선은 비어 있다는 말을 생김새로 한다 — 실선이면 이미 담긴 카드로 보인다 */}
           <View style={[styles.slot, COVER]}>
             <Icon name="plus" size={18} color={color.text.assistive} />

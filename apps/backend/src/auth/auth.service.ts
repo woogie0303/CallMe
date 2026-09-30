@@ -1,8 +1,16 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Reader, type ProviderName, type ReaderDocument } from '../readers/reader.schema';
+import {
+  Reader,
+  type ProviderName,
+  type ReaderDocument,
+} from '../readers/reader.schema';
 import { PROVIDERS, type OAuthProfile, type ProviderConfig } from './oauth';
 import type { ExchangeCodeDto } from './dto/auth.dto';
 import { TokenService, type IssuedTokens } from './token.service';
@@ -32,20 +40,34 @@ export class AuthService {
    * 동의 화면을 거쳐 인가 코드를 들고 오면 토큰으로 바꾼다(`exchange`).
    * 어느 쪽이든 그다음은 같다 — 프로필로 독자를 찾거나 만든다.
    */
-  async signIn(provider: ProviderName, dto: ExchangeCodeDto): Promise<SignInResult> {
+  async signIn(
+    provider: ProviderName,
+    dto: ExchangeCodeDto,
+  ): Promise<SignInResult> {
     const config = this.configFor(provider);
     const impl = PROVIDERS[provider];
 
     const profile = dto.idToken
-      ? await impl.verify({ idToken: dto.idToken, nickname: dto.nickname }, config)
+      ? await impl.verify(
+          { idToken: dto.idToken, nickname: dto.nickname },
+          config,
+        )
       : dto.accessToken
-        ? await impl.verify({ accessToken: dto.accessToken, nickname: dto.nickname }, config)
+        ? await impl.verify(
+            { accessToken: dto.accessToken, nickname: dto.nickname },
+            config,
+          )
         : await impl.exchange(
-            { code: dto.code!, redirectUri: dto.redirectUri!, codeVerifier: dto.codeVerifier, state: dto.state },
+            {
+              code: dto.code!,
+              redirectUri: dto.redirectUri!,
+              codeVerifier: dto.codeVerifier,
+              state: dto.state,
+            },
             config,
           );
     const reader = await this.findOrCreate(provider, profile);
-    const issued = await this.tokens.issue(reader.id as string);
+    const issued = await this.tokens.issue(reader.id);
 
     return { ...issued, reader: toView(reader) };
   }
@@ -111,7 +133,7 @@ export class AuthService {
 
 export function toView(reader: ReaderDocument): ReaderView {
   return {
-    id: reader.id as string,
+    id: reader.id,
     nickname: reader.nickname,
     email: reader.email,
     profileImage: reader.profileImage,

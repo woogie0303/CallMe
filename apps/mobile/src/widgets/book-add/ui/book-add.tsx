@@ -56,7 +56,8 @@ export function BookAdd({
     ...draftBook(draft.title, draft.author, Number(draft.pages) || undefined),
     cover: draft.cover,
   };
-  const set = (key: keyof BookDraft) => (value: string) => onChange({ ...draft, [key]: value });
+  const set = (key: keyof BookDraft) => (value: string) =>
+    onChange({ ...draft, [key]: value });
 
   return (
     <View style={styles.wrap}>
@@ -77,8 +78,17 @@ export function BookAdd({
         />
 
         <View style={styles.fields}>
-          <Field label="제목" value={draft.title} onChangeText={set('title')} autoFocus={focusTitle} />
-          <Field label="지은이" value={draft.author} onChangeText={set('author')} />
+          <Field
+            label="제목"
+            value={draft.title}
+            onChangeText={set('title')}
+            autoFocus={focusTitle}
+          />
+          <Field
+            label="지은이"
+            value={draft.author}
+            onChangeText={set('author')}
+          />
         </View>
       </View>
 
@@ -98,7 +108,9 @@ export function BookAdd({
         />
       </View>
       {tooFar ? (
-        <AppText style={styles.warn}>이 책은 {draft.pages}쪽까지예요. 그 안의 쪽수를 적어주세요.</AppText>
+        <AppText style={styles.warn}>
+          이 책은 {draft.pages}쪽까지예요. 그 안의 쪽수를 적어주세요.
+        </AppText>
       ) : null}
 
       <View style={styles.genreBlock}>
@@ -112,8 +124,11 @@ export function BookAdd({
                 style={[styles.genreChip, on ? styles.genreChipOn : null]}
                 onPress={() => onChange({ ...draft, genre })}
                 accessibilityRole="button"
-                accessibilityState={{ selected: on }}>
-                <AppText style={[styles.genreLabel, on ? styles.genreLabelOn : null]}>
+                accessibilityState={{ selected: on }}
+              >
+                <AppText
+                  style={[styles.genreLabel, on ? styles.genreLabelOn : null]}
+                >
                   {genre}
                 </AppText>
               </Tap>
@@ -144,7 +159,9 @@ function Field({
     <View style={styles.field}>
       <AppText style={styles.label}>
         {label}
-        {optional ? <AppText style={styles.optional}> · 없어도 돼요</AppText> : null}
+        {optional ? (
+          <AppText style={styles.optional}> · 없어도 돼요</AppText>
+        ) : null}
       </AppText>
       <TextInput
         value={value}
@@ -183,7 +200,11 @@ const styles = StyleSheet.create({
     backgroundColor: color.fill.default,
   },
   genreChipOn: { backgroundColor: color.surface.ink },
-  genreLabel: { ...type.label2, fontWeight: '600', color: color.text.secondary },
+  genreLabel: {
+    ...type.label2,
+    fontWeight: '600',
+    color: color.text.secondary,
+  },
   genreLabelOn: { color: color.text.onInk },
   /** 줄 하나로 받는다 — 상자를 두르면 폼이 화면의 주인공이 된다 */
   input: {

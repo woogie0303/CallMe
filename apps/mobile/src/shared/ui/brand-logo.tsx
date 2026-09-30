@@ -15,14 +15,23 @@ import type { ProviderName } from '@/shared/api/types';
  * 가이드의 네 조각, 카카오는 카카오 로그인 가이드의 말풍선 심볼. Simple Icons의
  * 카카오는 'TALK' 글자가 든 앱 아이콘이라 로그인 버튼에 쓰는 것이 아니다.
  */
-export const BRAND: Record<ProviderName, { background: string; border?: string; label: string }> = {
+export const BRAND: Record<
+  ProviderName,
+  { background: string; border?: string; label: string }
+> = {
   kakao: { background: '#FEE500', label: '카카오' },
   naver: { background: '#03C75A', label: '네이버' },
   google: { background: '#FFFFFF', border: '#DADCE0', label: 'Google' },
   apple: { background: '#000000', label: 'Apple' },
 };
 
-export function BrandLogo({ name, size = 22 }: { name: ProviderName; size?: number }) {
+export function BrandLogo({
+  name,
+  size = 22,
+}: {
+  name: ProviderName;
+  size?: number;
+}) {
   if (name === 'kakao') {
     return (
       <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -39,7 +48,10 @@ export function BrandLogo({ name, size = 22 }: { name: ProviderName; size?: numb
     const n = size * 0.72;
     return (
       <Svg width={n} height={n} viewBox="0 0 24 24">
-        <Path fill="#FFFFFF" d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z" />
+        <Path
+          fill="#FFFFFF"
+          d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z"
+        />
       </Svg>
     );
   }

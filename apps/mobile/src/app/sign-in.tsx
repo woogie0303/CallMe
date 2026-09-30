@@ -4,9 +4,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProviderName } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
-import { configured, SignInCancelled, SignInFailed } from '@/shared/session/oauth';
+import {
+  configured,
+  SignInCancelled,
+  SignInFailed,
+} from '@/shared/session/oauth';
 import { useSession } from '@/shared/session/session';
-import { ActionButton, AppText, BRAND, BrandLogo, Quote, Tap } from '@/shared/ui';
+import {
+  ActionButton,
+  AppText,
+  BRAND,
+  BrandLogo,
+  Quote,
+  Tap,
+} from '@/shared/ui';
 
 /**
  * 한국 독자가 가장 많이 쓰는 순서. Apple은 크기와 자리가 다른 것과 같아야 한다 —
@@ -40,7 +51,10 @@ export default function SignInScreen() {
         Alert.alert('로그인하지 못했어요', error.message);
         return;
       }
-      Alert.alert('로그인하지 못했어요', error instanceof Error ? error.message : '');
+      Alert.alert(
+        '로그인하지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
     } finally {
       setBusy(null);
     }
@@ -48,7 +62,11 @@ export default function SignInScreen() {
 
   return (
     <View
-      style={[styles.screen, { paddingTop: insets.top + 64, paddingBottom: insets.bottom + 24 }]}>
+      style={[
+        styles.screen,
+        { paddingTop: insets.top + 64, paddingBottom: insets.bottom + 24 },
+      ]}
+    >
       <View style={styles.head}>
         <AppText style={styles.wordmark}>Reread</AppText>
         <Quote style={styles.line}>
@@ -129,15 +147,22 @@ function ProviderButton({
       onPress={onPress}
       disabled={off}
       accessibilityRole="button"
-      accessibilityLabel={ready ? `${brand.label}로 로그인` : `${brand.label}로 로그인, 준비 중`}
+      accessibilityLabel={
+        ready ? `${brand.label}로 로그인` : `${brand.label}로 로그인, 준비 중`
+      }
       accessibilityState={{ disabled: off, busy: loading }}
       style={[
         styles.circle,
         { backgroundColor: brand.background },
         brand.border ? { borderWidth: 1, borderColor: brand.border } : null,
         !ready ? styles.unready : null,
-      ]}>
-      {loading ? <ActivityIndicator color={spinner} /> : <BrandLogo name={name} />}
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator color={spinner} />
+      ) : (
+        <BrandLogo name={name} />
+      )}
     </Tap>
   );
 }
@@ -152,7 +177,12 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface.base,
   },
   head: { gap: 18 },
-  wordmark: { ...type.title2, fontSize: 26, letterSpacing: -0.78, color: color.text.primary },
+  wordmark: {
+    ...type.title2,
+    fontSize: 26,
+    letterSpacing: -0.78,
+    color: color.text.primary,
+  },
   /** 책에서 온 영어만 세리프 */
   line: { fontSize: 22, lineHeight: 33, color: color.text.primary },
   blurb: { ...type.label1, lineHeight: 23, color: color.text.secondary },
@@ -161,7 +191,11 @@ const styles = StyleSheet.create({
   problem: { ...type.caption1, lineHeight: 18, color: color.status.cautionary },
 
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: color.border.default },
+  rule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border.default,
+  },
   dividerText: { ...type.caption1, color: color.text.secondary },
 
   row: { flexDirection: 'row', justifyContent: 'center', gap: 18 },

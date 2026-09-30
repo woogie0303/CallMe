@@ -1,4 +1,11 @@
-import { Body, Controller, ForbiddenException, HttpCode, Logger, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  HttpCode,
+  Logger,
+  Post,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { IsOptional, IsString, MinLength } from 'class-validator';
@@ -61,7 +68,7 @@ export class DevLoginController {
       }));
 
     this.log.warn(`개발용 로그인: ${nickname}`);
-    const issued = await this.tokens.issue(reader.id as string);
+    const issued = await this.tokens.issue(reader.id);
 
     return { ...issued, reader: toView(reader) };
   }

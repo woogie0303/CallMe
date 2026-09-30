@@ -36,7 +36,10 @@ export class SentencesController {
   }
 
   @Get(':id')
-  find(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  find(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.sentences.find(readerId, id);
   }
 
@@ -68,7 +71,10 @@ export class SentencesController {
   }
 
   @Delete(':id')
-  remove(@CurrentReader() readerId: string, @Param('id', ObjectIdPipe) id: string) {
+  remove(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
     return this.sentences.remove(readerId, id);
   }
 }

@@ -33,7 +33,8 @@ export function TodayItem({
 
   /** 그 문장에 쳐진 밑줄 — 같은 표현도 문장마다 나타난 꼴이 다르다 */
   const surface = latest
-    ? item.encounters.find((met) => met.sentenceId === latest.sentenceId)?.surface
+    ? item.encounters.find((met) => met.sentenceId === latest.sentenceId)
+        ?.surface
     : undefined;
   const segments = latest
     ? markSegments(
@@ -47,7 +48,8 @@ export function TodayItem({
       style={[styles.card, style]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${item.term}을 만난 문장 모두 보기`}>
+      accessibilityLabel={`${item.term}을 만난 문장 모두 보기`}
+    >
       {book ? <CoverThumb book={book} style={styles.thumb} /> : null}
       <View style={styles.body}>
         <AppText style={styles.eyebrow}>오늘 다시 볼 문장</AppText>
@@ -102,7 +104,13 @@ const styles = StyleSheet.create({
   },
   /** 본문 여백과 같은 선에 — 표지 윗변이 첫 줄 글자 윗변과 맞는다 */
   thumb: { marginTop: 14, marginLeft: 15 },
-  body: { flex: 1, minWidth: 0, gap: 8, paddingVertical: 14, paddingHorizontal: 15 },
+  body: {
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+  },
 
   eyebrow: { ...type.caption2, color: color.text.meta },
 

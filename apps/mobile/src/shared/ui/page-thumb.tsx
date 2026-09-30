@@ -28,8 +28,15 @@ export function PageThumb({
     <View
       style={[
         styles.page,
-        { width, height, paddingVertical: padding, paddingHorizontal: padding - 2, gap },
-      ]}>
+        {
+          width,
+          height,
+          paddingVertical: padding,
+          paddingHorizontal: padding - 2,
+          gap,
+        },
+      ]}
+    >
       {lines.map((w, i) => (
         <View
           key={i}
@@ -38,7 +45,11 @@ export function PageThumb({
             height: lineHeight,
             borderRadius: 2,
             backgroundColor:
-              i === markedLine ? accent(0.5) : i === lines.length - 1 ? slate(0.12) : slate(0.18),
+              i === markedLine
+                ? accent(0.5)
+                : i === lines.length - 1
+                  ? slate(0.12)
+                  : slate(0.18),
           }}
         />
       ))}

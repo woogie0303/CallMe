@@ -1,4 +1,10 @@
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { color, shadow, type } from '@/shared/config';
 import { Tap } from './pressable-row';
@@ -46,11 +52,16 @@ export function ActionButton({
       accessibilityRole="button"
       accessibilityLabel={aside ? `${label} ${aside}` : label}
       accessibilityState={{ disabled: off, busy: Boolean(loading) }}
-      style={[styles.base, v.container, off ? styles.off : null, style]}>
+      style={[styles.base, v.container, off ? styles.off : null, style]}
+    >
       <View style={styles.inner}>
-        {loading ? <ActivityIndicator size="small" color={v.label.color} /> : null}
+        {loading ? (
+          <ActivityIndicator size="small" color={v.label.color} />
+        ) : null}
         <AppText style={[styles.label, v.label]}>{label}</AppText>
-        {aside ? <AppText style={[styles.aside, v.aside]}>{aside}</AppText> : null}
+        {aside ? (
+          <AppText style={[styles.aside, v.aside]}>{aside}</AppText>
+        ) : null}
       </View>
     </Tap>
   );
@@ -58,7 +69,11 @@ export function ActionButton({
 
 const VARIANTS = {
   primary: {
-    container: { backgroundColor: color.primary, height: 52, ...shadow.primary },
+    container: {
+      backgroundColor: color.primary,
+      height: 52,
+      ...shadow.primary,
+    },
     label: { color: color.text.onInk, fontSize: 16 },
     aside: { color: color.text.onInkMuted },
   },

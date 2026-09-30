@@ -47,12 +47,15 @@ export function ReadingWeekChart({
       style={[styles.panel, styles.alt]}
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? '읽기 기록 보기' : undefined}>
+      accessibilityLabel={onPress ? '읽기 기록 보기' : undefined}
+    >
       <View style={styles.head}>
         <AppText style={styles.eyebrow}>이번 주</AppText>
         <View style={styles.headRight}>
           <AppText style={styles.month}>{week.monthLabel}</AppText>
-          {onPress ? <Icon name="chevronRight" size={14} color={color.text.assistive} /> : null}
+          {onPress ? (
+            <Icon name="chevronRight" size={14} color={color.text.assistive} />
+          ) : null}
         </View>
       </View>
 
@@ -60,7 +63,10 @@ export function ReadingWeekChart({
         <AppText style={styles.summary}>
           {week.pages}쪽 읽었어요
           {week.streak > 0 ? (
-            <AppText style={emphasis(color.primary)}> · 연속 {week.streak}일</AppText>
+            <AppText style={emphasis(color.primary)}>
+              {' '}
+              · 연속 {week.streak}일
+            </AppText>
           ) : null}
         </AppText>
       ) : (
@@ -75,7 +81,8 @@ export function ReadingWeekChart({
           read
             ? `이번 주 ${week.pages}쪽 읽었어요${week.streak > 0 ? `, 연속 ${week.streak}일` : ''}`
             : '이번 주에는 아직 읽은 기록이 없어요'
-        }>
+        }
+      >
         {week.bars.map((bar, i) => (
           <View key={i} style={styles.column}>
             <View style={styles.track}>
@@ -83,14 +90,21 @@ export function ReadingWeekChart({
                 <View
                   style={[
                     styles.bar,
-                    { height: Math.max(MIN_BAR, Math.min(1, bar.amount) * TRACK) },
+                    {
+                      height: Math.max(
+                        MIN_BAR,
+                        Math.min(1, bar.amount) * TRACK,
+                      ),
+                    },
                   ]}
                 />
               ) : (
                 <View style={styles.none} />
               )}
             </View>
-            <AppText style={[styles.day, bar.today ? styles.dayToday : null]}>{bar.label}</AppText>
+            <AppText style={[styles.day, bar.today ? styles.dayToday : null]}>
+              {bar.label}
+            </AppText>
           </View>
         ))}
       </View>
@@ -106,7 +120,11 @@ const styles = StyleSheet.create({
   panel: { padding: 20, gap: 12, borderRadius: 24 },
   /** AltPanel의 배경·모서리를 그대로 가져온다 — Tap으로 바꾸며 직접 칠한다 */
   alt: { backgroundColor: color.surface.alt },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   headRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   eyebrow: { ...type.caption1, color: color.text.meta },
   month: { ...type.caption1, color: color.text.meta },
@@ -119,7 +137,12 @@ const styles = StyleSheet.create({
   track: { height: TRACK, justifyContent: 'flex-end', alignItems: 'center' },
   bar: { width: BAR, borderRadius: BAR / 2, backgroundColor: color.primary },
   /** 안 읽은 날 — 빈 통이 아니라 바닥의 점 하나 */
-  none: { width: BAR, height: 3, borderRadius: 2, backgroundColor: color.fill.bold },
+  none: {
+    width: BAR,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: color.fill.bold,
+  },
   day: { ...type.caption2, color: color.text.meta },
   dayToday: { fontWeight: '700', color: color.primary },
 });

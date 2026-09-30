@@ -1,4 +1,11 @@
-import { IsIn, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { LEVELS, type Level } from '../reader.schema';
 
 export class UpdateReaderDto {

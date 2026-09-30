@@ -1,6 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import {
   useBook,
@@ -38,7 +44,8 @@ export default function BookScreen() {
    * (`useReadingBooks`). 그래서 이 책에 핀이 꽂혔는지는 서버의 `pinned`가 아니라
    * 홈 맨 위에 선 책이 이 책인지로 본다. 누르는 즉시 꽂힌 것처럼 보인다.
    */
-  const pinned = (update.isPending && update.variables?.pinned) || reading?.book.id === id;
+  const pinned =
+    (update.isPending && update.variables?.pinned) || reading?.book.id === id;
 
   /**
    * 압정 — 누르면 이 책을 홈 맨 위에 고정한다(다른 책의 고정은 풀린다). 이미 꽂힌
@@ -51,7 +58,10 @@ export default function BookScreen() {
       { pinned: true },
       {
         onError: (error) =>
-          Alert.alert('바꾸지 못했어요', error instanceof Error ? error.message : ''),
+          Alert.alert(
+            '바꾸지 못했어요',
+            error instanceof Error ? error.message : '',
+          ),
       },
     );
   };
@@ -84,7 +94,10 @@ export default function BookScreen() {
               await remove.mutateAsync(book.id);
               router.back();
             } catch (error) {
-              Alert.alert('지우지 못했어요', error instanceof Error ? error.message : '');
+              Alert.alert(
+                '지우지 못했어요',
+                error instanceof Error ? error.message : '',
+              );
             }
           },
         },
@@ -112,7 +125,10 @@ export default function BookScreen() {
                 disabled={pinned}
                 accessibilityRole="button"
                 accessibilityState={{ selected: pinned, disabled: pinned }}
-                accessibilityLabel={pinned ? '홈 맨 위에 고정된 책' : '홈에 고정하기'}>
+                accessibilityLabel={
+                  pinned ? '홈 맨 위에 고정된 책' : '홈에 고정하기'
+                }
+              >
                 <PinIcon
                   size={22}
                   filled={pinned}
@@ -123,7 +139,8 @@ export default function BookScreen() {
                 hitSlop={8}
                 onPress={() => setMenuOpen(true)}
                 accessibilityRole="button"
-                accessibilityLabel="이 책 더 보기 — 수정, 삭제">
+                accessibilityLabel="이 책 더 보기 — 수정, 삭제"
+              >
                 <MoreIcon size={22} color={color.text.primary} />
               </Tap>
             </View>
@@ -133,9 +150,13 @@ export default function BookScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        style={styles.scroll}>
+        style={styles.scroll}
+      >
         {isPending ? (
-          <ActivityIndicator style={styles.spinner} color={color.text.assistive} />
+          <ActivityIndicator
+            style={styles.spinner}
+            color={color.text.assistive}
+          />
         ) : book ? (
           <BookDetail
             book={book}
@@ -144,23 +165,37 @@ export default function BookScreen() {
               진도는 지금 읽는 책만의 것이 아니다 — 어느 책이든 막대가 서고,
               누르면 기록한다. 아직 안 편 책은 빈 막대가 기록할 자리다.
             */
-            progress={{ bookId: book.id, currentPage: page, totalPages: book.pages ?? 0 }}
+            progress={{
+              bookId: book.id,
+              currentPage: page,
+              totalPages: book.pages ?? 0,
+            }}
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })
             }
             onOpenSentence={(sentenceId) =>
               /* 책 화면에서 문장으로 가는 길은 '마음에 들었던 문장' 탭뿐이다 */
-              router.push({ pathname: '/sentence/[id]', params: { id: sentenceId, from: 'liked' } })
+              router.push({
+                pathname: '/sentence/[id]',
+                params: { id: sentenceId, from: 'liked' },
+              })
             }
             onPressProgress={() =>
-              router.push({ pathname: '/progress', params: { bookId: book.id } })
+              router.push({
+                pathname: '/progress',
+                params: { bookId: book.id },
+              })
             }
             /*
               지금 읽는 책이 아니어도 찍고 물을 수 있어야 한다 — 두 권을 번갈아
               읽기도 하고, 예전 책을 다시 펴기도 한다. 어느 책에 담을지는 bookId가 정한다.
             */
-            onAsk={() => router.push({ pathname: '/ask', params: { bookId: book.id } })}
-            onCapture={() => router.push({ pathname: '/scan', params: { bookId: book.id } })}
+            onAsk={() =>
+              router.push({ pathname: '/ask', params: { bookId: book.id } })
+            }
+            onCapture={() =>
+              router.push({ pathname: '/scan', params: { bookId: book.id } })
+            }
           />
         ) : (
           <AppText style={styles.missing}>그 책을 찾지 못했어요.</AppText>
@@ -196,5 +231,10 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingBottom: 32 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   spinner: { paddingTop: 40 },
-  missing: { ...type.label1, color: color.text.secondary, paddingTop: 40, textAlign: 'center' },
+  missing: {
+    ...type.label1,
+    color: color.text.secondary,
+    paddingTop: 40,
+    textAlign: 'center',
+  },
 });

@@ -1,6 +1,15 @@
-import { createPublicKey, verify as verifySignature, type JsonWebKey } from 'node:crypto';
+import {
+  createPublicKey,
+  verify as verifySignature,
+  type JsonWebKey,
+} from 'node:crypto';
 import { getJson, peekJwt, rejectToken } from './http';
-import type { OAuthProfile, OAuthProvider, ProviderConfig, TokenExchange } from './oauth.types';
+import type {
+  OAuthProfile,
+  OAuthProvider,
+  ProviderConfig,
+  TokenExchange,
+} from './oauth.types';
 
 type AppleHeader = { kid?: string; alg?: string };
 
@@ -56,19 +65,27 @@ export const apple: OAuthProvider = {
     rejectToken('Apple', '앱에서만 로그인할 수 있어요.');
   },
 
-  async verify(input: TokenExchange, config: ProviderConfig): Promise<OAuthProfile> {
-    if (!('idToken' in input)) rejectToken('Apple', 'identityToken이 필요해요.');
+  async verify(
+    input: TokenExchange,
+    config: ProviderConfig,
+  ): Promise<OAuthProfile> {
+    if (!('idToken' in input))
+      rejectToken('Apple', 'identityToken이 필요해요.');
 
     const [head, body, signature] = input.idToken.split('.');
-    if (!head || !body || !signature) rejectToken('Apple', '토큰 모양이 아니에요.');
+    if (!head || !body || !signature)
+      rejectToken('Apple', '토큰 모양이 아니에요.');
 
     let header: AppleHeader;
     try {
-      header = JSON.parse(Buffer.from(head, 'base64url').toString('utf8')) as AppleHeader;
+      header = JSON.parse(
+        Buffer.from(head, 'base64url').toString('utf8'),
+      ) as AppleHeader;
     } catch {
       rejectToken('Apple', '토큰을 읽지 못했어요.');
     }
-    if (header.alg !== 'RS256' || !header.kid) rejectToken('Apple', '서명 방식을 알 수 없어요.');
+    if (header.alg !== 'RS256' || !header.kid)
+      rejectToken('Apple', '서명 방식을 알 수 없어요.');
 
     const jwk = await keyFor(header.kid);
     if (!jwk) rejectToken('Apple', '서명한 키를 찾지 못했어요.');
@@ -83,9 +100,12 @@ export const apple: OAuthProvider = {
 
     const claims = peekJwt<AppleClaims>(input.idToken);
     if (!claims) rejectToken('Apple', '토큰을 읽지 못했어요.');
-    if (claims.iss !== ISSUER) rejectToken('Apple', 'Apple이 발급한 토큰이 아니에요.');
-    if (claims.aud !== config.clientId) rejectToken('Apple', '다른 앱에 발급된 토큰이에요.');
-    if (claims.exp * 1000 < Date.now()) rejectToken('Apple', '토큰이 만료됐어요.');
+    if (claims.iss !== ISSUER)
+      rejectToken('Apple', 'Apple이 발급한 토큰이 아니에요.');
+    if (claims.aud !== config.clientId)
+      rejectToken('Apple', '다른 앱에 발급된 토큰이에요.');
+    if (claims.exp * 1000 < Date.now())
+      rejectToken('Apple', '토큰이 만료됐어요.');
 
     return {
       providerId: claims.sub,

@@ -42,7 +42,8 @@ export function SentenceField({
             style={styles.camera}
             onPress={onCapture}
             accessibilityRole="button"
-            accessibilityLabel="읽던 쪽 촬영">
+            accessibilityLabel="읽던 쪽 촬영"
+          >
             <CameraIcon size={19} color={color.text.onInk} />
           </Tap>
 

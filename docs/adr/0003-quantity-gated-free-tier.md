@@ -13,7 +13,7 @@ of concluding they want more of it.
   ~150 out on a small model) is roughly ₩2, and a single ask returns every candidate in the
   sentence, so cost per saved item is lower still.
 - Running out of asks must not break anything — the capture still succeeds and becomes a
-  *Pending Ask*. The pile of unanswered sentences is the upsell surface, which is why ads,
+  _Pending Ask_. The pile of unanswered sentences is the upsell surface, which is why ads,
   when they come, are rewarded ads offered there rather than interstitials before an ask.
 - Pricing is hard to walk back once public. Moving later from a quantity cap to a quality
   split would take features away from existing free users.

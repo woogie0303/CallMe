@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import type { GenreShare } from "@/entities/reading/model/types";
-import { color, type } from "@/shared/config";
-import { AppText, Tap } from "@/shared/ui";
+import type { GenreShare } from '@/entities/reading/model/types';
+import { color, type } from '@/shared/config';
+import { AppText, Tap } from '@/shared/ui';
 
 /** 낱말 크기가 오갈 수 있는 범위 — 이 안에서 읽은 쪽수 비율로 정해진다 */
 const MIN_SIZE = 15;
@@ -26,8 +26,8 @@ const MAX_SIZE = 34;
  * 다른 이유가 있다는 사실 자체가 흐려진다.
  */
 export function GenreCloud({ shares }: { shares: GenreShare[] }) {
-  const known = shares.filter((share) => share.genre !== "장르 없음");
-  const unknown = shares.find((share) => share.genre === "장르 없음");
+  const known = shares.filter((share) => share.genre !== '장르 없음');
+  const unknown = shares.find((share) => share.genre === '장르 없음');
   const maxPages = Math.max(1, ...known.map((share) => share.pages));
 
   return (
@@ -43,7 +43,7 @@ function Word({ share, maxPages }: { share: GenreShare; maxPages: number }) {
   const [open, setOpen] = useState(false);
   const weight = share.pages / maxPages;
   const fontSize = MIN_SIZE + (MAX_SIZE - MIN_SIZE) * Math.sqrt(weight);
-  const fontWeight = weight > 0.55 ? "800" : weight > 0.3 ? "700" : "500";
+  const fontWeight = weight > 0.55 ? '800' : weight > 0.3 ? '700' : '500';
 
   return (
     <Tap
@@ -91,24 +91,24 @@ function interleave(shares: GenreShare[]): GenreShare[] {
 const styles = StyleSheet.create({
   wrap: { gap: 20 },
   cloud: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "baseline",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'baseline',
     gap: 16,
     paddingVertical: 12,
   },
   word: { color: color.primary },
   /** 눌러서 편 낱말은 밑줄로 표시한다 — 서랍 카드의 밑줄과 같은 말이다 */
   wordOpen: {
-    textDecorationLine: "underline",
+    textDecorationLine: 'underline',
     textDecorationColor: color.primaryLine,
   },
-  pages: { fontSize: 13, fontWeight: "600", color: color.text.meta },
+  pages: { fontSize: 13, fontWeight: '600', color: color.text.meta },
   footnote: {
     ...type.caption1,
     color: color.text.meta,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 18,
   },
 });

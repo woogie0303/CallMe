@@ -80,13 +80,15 @@ async function refresh(): Promise<string | null> {
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const send = async (token?: string | null): Promise<Response> => {
     const headers: Record<string, string> = {};
-    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (options.body !== undefined)
+      headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;
 
     return fetch(`${baseUrl()}${path}`, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body:
+        options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   };
 

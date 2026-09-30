@@ -94,7 +94,11 @@ export function BookDetail({
             />
           )
         ) : liked.length ? (
-          <SentenceShelf sentences={liked} title={null} onPressSentence={onOpenSentence} />
+          <SentenceShelf
+            sentences={liked}
+            title={null}
+            onPressSentence={onOpenSentence}
+          />
         ) : (
           <EmptyState
             mark="empty"

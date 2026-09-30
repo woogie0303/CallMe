@@ -28,7 +28,10 @@ export class SentencesService {
     @InjectModel(Ask.name) private readonly asks: Model<Ask>,
   ) {}
 
-  async create(readerId: string, dto: CreateSentenceDto): Promise<SentenceDocument> {
+  async create(
+    readerId: string,
+    dto: CreateSentenceDto,
+  ): Promise<SentenceDocument> {
     const owner = new Types.ObjectId(readerId);
     const book = await this.books.findOne({ _id: dto.bookId, readerId: owner });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
@@ -52,13 +55,18 @@ export class SentencesService {
    * 다만 하트(`favorite`)를 켠 문장은 표현이 딸려 있어도 들어온다 — 독자가
    * 직접 마음에 든다고 한 줄이다.
    */
-  async list(readerId: string, query: ListSentencesQuery): Promise<SentenceDocument[]> {
+  async list(
+    readerId: string,
+    query: ListSentencesQuery,
+  ): Promise<SentenceDocument[]> {
     const owner = new Types.ObjectId(readerId);
     const filter: Record<string, unknown> = { readerId: owner };
     if (query.bookId) filter.bookId = new Types.ObjectId(query.bookId);
 
     if (query.liked) {
-      const claimed = await this.items.distinct('encounters.sentenceId', { readerId: owner });
+      const claimed = await this.items.distinct('encounters.sentenceId', {
+        readerId: owner,
+      });
       const asked = await this.asks.distinct('sentenceId', { readerId: owner });
       filter.$or = [
         { _id: { $nin: [...claimed, ...asked] } },

@@ -40,7 +40,8 @@ export function DisclosureRow({
       style={styles.row}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[eyebrow, title, body].filter(Boolean).join(', ')}>
+      accessibilityLabel={[eyebrow, title, body].filter(Boolean).join(', ')}
+    >
       {icon ? (
         <View style={styles.iconTile}>
           {typeof icon === 'string' ? (
@@ -54,7 +55,9 @@ export function DisclosureRow({
       <View style={styles.text}>
         {eyebrow ? <AppText style={styles.eyebrow}>{eyebrow}</AppText> : null}
         <AppText style={big ? styles.value : styles.title}>{title}</AppText>
-        {body ? <AppText style={big ? styles.hint : styles.body}>{body}</AppText> : null}
+        {body ? (
+          <AppText style={big ? styles.hint : styles.body}>{body}</AppText>
+        ) : null}
       </View>
 
       <Icon name="chevronRight" size={16} color={color.text.assistive} />

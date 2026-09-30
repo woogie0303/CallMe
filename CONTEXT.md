@@ -14,12 +14,12 @@ conversation, or in UI copy.
 **Lexical Item (어휘 항목)**:
 A unit of language the reader saved because they did not know it. It may be a single word
 (`resign`), or a phrasal verb or collocation (`make out`, `for the time being`). Saving the
-same item a second time makes that second save a *Re-encounter*.
+same item a second time makes that second save a _Re-encounter_.
 _Avoid_: Word / 단어 (excludes phrasal verbs, so it is inaccurate), Vocabulary, Term
 
 **Ask (질문)**:
 The unit of a request to the AI is always a **whole sentence**, never a bare lexical item.
-One ask returns the sentence's Korean translation plus a set of *Candidates*. Because the
+One ask returns the sentence's Korean translation plus a set of _Candidates_. Because the
 model always sees the surrounding line, the sense it reports is the sense on the page.
 _Avoid_: Lookup / 검색, Query, Translation request
 
@@ -32,7 +32,7 @@ _Avoid_: Suggestion / 제안, Extraction, Highlight
 **Sentence (문장)**:
 One line copied verbatim from the book, and the unit the reader saves and returns to. It is
 a **record separate from** a lexical item: a sentence may carry items the reader did not know,
-or none at all because they simply liked it. Both live in the *Drawer* all the same — the
+or none at all because they simply liked it. Both live in the _Drawer_ all the same — the
 difference is only whether anything is underlined inside it.
 _Avoid_: Quote / 인용, 구절, 예문
 

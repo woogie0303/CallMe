@@ -14,7 +14,13 @@ import type { ItemSummary } from '../api/item.api';
  * 만난 횟수는 남긴다. 출처와 달리 이건 이 화면에서 알 수 없는 사실이고,
  * 두 번 만났다는 것 자체가 이 앱이 하려는 말이기 때문이다.
  */
-export function ItemCard({ item, onPress }: { item: ItemSummary; onPress?: () => void }) {
+export function ItemCard({
+  item,
+  onPress,
+}: {
+  item: ItemSummary;
+  onPress?: () => void;
+}) {
   const met = item.met;
 
   return (
@@ -22,7 +28,8 @@ export function ItemCard({ item, onPress }: { item: ItemSummary; onPress?: () =>
       style={styles.card}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${item.term}, ${item.meaning}${met > 1 ? `, ${met}번 만남` : ''}`}>
+      accessibilityLabel={`${item.term}, ${item.meaning}${met > 1 ? `, ${met}번 만남` : ''}`}
+    >
       <View style={styles.head}>
         <Quote style={styles.term}>{item.term}</Quote>
         {met > 1 ? <CountBadge label={`${met}번 만남`} /> : null}
@@ -49,8 +56,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  term: { flex: 1, fontSize: 16, lineHeight: 21, fontWeight: '600', color: color.text.primary },
+  term: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '600',
+    color: color.text.primary,
+  },
   /** 책의 영어와 앱의 한국어 사이를 가르는 선 하나 */
-  rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.border.default },
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border.default,
+  },
   meaning: { ...type.label2, color: color.text.secondary },
 });

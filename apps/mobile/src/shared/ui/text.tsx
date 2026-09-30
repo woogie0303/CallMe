@@ -9,7 +9,12 @@ import { color, family } from '@/shared/config';
  * 흐려지는 순간 Reread는 평범한 단어장처럼 보이기 시작한다.
  */
 export function AppText({ style, ...rest }: TextProps) {
-  return <Text {...rest} style={[{ fontFamily: family.sans, color: color.text.primary }, style]} />;
+  return (
+    <Text
+      {...rest}
+      style={[{ fontFamily: family.sans, color: color.text.primary }, style]}
+    />
+  );
 }
 
 /**
@@ -17,7 +22,12 @@ export function AppText({ style, ...rest }: TextProps) {
  * 앱이 지어낸 문장에는 쓰지 않는다.
  */
 export function Quote({ style, ...rest }: TextProps) {
-  return <Text {...rest} style={[{ fontFamily: family.serif, color: color.text.primary }, style]} />;
+  return (
+    <Text
+      {...rest}
+      style={[{ fontFamily: family.serif, color: color.text.primary }, style]}
+    />
+  );
 }
 
 /** 문장 안에서 한 조각만 강조할 때 — 부모의 크기·행간을 물려받는다. */

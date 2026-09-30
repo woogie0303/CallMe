@@ -2,7 +2,13 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { color, gutter, type } from '@/shared/config';
-import { AppText, Mark, MARK_NAMES, ScreenHeader, type MarkName } from '@/shared/ui';
+import {
+  AppText,
+  Mark,
+  MARK_NAMES,
+  ScreenHeader,
+  type MarkName,
+} from '@/shared/ui';
 
 /**
  * 개발용 — 9개 캐릭터를 한 화면에서 다 본다.
@@ -28,8 +34,15 @@ export default function DevMarksScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader leading="back" onLeadingPress={() => router.back()} title="캐릭터 9개" />
-      <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
+      <ScreenHeader
+        leading="back"
+        onLeadingPress={() => router.back()}
+        title="캐릭터 9개"
+      />
+      <ScrollView
+        contentContainerStyle={styles.grid}
+        showsVerticalScrollIndicator={false}
+      >
         {MARK_NAMES.map((name) => (
           <View key={name} style={styles.cell}>
             <Mark name={name} size={104} />

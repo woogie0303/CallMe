@@ -27,7 +27,10 @@ export const DRAWER_FILTERS: SectionOption<DrawerFilter>[] = [
   { value: 'again', icon: 'clock', title: '다시 만난 표현' },
 ];
 
-export const DRAWER_MATCH: Record<DrawerFilter, (row: SentenceCardData) => boolean> = {
+export const DRAWER_MATCH: Record<
+  DrawerFilter,
+  (row: SentenceCardData) => boolean
+> = {
   liked: (s) => s.marks.length === 0 || Boolean(s.favorite),
   items: (s) => s.marks.length > 0,
   again: (s) => s.marks.some((m) => (m.met ?? 0) > 1),
@@ -42,5 +45,12 @@ export function DrawerFilterRow({
   onChange: (next: DrawerFilter) => void;
   count?: number;
 }) {
-  return <SectionSwitch options={DRAWER_FILTERS} value={value} onChange={onChange} count={count} />;
+  return (
+    <SectionSwitch
+      options={DRAWER_FILTERS}
+      value={value}
+      onChange={onChange}
+      count={count}
+    />
+  );
 }
