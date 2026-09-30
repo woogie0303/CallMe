@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { assertPageInBook } from '../common/page-in-book';
 import { LexicalItem } from '../items/lexical-item.schema';
 import { ReadingService } from '../reading/reading.service';
 import { Sentence } from '../sentences/sentence.schema';
@@ -16,8 +17,21 @@ export class BooksService {
     private readonly reading: ReadingService,
   ) {}
 
-  create(readerId: string, dto: CreateBookDto): Promise<BookDocument> {
-    return this.books.create({ ...dto, readerId: new Types.ObjectId(readerId) });
+  /**
+   * 등록하면서 '지금 몇 쪽'을 적었으면 그만큼을 오늘 읽은 것으로 남긴다. 한동안
+   * 진도를 옮길 때(`update`)만 기록해서, 등록할 때 적은 쪽수는 그래프 어디에도
+   * 잡히지 않았다 — 독자에게는 분명히 읽은 쪽인데.
+   */
+  async create(readerId: string, dto: CreateBookDto): Promise<BookDocument> {
+    assertPageInBook({ pages: dto.pages }, dto.currentPage || undefined);
+
+    const book = await this.books.create({
+      ...dto,
+      readerId: new Types.ObjectId(readerId),
+      ...(dto.currentPage ? { lastReadAt: new Date() } : {}),
+    });
+    await this.reading.record(readerId, String(book._id), dto.currentPage ?? 0);
+    return book;
   }
 
   list(readerId: string, finished?: boolean): Promise<BookDocument[]> {
@@ -43,6 +57,11 @@ export class BooksService {
    */
   async update(readerId: string, id: string, dto: UpdateBookDto): Promise<BookDocument> {
     const before = await this.find(readerId, id);
+    /** 쪽수를 함께 고치는 중이면 새 쪽수로, 아니면 이미 있는 쪽수로 가린다 */
+    assertPageInBook(
+      { pages: dto.pages ?? before.pages },
+      dto.currentPage || undefined,
+    );
     const advanced =
       dto.currentPage !== undefined ? dto.currentPage - before.currentPage : 0;
 
@@ -56,6 +75,14 @@ export class BooksService {
     );
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
 
+    /** 고정은 한 권뿐 — 이 책을 고정하면 다른 책의 고정을 푼다 */
+    if (dto.pinned) {
+      await this.books.updateMany(
+        { readerId: new Types.ObjectId(readerId), _id: { $ne: book._id } },
+        { pinned: false },
+      );
+    }
+
     await this.reading.record(readerId, id, advanced);
     return book;
   }
@@ -64,7 +91,7 @@ export class BooksService {
    * 책을 지우면 그 책에서 옮겨 적은 문장도 함께 사라진다. 문장이 사라지면
    * 그 문장을 가리키던 만남도 지워야 하고, 만남이 하나도 남지 않은 어휘 항목은
    * 그때 함께 지운다 — 어디서 만났는지 말할 수 없는 항목은 서랍에서 할 말이
-   * 없기 때문이다.
+   * 없기 때문이다. 그 책의 읽은 기록(쪽수)도 함께 지운다.
    */
   async remove(readerId: string, id: string): Promise<{ deletedSentences: number }> {
     const book = await this.find(readerId, id);
@@ -80,6 +107,7 @@ export class BooksService {
     );
     await this.items.deleteMany({ readerId: owner, encounters: { $size: 0 } });
     await this.sentences.deleteMany({ _id: { $in: sentenceIds } });
+    await this.reading.forgetBook(readerId, String(book._id));
     await this.books.deleteOne({ _id: book._id });
 
     return { deletedSentences: sentenceIds.length };

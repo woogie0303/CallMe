@@ -1,10 +1,12 @@
 import { ToBoolean } from '../../common/to-boolean';
+import { GENRES, type Genre } from '../book.schema';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDateString,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -30,6 +32,10 @@ export class CreateBookDto {
   @IsOptional()
   @IsUrl({ require_tld: false })
   cover?: string;
+
+  @IsOptional()
+  @IsIn(GENRES)
+  genre?: Genre;
 
   /** 책등 그라디언트 두 색 */
   @IsOptional()
@@ -68,6 +74,11 @@ export class UpdateBookDto extends CreateBookDto {
   @IsOptional()
   @IsDateString()
   finishedAt?: string | null;
+
+  /** 홈 맨 위에 고정. true를 보내면 다른 책의 고정은 풀린다. */
+  @IsOptional()
+  @IsBoolean()
+  pinned?: boolean;
 }
 
 export class ListBooksQuery {
