@@ -4,6 +4,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { color } from '@/shared/config';
 import { QueryProvider } from '@/shared/query/provider';
@@ -17,12 +18,15 @@ SplashScreen.preventAutoHideAsync();
  */
 export default function RootLayout() {
   return (
-    <QueryProvider>
-      <SessionProvider>
-        <StatusBar style="dark" />
-        <Gate />
-      </SessionProvider>
-    </QueryProvider>
+    /* 촬영 시트의 손잡이가 끌기를 받는다(`widgets/capture/ui/ask-sheet`) */
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryProvider>
+        <SessionProvider>
+          <StatusBar style="dark" />
+          <Gate />
+        </SessionProvider>
+      </QueryProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -73,11 +77,12 @@ function Gate() {
         }}
       />
       <Stack.Screen name="book-add" />
+      <Stack.Screen name="book-edit" />
       <Stack.Screen name="book-search" />
       <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
       <Stack.Screen name="scan" />
       <Stack.Screen name="pending" />
-      <Stack.Screen name="retell" />
+      <Stack.Screen name="genres" />
       <Stack.Screen name="level" options={{ presentation: 'modal' }} />
     </Stack>
   );

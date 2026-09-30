@@ -55,7 +55,7 @@ export default function SignInScreen() {
           “I could not make out whether it was a statue or a person.”
         </Quote>
         <AppText style={styles.blurb}>
-          원서를 읽다 막힌 문장을 담아두면,{'\n'}나중에 또 헷갈릴 때 다시 이어드려요.
+          원서를 읽다 막힌 문장을 담아두면,{'\n'}나중에 다시 만날 때 이어드려요.
         </AppText>
       </View>
 
