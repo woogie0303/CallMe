@@ -113,18 +113,7 @@ export function PhotoPicker({
           })
         : null}
 
-      {/* 무엇을 하면 되는지 한 줄. 짚기 전에는 시작을, 짚은 뒤에는 끝을 말한다. */}
-      <View style={styles.hint} pointerEvents="none">
-        <AppText style={styles.hintText}>
-          {anchor === null && !selection
-            ? '막힌 곳의 첫 낱말을 눌러주세요'
-            : !selection
-              ? '이제 끝 낱말을 눌러주세요'
-              : shown?.widened
-                ? '문장 전체로 넓혔어요 · 다시 고르려면 아무 낱말이나'
-                : '다시 고르려면 아무 낱말이나 눌러주세요'}
-        </AppText>
-      </View>
+
     </View>
   );
 }
@@ -179,17 +168,6 @@ const styles = StyleSheet.create({
   wordOn: { backgroundColor: accent(0.42) },
   /** 첫 낱말만 짚어둔 상태 — 여기서 시작한다는 표시 */
   wordAnchor: { backgroundColor: accent(0.5), borderWidth: 1.5, borderColor: color.primary },
-
-  hint: { position: 'absolute', left: 0, right: 0, bottom: 12, alignItems: 'center' },
-  hintText: {
-    ...type.caption1,
-    color: color.text.onInk,
-    backgroundColor: ink(0.72),
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
 
   paper: {
     borderRadius: 16,

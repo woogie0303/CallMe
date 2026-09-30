@@ -5,12 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
-import { useSaveItem } from '@/entities/lexical-item/api/item.api';
+import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
-import type { ApiAskView } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
-import { ActionButton, AltPanel, AppText, Icon, Quote, ScreenHeader } from '@/shared/ui';
-import { AskResult } from '@/widgets/ask/ui/ask-result';
+import { ActionButton, AppText, ScreenHeader } from '@/shared/ui';
 import { SentenceField } from '@/widgets/ask/ui/sentence-field';
 
 /**
@@ -32,77 +30,82 @@ export default function AskScreen() {
   const params = useLocalSearchParams<Params>();
   /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
   const [sentence, setSentence] = useState(params.text ?? '');
-  const [answer, setAnswer] = useState<ApiAskView | null>(null);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
 
   const { data: quota } = useAskQuota();
   const { data: current } = useCurrentBook();
   const { data: chosen } = useBook(params.bookId);
   const book = chosen ?? current?.book;
-  const page = params.page ? Number(params.page) : undefined;
+  /**
+   * 쪽수는 꼭 적는다 — 나중에 이 문장을 다시 찾을 때 붙잡을 곳이 쪽수뿐이다.
+   * 손대기 전까지는 지난번에 적은 쪽이 들어가 있어서 대개 확인만 하면 된다.
+   */
+  const lastPage =
+    (current?.book.id === book?.id ? current?.progress.currentPage : undefined) ??
+    book?.currentPage ??
+    0;
+  const [pageEdit, setPageText] = useState<string | undefined>(params.page);
+  const pageText = pageEdit ?? (lastPage > 0 ? String(lastPage) : '');
+  const typedPage = Number(pageText);
+  /** 책에 없는 쪽은 쪽이 아니다 — 아래 글이 이유를 말하고, 서버도 한 번 더 막는다 */
+  const tooFar = Boolean(book?.pages && typedPage > book.pages);
+  const page = typedPage > 0 && !tooFar ? typedPage : undefined;
+  const ready = Boolean(book && sentence.trim() && page);
+  const moveProgress = useUpdateProgress(book?.id ?? '');
 
   const createAsk = useCreateAsk();
-  const saveItem = useSaveItem();
   const keepSentence = useCreateSentence();
 
   const left = quota?.remaining ?? 0;
-  const phase = !answer ? 'writing' : answer.ask.status === 'answered' ? 'answered' : 'pending';
 
-  const togglePick = (term: string) =>
-    setPicked((prev) => {
-      const next = new Set(prev);
-      if (next.has(term)) next.delete(term);
-      else next.add(term);
-      return next;
-    });
-
+  /**
+   * 문장을 적은 쪽까지는 읽은 것이다 — 담을 때 진도도 그만큼 옮긴다.
+   * 앞으로만 간다: 예전 쪽을 다시 펴서 적었다고 진도가 뒤로 가면 안 된다.
+   * 진도를 못 옮겨도 문장 담기는 실패가 아니다.
+   */
+  const recordPage = () => {
+    if (!book || !page || page <= lastPage) return;
+    moveProgress.mutate(page);
+  };
   /**
    * 물어본다. 질문이 떨어졌거나 답을 못 받아도 실패가 아니다 — 서버가 문장을
-   * 먼저 저장하고 pending으로 돌려주므로, 화면은 오류가 아니라 상태를 보여준다.
+   * 먼저 저장하고 pending으로 돌려준다(ADR-0003).
+   *
+   * 답은 이 모달에서 펴지 않고 그 문장이 사는 곳으로 간다. 답이 왔으면 문장 화면을
+   * 뜻을 편 채로, 못 받았으면 기다리는 문장 목록으로. 촬영에서 물었을 때와 같은
+   * 길이다 — 어디서 물었든 결과는 한 화면에서 본다.
    */
   const ask = async () => {
-    if (!book || !sentence.trim()) return;
-    const view = await createAsk.mutateAsync({
-      bookId: book.id,
-      text: sentence.trim(),
-      page,
-    });
-    setAnswer(view);
-    /** 답이 왔으면 후보를 전부 골라둔 채로 시작한다 — 빼는 편이 고르는 것보다 빠르다 */
-    setPicked(new Set(view.ask.candidates.map((candidate) => candidate.term)));
-  };
-
-  /** 고른 후보를 서랍에 담는다. 이미 있던 표현이면 그 자리에서 재회가 된다. */
-  const keep = async () => {
-    if (!answer?.sentence) return;
-    const chosenOnes = answer.ask.candidates.filter((c) => picked.has(c.term));
-    for (const candidate of chosenOnes) {
-      await saveItem.mutateAsync({
-        term: candidate.term,
-        meaning: candidate.meaning,
-        register: candidate.register,
-        surface: candidate.surface,
-        sentenceId: answer.sentence._id,
+    if (!book || !sentence.trim() || !page) return;
+    try {
+      const view = await createAsk.mutateAsync({
+        bookId: book.id,
+        text: sentence.trim(),
+        page,
       });
+      recordPage();
+      if (view.ask.status === 'answered' && view.sentence) {
+        router.replace({
+          pathname: '/sentence/[id]',
+          params: { id: view.sentence._id, reveal: '1' },
+        });
+      } else {
+        router.replace('/pending');
+      }
+    } catch (error) {
+      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
     }
-    router.replace('/drawer');
-  };
-
-  const reset = () => {
-    setAnswer(null);
-    setPicked(new Set());
-    setSentence('');
   };
 
   /**
-   * 뜻을 묻지 않고 문장만 남긴다. 어휘 항목이 없으니 서랍이 아니라 책으로 간다.
+   * 뜻을 묻지 않고 문장만 남긴다. 담고 나면 그 책의 '마음에 들었던 문장'을 편다.
    * 질문 횟수도 쓰지 않는다 — 모델을 부르지 않으니까.
    */
   const keepOnly = async () => {
-    if (!book || !sentence.trim()) return;
+    if (!book || !sentence.trim() || !page) return;
     try {
       await keepSentence.mutateAsync({ bookId: book.id, text: sentence.trim(), page });
-      router.replace({ pathname: '/book/[id]', params: { id: book.id } });
+      recordPage();
+      router.replace({ pathname: '/book/[id]', params: { id: book.id, tab: 'liked' } });
     } catch (error) {
       Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
     }
@@ -128,84 +131,39 @@ export default function AskScreen() {
         contentContainerStyle={styles.content}
         style={styles.scroll}
         keyboardShouldPersistTaps="handled">
-        {/*
-          답이 오면 입력칸은 물러난다. 같은 문장을 입력칸과 답에 두 번 세우면
-          어느 쪽이 지금 보고 있는 것인지 흐려진다 — 답에 선 문장은 밑줄이
-          그어져 있어서, 이미 그 문장이자 고를 거리다.
-        */}
-        {phase === 'writing' ? (
-          <SentenceField
-            value={sentence}
-            onChangeText={setSentence}
-            onCapture={() => router.replace('/scan')}
-          />
-        ) : null}
-
-        {phase === 'answered' && answer ? (
-          <AskResult
-            sentence={answer.sentence?.text ?? sentence}
-            translation={answer.ask.translation}
-            candidates={answer.ask.candidates}
-            picked={picked}
-            onTogglePick={togglePick}
-          />
-        ) : null}
-
-        {phase === 'pending' ? (
-          <>
-            <Quote style={styles.kept}>{answer?.sentence?.text ?? sentence}</Quote>
-            <AltPanel style={styles.pending}>
-              <View style={styles.pendingHead}>
-                <Icon name="clock" size={15} color={color.text.meta} />
-                <AppText style={styles.pendingTitle}>문장은 담아뒀어요</AppText>
-              </View>
-              <AppText style={styles.pendingBody}>
-                {answer?.ask.pendingReason === '질문 소진'
-                  ? '이번 달 질문을 다 쓰셨어요. 담아둔 문장은 다음 달에 자동으로 풀려요 — 읽던 데까지 계속 읽으셔도 돼요.'
-                  : '지금은 답을 받지 못했어요. 문장은 담아뒀으니 나중에 다시 풀어드릴게요.'}
-              </AppText>
-            </AltPanel>
-          </>
+        <SentenceField
+          value={sentence}
+          onChangeText={setSentence}
+          onCapture={() =>
+            router.replace(book ? { pathname: '/scan', params: { bookId: book.id } } : '/scan')
+          }
+          page={pageText}
+          onChangePage={setPageText}
+        />
+        {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
+        {tooFar ? (
+          <AppText style={styles.needPage}>이 책은 {book?.pages}쪽까지예요.</AppText>
+        ) : sentence.trim() && !page ? (
+          <AppText style={styles.needPage}>몇 쪽인지 적어야 담을 수 있어요.</AppText>
         ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        {phase === 'writing' ? (
-          <>
-            <ActionButton
-              label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
-              variant={left > 0 ? 'primary' : 'ink'}
-              disabled={!book || !sentence.trim()}
-              loading={createAsk.isPending}
-              onPress={ask}
-            />
-            {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다 */}
-            <ActionButton
-              label="그냥 마음에 든 문장이에요"
-              variant="subtle"
-              disabled={!book || !sentence.trim()}
-              loading={keepSentence.isPending}
-              onPress={keepOnly}
-            />
-          </>
-        ) : null}
-
-        {phase === 'answered' ? (
-          <>
-            <ActionButton
-              label="서랍에 담기"
-              aside={`${picked.size}개`}
-              disabled={picked.size === 0}
-              loading={saveItem.isPending}
-              onPress={keep}
-            />
-            <ActionButton label="다른 문장 물어보기" variant="subtle" onPress={reset} />
-          </>
-        ) : null}
-
-        {phase === 'pending' ? (
-          <ActionButton label="다른 문장 담아두기" variant="ink" onPress={reset} />
-        ) : null}
+        <ActionButton
+          label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
+          variant={left > 0 ? 'primary' : 'ink'}
+          disabled={!ready || keepSentence.isPending}
+          loading={createAsk.isPending}
+          onPress={ask}
+        />
+        {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다 */}
+        <ActionButton
+          label="그냥 마음에 든 문장이에요"
+          variant="subtle"
+          disabled={!ready || createAsk.isPending}
+          loading={keepSentence.isPending}
+          onPress={keepOnly}
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -218,15 +176,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingTop: 4, paddingBottom: 24, gap: 18 },
 
-  pending: { padding: 16, gap: 10 },
-  pendingHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  pendingTitle: {
-    ...type.label2,
-    fontWeight: '700',
-    color: color.text.primary,
-  },
-  pendingBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
-  kept: { fontSize: 17, lineHeight: 27, color: color.text.primary },
 
+  needPage: { ...type.caption1, color: color.status.cautionary, marginTop: -8 },
   footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
 });

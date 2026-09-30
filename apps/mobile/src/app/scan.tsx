@@ -6,15 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota, useCreateAsk, useSplitLines } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
-import { useSaveItem } from '@/entities/lexical-item/api/item.api';
+import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
-import type { ApiAskView } from '@/shared/api/types';
 import { color, gutter, ink, type } from '@/shared/config';
 import { alignSentences, type SentencePlacement } from '@/shared/ocr/align';
 import { selectWords, type Selection } from '@/shared/ocr/selection';
 import { available, readLines, type OcrWord } from '@/shared/ocr/text-extractor';
 import { ActionButton, AppText, HeaderAction, ScreenHeader, Tap } from '@/shared/ui';
-import { AskSheet, type SheetPhase } from '@/widgets/capture/ui/ask-sheet';
+import { AskSheet } from '@/widgets/capture/ui/ask-sheet';
 import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
 
 type Params = { bookId?: string };
@@ -22,9 +21,10 @@ type Params = { bookId?: string };
 /**
  * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서** 막힌 문장을 짚어 묻는다.
  *
- * 한 화면이다. 예전에는 촬영 → 문장 고르기 → 질문 화면으로 옮겨 다녔고, 옮기는
- * 순간 사진이 사라져서 한 장을 찍어도 문장 하나밖에 못 물었다. 지금은 시트가
- * 사진 위로 올라왔다 내려가므로, 한 쪽에서 막힌 문장을 연달아 물을 수 있다.
+ * 짚은 문장은 시트에서 물을지 그냥 담을지만 고르고, 고르는 순간 그 문장이 사는
+ * 곳으로 간다 — 물어서 답이 왔으면 문장 화면, 답을 못 받았으면 기다리는 문장,
+ * 그냥 담았으면 그 책의 '마음에 들었던 문장'. 한동안은 담은 뒤 사진으로 돌아와
+ * 다음 문장을 짚게 했는데, 방금 담은 것이 어디 갔는지 보이지 않았다.
  *
  * 글자를 읽는 일은 기기가 하고(Apple Vision / ML Kit), 줄을 문장으로 잇는 일은
  * 서버가 한다 — 앱에서 정규식으로 자르면 답을 내는 모델과 다르게 자른다(ADR-0002).
@@ -48,27 +48,38 @@ export default function ScanScreen() {
   const [rough, setRough] = useState(false);
   const [reading, setReading] = useState(false);
 
-  /** 지금 짚은 문장과, 그 문장에 대해 받은 답 */
+  /** 지금 짚은 문장 — 인식이 틀렸으면 시트에서 고친 글이 여기 들어간다 */
   const [picked, setPicked] = useState<string | undefined>();
-  const [answer, setAnswer] = useState<ApiAskView | null>(null);
-  const [keep, setKeep] = useState<Set<string>>(new Set());
+  /** 손대기 전까지는 지난번에 적은 쪽을 따른다 */
+  const [pageEdit, setPageEdit] = useState<string>();
 
   const split = useSplitLines();
   const createAsk = useCreateAsk();
-  const saveItem = useSaveItem();
   const keepSentence = useCreateSentence();
   const { data: quota } = useAskQuota();
   const { data: current } = useCurrentBook();
   const { data: chosen } = useBook(params.bookId);
   const book = chosen ?? current?.book;
   const left = quota?.remaining ?? 0;
+  const moveProgress = useUpdateProgress(book?.id ?? '');
 
-  const phase: SheetPhase = !answer
-    ? 'picked'
-    : answer.ask.status === 'answered'
-      ? 'answered'
-      : 'pending';
-  const busy = createAsk.isPending || saveItem.isPending || keepSentence.isPending;
+  const lastPage =
+    (current?.book.id === book?.id ? current?.progress.currentPage : undefined) ??
+    book?.currentPage ??
+    0;
+  const pageText = pageEdit ?? (lastPage > 0 ? String(lastPage) : '');
+  /** 책에 없는 쪽은 쪽이 아니다 — 시트가 이유를 말하고, 서버도 한 번 더 막는다 */
+  const typedPage = Number(pageText);
+  const page =
+    typedPage > 0 && (!book?.pages || typedPage <= book.pages) ? typedPage : undefined;
+
+  /** 문장이 있는 쪽까지는 읽은 것이다 — 진도를 앞으로만 옮긴다 */
+  const recordPage = () => {
+    if (!book || !page || page <= lastPage) return;
+    moveProgress.mutate(page);
+  };
+
+  const busy = createAsk.isPending || keepSentence.isPending;
 
   const shoot = async () => {
     if (!camera.current || reading) return;
@@ -117,8 +128,6 @@ export default function ScanScreen() {
 
   const closeSheet = () => {
     setPicked(undefined);
-    setAnswer(null);
-    setKeep(new Set());
     setAnchor(null);
     setRange(null);
   };
@@ -132,7 +141,6 @@ export default function ScanScreen() {
       setRange(null);
       setAnchor(index);
       setPicked(undefined);
-      setAnswer(null);
       return;
     }
     if (anchor === null) {
@@ -147,12 +155,22 @@ export default function ScanScreen() {
   };
 
   const ask = async () => {
-    if (!book || !picked || busy) return;
+    if (!book || !picked?.trim() || !page || busy) return;
     try {
-      const view = await createAsk.mutateAsync({ bookId: book.id, text: picked });
-      setAnswer(view);
-      /** 답이 왔으면 후보를 전부 골라둔 채로 시작한다 — 빼는 편이 고르는 것보다 빠르다 */
-      setKeep(new Set(view.ask.candidates.map((c) => c.term)));
+      const view = await createAsk.mutateAsync({ bookId: book.id, text: picked.trim(), page });
+      recordPage();
+      /**
+       * 답이 왔으면 그 문장 화면에서 뜻을 편 채로 연다. 못 받았으면(질문 소진·
+       * 연결 실패) 문장은 담겼고 답을 기다리는 줄에 선다 — 그 목록으로 간다.
+       */
+      if (view.ask.status === 'answered' && view.sentence) {
+        router.replace({
+          pathname: '/sentence/[id]',
+          params: { id: view.sentence._id, reveal: '1' },
+        });
+      } else {
+        router.replace('/pending');
+      }
     } catch (error) {
       Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
     }
@@ -160,29 +178,11 @@ export default function ScanScreen() {
 
   /** 뜻은 몰라도 되고 그냥 좋았던 문장 — 질문 횟수를 쓰지 않는다 */
   const keepOnly = async () => {
-    if (!book || !picked || busy) return;
+    if (!book || !picked?.trim() || !page || busy) return;
     try {
-      await keepSentence.mutateAsync({ bookId: book.id, text: picked });
-      closeSheet();
-    } catch (error) {
-      Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
-    }
-  };
-
-  /** 고른 표현을 서랍에 담는다. 이미 있던 표현이면 그 자리에서 재회가 된다. */
-  const keepPicked = async () => {
-    if (!answer?.sentence || busy) return;
-    try {
-      for (const c of answer.ask.candidates.filter((x) => keep.has(x.term))) {
-        await saveItem.mutateAsync({
-          term: c.term,
-          meaning: c.meaning,
-          register: c.register,
-          surface: c.surface,
-          sentenceId: answer.sentence._id,
-        });
-      }
-      closeSheet();
+      await keepSentence.mutateAsync({ bookId: book.id, text: picked.trim(), page });
+      recordPage();
+      router.replace({ pathname: '/book/[id]', params: { id: book.id, tab: 'liked' } });
     } catch (error) {
       Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
     }
@@ -231,9 +231,6 @@ export default function ScanScreen() {
         </View>
 
         <View style={[styles.shutterRow, { paddingBottom: insets.bottom + 16 }]}>
-          <AppText style={styles.guide}>
-            {book ? `${book.title} · ` : ''}읽던 쪽이 화면에 다 들어오게 찍어주세요
-          </AppText>
           <Tap
             style={styles.shutter}
             onPress={shoot}
@@ -249,11 +246,11 @@ export default function ScanScreen() {
 
   /* ── 찍은 뒤: 쪽 위에서 문장 짚기 ─────────────────────────── */
   return (
+    /* 자판이 올라오면 시트가 스스로 화면 위까지 자란다(`AskSheet`) */
     <View style={styles.screen}>
       <ScreenHeader
         leading="back"
         onLeadingPress={retake}
-        title={picked ? undefined : '막힌 곳을 짚어보세요'}
         trailing={<HeaderAction label="다시 찍기" tone={color.text.meta} onPress={retake} />}
       />
 
@@ -268,8 +265,6 @@ export default function ScanScreen() {
           selected={picked}
           onSelectSentence={(sentence) => {
             if (sentence === picked) return;
-            setAnswer(null);
-            setKeep(new Set());
             setPicked(sentence);
           }}
         />
@@ -284,24 +279,15 @@ export default function ScanScreen() {
       {picked ? (
         <AskSheet
           sentence={picked}
-          phase={phase}
-          translation={answer?.ask.translation}
-          candidates={answer?.ask.candidates ?? []}
-          picked={keep}
+          onChangeSentence={setPicked}
+          page={pageText}
+          onChangePage={setPageEdit}
+          maxPage={book?.pages || undefined}
           quotaLeft={left}
-          busy={busy}
-          pendingReason={answer?.ask.pendingReason}
-          onTogglePick={(term) =>
-            setKeep((prev) => {
-              const next = new Set(prev);
-              if (next.has(term)) next.delete(term);
-              else next.add(term);
-              return next;
-            })
-          }
+          asking={createAsk.isPending}
+          keeping={keepSentence.isPending}
           onAsk={ask}
           onKeepOnly={keepOnly}
-          onKeep={keepPicked}
           onClose={closeSheet}
         />
       ) : null}
@@ -371,7 +357,6 @@ const styles = StyleSheet.create({
   readingLabel: { ...type.label2, color: color.text.onInk },
 
   shutterRow: { alignItems: 'center', gap: 14, paddingTop: 4 },
-  guide: { ...type.caption1, color: color.text.meta, textAlign: 'center' },
   shutter: {
     width: 68,
     height: 68,

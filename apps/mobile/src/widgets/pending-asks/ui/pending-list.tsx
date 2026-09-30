@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { Book } from '@/entities/book/model/types';
-import { SpineEdge } from '@/entities/book/ui/spine-edge';
+import { CoverThumb } from '@/entities/book/ui/cover-thumb';
 import { color, type } from '@/shared/config';
 import { AppText, Quote, Tap } from '@/shared/ui';
 
@@ -30,7 +30,7 @@ export function PendingList({
         const book = ask.book;
         return (
           <Tap key={ask.id} style={styles.card} onPress={() => onPressAsk?.(ask.id)}>
-            {book ? <SpineEdge book={book} /> : null}
+            {book ? <CoverThumb book={book} style={styles.thumb} /> : null}
             <View style={styles.body}>
               <Quote style={styles.text}>{ask.text}</Quote>
               <View style={styles.foot}>
@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     borderColor: color.border.subtle,
     overflow: 'hidden',
   },
+  thumb: { marginTop: 14, marginLeft: 14 },
   body: { flex: 1, gap: 8, paddingVertical: 14, paddingHorizontal: 14, minWidth: 0 },
   text: { fontSize: 15, lineHeight: 23, color: color.text.body },
   foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
