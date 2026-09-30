@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { color, type } from '@/shared/config';
@@ -21,8 +22,11 @@ export function DisclosureRow({
   body,
   onPress,
 }: {
-  /** 왼쪽에 서는 아이콘 타일 — 갈림길을 고르는 자리에서만 쓴다 */
-  icon?: FilledIconName;
+  /**
+   * 왼쪽에 서는 아이콘 타일 — 갈림길을 고르는 자리에서만 쓴다. 면 아이콘은 이름으로,
+   * 선 아이콘(`TrashIcon` 등)은 그린 것을 그대로 넘긴다.
+   */
+  icon?: FilledIconName | ReactElement;
   /** 아래 값이 무엇인지 먼저 말하는 작은 라벨 */
   eyebrow?: string;
   title: string;
@@ -39,7 +43,11 @@ export function DisclosureRow({
       accessibilityLabel={[eyebrow, title, body].filter(Boolean).join(', ')}>
       {icon ? (
         <View style={styles.iconTile}>
-          <Icon name={icon} size={19} color={color.text.primary} />
+          {typeof icon === 'string' ? (
+            <Icon name={icon} size={19} color={color.text.primary} />
+          ) : (
+            icon
+          )}
         </View>
       ) : null}
 

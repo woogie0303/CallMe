@@ -30,3 +30,15 @@ export function daysBetween(from: string | Date, to: string | Date): number {
     (new Date(to).getTime() - new Date(from).getTime()) / 86_400_000,
   );
 }
+
+/**
+ * 스레드의 시각 — '방금', '3분', '4시간', 그 뒤로는 담은 날처럼(`savedLabel`).
+ * 생각을 단 직후에 '오늘'이라고만 적히면 방금 쓴 건지 아침에 쓴 건지 모른다.
+ */
+export function agoLabel(date: string | Date, now = new Date()): string {
+  const minutes = Math.floor((now.getTime() - new Date(date).getTime()) / 60_000);
+  if (minutes < 1) return '방금';
+  if (minutes < 60) return `${minutes}분`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}시간`;
+  return savedLabel(date);
+}

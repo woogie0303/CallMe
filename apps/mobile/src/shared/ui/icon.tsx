@@ -109,6 +109,119 @@ export function Icon({ name, size = 20, color = INK }: IconProps & { name: Fille
   );
 }
 
+/**
+ * 펼친 책 — 쪽수를 적는 자리에 선다.
+ * TODO: 디자인 문서에 없어 여기서 그렸다(카메라와 같은 1.8 선). `icons/*.svg`에
+ * 들어오면 교체한다. 책갈피는 '저장'으로 읽혀서 쓰지 않았다.
+ */
+export function PageIcon({ size = 20, color = INK }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 6.8C10.2 5.4 7.5 4.9 3.8 5.1v12.8c3.7-.2 6.4.3 8.2 1.7 1.8-1.4 4.5-1.9 8.2-1.7V5.1c-3.7-.2-6.4.3-8.2 1.7zM12 6.8v12.8"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * 하트 — 켜면 차고, 끄면 선만 남는다. 면 아이콘 `heart`와 같은 모양이다.
+ * TODO: 디자인 문서에 들어오면 교체한다.
+ */
+export function HeartIcon({ size = 20, color = INK, filled }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 20.2S3.9 15 3.9 9.6c0-2.6 2-4.6 4.4-4.6 1.5 0 2.9.8 3.7 2.1.8-1.3 2.2-2.1 3.7-2.1 2.4 0 4.4 2 4.4 4.6 0 5.4-8.1 10.6-8.1 10.6z"
+        stroke={color}
+        fill={filled ? color : 'none'}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * 쓰레기통 — 지우기. 선 아이콘이라 카메라와 같은 1.8 굵기.
+ * TODO: 디자인 문서에 없어 여기서 그렸다. `icons/*.svg`에 들어오면 교체한다.
+ */
+export function TrashIcon({ size = 20, color = INK }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 6.8h15M9.6 6.8V5.3c0-.8.6-1.4 1.4-1.4h2c.8 0 1.4.6 1.4 1.4v1.5M6.4 6.8l.8 11.6c.1 1 .9 1.7 1.9 1.7h5.8c1 0 1.8-.7 1.9-1.7l.8-11.6M10.2 10.6v5.6M13.8 10.6v5.6"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * 더 보기(⋮) — 세로로 선 점 셋. 화면 머리에서 '이 책에 할 수 있는 일'을 연다.
+ * TODO: 디자인 문서에 없어 여기서 그렸다. `icons/*.svg`에 들어오면 교체한다.
+ */
+export function MoreIcon({ size = 20, color = INK }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={5} r={1.9} fill={color} />
+      <Circle cx={12} cy={12} r={1.9} fill={color} />
+      <Circle cx={12} cy={19} r={1.9} fill={color} />
+    </Svg>
+  );
+}
+
+/**
+ * 압정(📌) — 홈 맨 위에 고정한 책. 고정하면 차고, 아니면 선만 남는다.
+ * TODO: 디자인 문서에 없어 여기서 그렸다. `icons/*.svg`에 들어오면 교체한다.
+ */
+export function PinIcon({ size = 20, color = INK, filled }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 3.5h6M10 3.5l-.6 6.2-3.1 3.4v1.4h11.4v-1.4l-3.1-3.4-.6-6.2"
+        stroke={color}
+        fill={filled ? color : 'none'}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M12 14.5v6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/**
+ * 묻기 — 말풍선 안의 물음표. 문장 화면 머리에서 '이 문장 물어보기'를 대신한다.
+ * TODO: 디자인 문서에 없어 여기서 그렸다. `icons/*.svg`에 들어오면 교체한다.
+ */
+export function AskIcon({ size = 20, color = INK }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20.5 11.6c0 4.3-3.8 7.6-8.5 7.6-1.1 0-2.1-.2-3.1-.5L4 20.2l1.4-3.7c-1.2-1.3-1.9-3-1.9-4.9C3.5 7.3 7.3 4 12 4s8.5 3.3 8.5 7.6z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M10 9.7a2.1 2.1 0 1 1 3.1 1.9c-.7.4-1.1.9-1.1 1.6"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <Circle cx={12} cy={15.6} r={1.05} fill={color} />
+    </Svg>
+  );
+}
+
 /** 선으로 그려진 아이콘은 굵기를 유지해야 해서 따로 둔다. */
 export function CameraIcon({ size = 20, color = INK }: IconProps) {
   return (
