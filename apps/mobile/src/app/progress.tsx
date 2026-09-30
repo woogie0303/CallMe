@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useBook } from '@/entities/book/api/book.api';
+import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, ProgressBar, Quote, ScreenHeader } from '@/shared/ui';
@@ -19,8 +19,18 @@ export default function ProgressScreen() {
   const router = useRouter();
   const { bookId } = useLocalSearchParams<{ bookId?: string }>();
   const { data: book } = useBook(bookId);
+  const { data: reading } = useCurrentBook();
   const update = useUpdateProgress(bookId ?? '');
-  const [page, setPage] = useState('');
+  /**
+   * 지난번에 적은 쪽이 먼저 들어가 있다 — 대개 거기서 조금 더 읽었으니 끝자리만
+   * 고치면 된다. 손대기 전까지는 책이 불러와지는 대로 그 값을 따른다.
+   */
+  const last =
+    (reading?.book.id === bookId ? reading?.progress.currentPage : undefined) ??
+    book?.currentPage ??
+    0;
+  const [edited, setPage] = useState<string>();
+  const page = edited ?? (last > 0 ? String(last) : '');
 
   const typed = Number(page);
   const total = book?.pages ?? 0;
@@ -56,6 +66,7 @@ export default function ProgressScreen() {
             onChangeText={setPage}
             keyboardType="number-pad"
             autoFocus
+            selectTextOnFocus
             placeholder="0"
             placeholderTextColor={color.text.assistive}
             style={styles.input}

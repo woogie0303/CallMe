@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { ReadingWeek } from '@/entities/reading/model/types';
 import { color, type } from '@/shared/config';
-import { AltPanel, AppText, emphasis } from '@/shared/ui';
+import { AppText, Icon, Tap, emphasis } from '@/shared/ui';
 
 /** 막대가 설 수 있는 높이. 이 안에서 비율만큼 차오른다. */
 const TRACK = 60;
@@ -28,20 +28,37 @@ const BAR = 16;
  *
  * 막대 높이는 **그 주에 가장 많이 읽은 날에 대한 비율**이라 절대량을 말하지
  * 못한다. 그래서 합계 쪽수는 위에 글로 적는다.
+ *
+ * `onPress`를 주면 판 전체가 눌린다 — 읽기 기록(꾸준함·장르·읽은 날)으로 넘어가는 문이다.
+ * 이레는 '요즘 읽고 있나'를, 그 문 너머는 '무엇을 즐겨 읽나'를 말해서 서로
+ * 다른 걸 보여준다.
  */
-export function ReadingWeekChart({ week }: { week: ReadingWeek }) {
+export function ReadingWeekChart({
+  week,
+  onPress,
+}: {
+  week: ReadingWeek;
+  onPress?: () => void;
+}) {
   const read = week.days > 0;
 
   return (
-    <AltPanel style={styles.panel}>
+    <Tap
+      style={[styles.panel, styles.alt]}
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? '읽기 기록 보기' : undefined}>
       <View style={styles.head}>
         <AppText style={styles.eyebrow}>이번 주</AppText>
-        <AppText style={styles.month}>{week.monthLabel}</AppText>
+        <View style={styles.headRight}>
+          <AppText style={styles.month}>{week.monthLabel}</AppText>
+          {onPress ? <Icon name="chevronRight" size={14} color={color.text.assistive} /> : null}
+        </View>
       </View>
 
       {read ? (
         <AppText style={styles.summary}>
-          {week.pages}쪽 읽었어요 · {week.days}일
+          {week.pages}쪽 읽었어요
           {week.streak > 0 ? (
             <AppText style={emphasis(color.primary)}> · 연속 {week.streak}일</AppText>
           ) : null}
@@ -56,7 +73,7 @@ export function ReadingWeekChart({ week }: { week: ReadingWeek }) {
         accessibilityRole="image"
         accessibilityLabel={
           read
-            ? `이번 주 ${week.days}일, 모두 ${week.pages}쪽 읽었어요`
+            ? `이번 주 ${week.pages}쪽 읽었어요${week.streak > 0 ? `, 연속 ${week.streak}일` : ''}`
             : '이번 주에는 아직 읽은 기록이 없어요'
         }>
         {week.bars.map((bar, i) => (
@@ -77,7 +94,7 @@ export function ReadingWeekChart({ week }: { week: ReadingWeek }) {
           </View>
         ))}
       </View>
-    </AltPanel>
+    </Tap>
   );
 }
 
@@ -87,7 +104,10 @@ const styles = StyleSheet.create({
    * 되자 판 전체가 분홍빛으로 떠서 막대가 묻혔다. 판이 조용해야 막대가 선다.
    */
   panel: { padding: 20, gap: 12, borderRadius: 24 },
+  /** AltPanel의 배경·모서리를 그대로 가져온다 — Tap으로 바꾸며 직접 칠한다 */
+  alt: { backgroundColor: color.surface.alt },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   eyebrow: { ...type.caption1, color: color.text.meta },
   month: { ...type.caption1, color: color.text.meta },
   summary: { ...type.headline2, fontWeight: '700', color: color.text.primary },

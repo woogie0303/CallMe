@@ -39,3 +39,12 @@ export type ReadingWeek = {
   streak: number;
   bars: ReadingDay[];
 };
+
+export type ReadingCalendarDay = { date: Date; pages: number };
+
+export type GenreShare = {
+  genre: string;
+  pages: number;
+  /** 전체 대비 비율, 0~1 — 막대 폭을 정한다 */
+  ratio: number;
+};
