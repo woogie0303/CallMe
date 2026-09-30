@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
-import type { ApiBook } from '@/shared/api/types';
+import type { ApiBook, Genre } from '@/shared/api/types';
 import { samplePrimer } from '../lib/sample';
 import { spineFor } from '../lib/spine';
 import type { Book } from '../model/types';
@@ -20,6 +20,8 @@ export function toBook(api: ApiBook): Book {
     pages: api.pages ?? 0,
     currentPage: api.currentPage,
     cover: api.cover,
+    genre: api.genre,
+    pinned: api.pinned,
     spine: [from, to] as const,
     /**
      * 서버가 아직 안 준다 — 모델이 써야 하는 글인데 키가 없다. 화면 구조를
@@ -48,32 +50,44 @@ export function useBook(id?: string) {
   });
 }
 
-/** 읽고 있는 책들 — 가장 최근에 편 것이 앞에 선다 */
+/**
+ * 읽고 있는 책들. 맨 앞은 **핀이 꽂힌 책** — 고정한 책이 있으면 그 책, 없으면
+ * 가장 최근에 **등록한** 책이다. 나머지는 가장 최근에 편 것부터.
+ *
+ * 맨 위 자리는 읽을 때마다 바뀌지 않는다. 한때 가장 최근에 읽은 책이 섰는데,
+ * 두 권을 번갈아 읽으면 홈을 열 때마다 맨 위가 뒤바뀌었다. 핀은 늘 한 권에
+ * 꽂혀 있다 — 고정한 책이 없어도 새로 들인 책이 그 자리를 맡고(그래서 그 책에도
+ * 핀이 보인다), 다른 책에 핀을 꽂으면 그리로 옮겨 간다.
+ */
 export function useReadingBooks() {
   return useQuery({
     queryKey: [...booksKey, 'reading'],
     queryFn: async () => {
       const books = await api<ApiBook[]>('/books?finished=false');
-      return [...books].sort(byLastRead).map((raw) => ({ book: toBook(raw), progress: raw }));
+      const hero =
+        books.find((book) => book.pinned) ??
+        [...books].sort((a, b) => time(b.createdAt) - time(a.createdAt))[0];
+      const rest = books.filter((book) => book !== hero).sort(byLastRead);
+      return (hero ? [{ ...hero, pinned: true }, ...rest] : rest).map((raw) => ({
+        book: toBook(raw),
+        progress: raw,
+      }));
     },
   });
 }
 
-/**
- * 맨 위에 크게 서는 한 권 — 가장 최근에 읽은 책이다.
- *
- * 이 자리는 책을 새로 들인다고 바뀌지 않는다. 진도를 옮길 때 바뀐다 —
- * 등록만으로 밀려나면 어제까지 읽던 쪽이 어디로 갔는지 알 수 없어진다.
- */
+/** 맨 위에 크게 서는 한 권 — 핀이 꽂힌 책(`useReadingBooks` 참고) */
 export function useCurrentBook() {
   const query = useReadingBooks();
   return { ...query, data: query.data ? (query.data[0] ?? null) : undefined };
 }
 
 function byLastRead(a: ApiBook, b: ApiBook): number {
-  const at = new Date(a.lastReadAt ?? a.startedAt ?? 0).getTime();
-  const bt = new Date(b.lastReadAt ?? b.startedAt ?? 0).getTime();
-  return bt - at;
+  return time(b.lastReadAt ?? b.startedAt) - time(a.lastReadAt ?? a.startedAt);
+}
+
+function time(iso?: string): number {
+  return iso ? new Date(iso).getTime() : 0;
 }
 
 /**
@@ -90,6 +104,7 @@ export function useCreateBook() {
       pages?: number;
       currentPage?: number;
       cover?: string;
+      genre?: Genre;
     }) => {
       const [from, to] = spineFor(input.title);
       return api<ApiBook>('/books', {
@@ -97,7 +112,50 @@ export function useCreateBook() {
         body: { ...input, spine: [from, to], startedAt: new Date().toISOString() },
       });
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: booksKey }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: booksKey });
+      /** 등록할 때 적은 '지금 몇 쪽'도 오늘 읽은 것으로 남는다 — 그래프가 알아야 한다 */
+      client.invalidateQueries({ queryKey: ['reading'] });
+    },
+  });
+}
+
+/**
+ * 책을 고친다 — 제목·지은이·쪽수·장르·지금 몇 쪽, 그리고 홈 고정.
+ * '지금 몇 쪽'을 앞으로 옮기면 그 차이가 오늘 읽은 양으로 남으므로 그래프도 낡는다.
+ */
+export function useUpdateBook(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: {
+      title?: string;
+      author?: string;
+      pages?: number;
+      currentPage?: number;
+      genre?: Genre;
+      pinned?: boolean;
+    }) => api<ApiBook>(`/books/${id}`, { method: 'PATCH', body: patch }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: booksKey });
+      client.invalidateQueries({ queryKey: ['reading'] });
+    },
+  });
+}
+
+/**
+ * 책을 지운다. 서버가 그 책의 문장·그 책에서만 만난 표현·읽은 기록까지 함께
+ * 지우므로, 서랍·표현·그래프가 전부 낡는다.
+ */
+export function useDeleteBook() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ deletedSentences: number }>(`/books/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      for (const key of [booksKey, ['reading'], ['sentences'], ['items'], ['asks']]) {
+        client.invalidateQueries({ queryKey: key });
+      }
+    },
   });
 }
 
@@ -107,6 +165,8 @@ export type BookSearchResult = {
   pages?: number;
   cover?: string;
   publisher?: string;
+  /** 구글 북스에서만 자동으로 온다. 카카오·Open Library는 비워 온다. */
+  genre?: Genre;
 };
 
 /**

@@ -1,16 +1,18 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { Book } from '@/entities/book/model/types';
-import { BookSpine } from '@/entities/book/ui/book-spine';
+import { CoverThumb } from '@/entities/book/ui/cover-thumb';
 import { color, type } from '@/shared/config';
 import { AppText, Quote, SectionHeader, Tap } from '@/shared/ui';
 
 /**
- * 문장 목록. 왼쪽 책등 색이 라벨을 대신하고,
- * 원문은 세리프로, 출처는 산세리프로 적힌다.
- * 책 화면에서 '그냥 마음에 든 문장'을 보여줄 때도 이걸 쓴다.
+ * 문장 목록. 원문은 세리프로, 출처는 산세리프로 적힌다.
+ *
+ * 책(`book`)을 넘기면 왼쪽에 표지가 서고 출처에 제목이 붙는다. 책 화면의
+ * '마음에 들었던 문장'처럼 한 권 안에서 보는 목록에는 넘기지 않는다 — 모든 줄에
+ * 같은 표지가 서면 출처를 알려주지도 못하면서 문장 읽을 폭만 줄인다.
  */
-/** 한 줄에 필요한 것 전부. 어느 책인지는 부르는 쪽이 이미 안다. */
+/** 한 줄에 필요한 것 전부. */
 export type SentenceRow = {
   id: string;
   text: string;
@@ -37,14 +39,16 @@ export function SentenceShelf({
         const book = s.book;
         return (
           <Tap key={s.id} style={styles.row} onPress={() => onPressSentence?.(s.id)}>
-            {book ? <BookSpine book={book} /> : null}
+            {book ? <CoverThumb book={book} /> : null}
             <View style={styles.body}>
               <Quote numberOfLines={2} style={styles.text}>
                 {s.text}
               </Quote>
-              <AppText style={styles.source}>
-                {book ? `${book.title} · ` : ''}p.{s.page}
-              </AppText>
+              {book || s.page ? (
+                <AppText style={styles.source}>
+                  {[book?.title, s.page ? `p.${s.page}` : null].filter(Boolean).join(' · ')}
+                </AppText>
+              ) : null}
             </View>
           </Tap>
         );

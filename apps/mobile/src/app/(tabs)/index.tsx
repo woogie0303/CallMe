@@ -6,7 +6,6 @@ import { useReadingBooks } from '@/entities/book/api/book.api';
 import { useTodayItem } from '@/entities/lexical-item/api/item.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, gutter } from '@/shared/config';
-import { savedLabel } from '@/shared/lib/date';
 import { ActionButton, EmptyState } from '@/shared/ui';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ReadingShelf } from '@/widgets/reading-shelf/ui/reading-shelf';
@@ -26,8 +25,8 @@ import { TodayItem, TodayItemEmpty } from '@/widgets/today-item/ui/today-item';
  * 같은 `BookHero`를 같은 방식으로 세우는 것과도 이걸로 맞는다.
  *
  * 읽고 있는 책이 여럿이면 맨 위에 한 권이 크게 서고 나머지는 그 아래 줄에 선다.
- * 책을 새로 들여도 맨 위가 바뀌지 않는다 — 그 자리는 가장 최근에 읽은 책의
- * 것이고, 등록이 아니라 진도를 옮길 때 바뀐다.
+ * 맨 위는 핀이 꽂힌 책이다 — 고정한 책, 없으면 가장 최근에 등록한 책
+ * (`useReadingBooks`). 읽을 때마다 바뀌지 않는다.
  *
  * 오늘의 표현은 작은 카드 그대로 둔다. 문장까지 넣어 키워 봤지만 홈에서는
  * 그만큼이 도로 빈자리가 됐다 — 문장을 읽는 자리는 눌러서 들어가는 항목
@@ -62,9 +61,6 @@ export default function HomeScreen() {
               bookId: book.id,
               currentPage: reading.progress.currentPage,
               totalPages: reading.progress.pages ?? 0,
-              lastReadLabel: reading.progress.lastReadAt
-                ? `${savedLabel(reading.progress.lastReadAt)}에 읽었어요`
-                : undefined,
             }}
             onPressBook={() => openBook(book.id)}
             onPressProgress={() =>
@@ -78,7 +74,9 @@ export default function HomeScreen() {
             onPressBook={openBook}
             onAdd={() => router.push('/book-pick')}
           />
-          {week ? <ReadingWeekChart week={week} /> : null}
+          {week ? (
+            <ReadingWeekChart week={week} onPress={() => router.push('/genres')} />
+          ) : null}
           {/* 담아둔 것이 없어도 자리는 남긴다 — 비면 화면이 덜 만들어진 것처럼 보인다 */}
           {today ? (
             <TodayItem

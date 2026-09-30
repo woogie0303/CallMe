@@ -1,10 +1,17 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from "react-native";
 
-import type { Book } from '@/entities/book/model/types';
-import { BookCover } from '@/entities/book/ui/book-cover';
-import type { ReadingProgress } from '@/entities/reading/model/types';
-import { color, shadow, type } from '@/shared/config';
-import { AppText, CameraIcon, Icon, ProgressBar, Quote, Tap } from '@/shared/ui';
+import type { Book } from "@/entities/book/model/types";
+import { BookCover } from "@/entities/book/ui/book-cover";
+import type { ReadingProgress } from "@/entities/reading/model/types";
+import { color, shadow, type } from "@/shared/config";
+import {
+  AppText,
+  CameraIcon,
+  Icon,
+  ProgressBar,
+  Quote,
+  Tap,
+} from "@/shared/ui";
 
 /**
  * 책 한 권을 크게 세우는 판. 홈의 '읽고 있는 책'과 책 화면의 머리가 이걸
@@ -13,8 +20,8 @@ import { AppText, CameraIcon, Icon, ProgressBar, Quote, Tap } from '@/shared/ui'
  * 화면 높이에 억지로 맞추지 않는다. 채울 내용이 없는데 판만 늘리면
  * 그만큼이 빈자리로 남는다 — 내용이 정하는 높이가 곧 이 판의 높이다.
  *
- * 진도와 버튼은 있을 때만 그린다. 읽고 있지 않은 책에 0% 막대를 세우면
- * 읽다 만 책처럼 보이고, 그건 사실이 아니다.
+ * 진도와 버튼은 넘겨받았을 때만 그린다. 책 화면은 아직 안 편 책에도 빈 막대를
+ * 넘긴다 — 눌러서 기록할 자리가 있어야 해서다.
  */
 export function BookHero({
   book,
@@ -30,7 +37,7 @@ export function BookHero({
   /** 좌우 여백. 이미 여백을 가진 화면 안에 놓일 때는 0을 준다. */
   inset?: number;
   onPressBook?: () => void;
-  /** 읽은 데까지 표시를 옮기는 자리 — 진도 줄 자체가 그 버튼이다 */
+  /** 읽은 데까지 표시를 옮기는 자리 — 진도 막대 자체가 그 버튼이다 */
   onPressProgress?: () => void;
   onAsk?: () => void;
   onCapture?: () => void;
@@ -41,7 +48,8 @@ export function BookHero({
    * 'p.50 / 0 · Infinity%'로 그려졌다. 비율은 쪽수를 아는 책에만 있다.
    */
   const measured = Boolean(progress && progress.totalPages > 0);
-  const ratio = progress && measured ? progress.currentPage / progress.totalPages : 0;
+  const ratio =
+    progress && measured ? progress.currentPage / progress.totalPages : 0;
   const actionable = Boolean(onAsk || onCapture);
 
   return (
@@ -51,8 +59,9 @@ export function BookHero({
           <Tap
             onPress={onPressBook}
             style={styles.titleBlock}
-            accessibilityRole={onPressBook ? 'button' : undefined}
-            accessibilityLabel={`${book.title}, ${book.author}`}>
+            accessibilityRole={onPressBook ? "button" : undefined}
+            accessibilityLabel={`${book.pinned ? "홈에 고정한 책, " : ""}${book.title}, ${book.author}`}
+          >
             <Quote style={styles.title}>{book.title}</Quote>
             <AppText style={styles.author}>{book.author}</AppText>
           </Tap>
@@ -69,7 +78,8 @@ export function BookHero({
                 style={styles.capture}
                 onPress={onCapture}
                 accessibilityRole="button"
-                accessibilityLabel="읽던 쪽 찍기">
+                accessibilityLabel="읽던 쪽 찍기"
+              >
                 <CameraIcon size={18} color={color.text.onInk} />
                 <AppText style={styles.captureLabel}>읽던 쪽 찍기</AppText>
               </Tap>
@@ -77,7 +87,8 @@ export function BookHero({
                 style={styles.write}
                 onPress={onAsk}
                 accessibilityRole="button"
-                accessibilityLabel="문장 적어서 묻기">
+                accessibilityLabel="문장 적어서 묻기"
+              >
                 <Icon name="write" size={17} color={color.primary} />
               </Tap>
             </View>
@@ -89,16 +100,25 @@ export function BookHero({
           onPress={onPressBook}
           style={styles.coverTap}
           accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants">
-          <BookCover book={book} width={130} height={200} radius={10} showTitle={false} />
+          importantForAccessibility="no-hide-descendants"
+        >
+          <BookCover
+            book={book}
+            width={130}
+            height={200}
+            radius={10}
+            showTitle={false}
+          />
         </Tap>
       </View>
 
+      {/* 막대가 곧 기록 버튼이다 — 누를 만큼 굵게 둔다 */}
       <Tap
         style={styles.progress}
         onPress={onPressProgress}
         disabled={!onPressProgress}
-        accessibilityRole={onPressProgress ? 'button' : undefined}
+        accessibilityRole={onPressProgress ? "button" : undefined}
+        accessibilityHint={onPressProgress ? "읽은 쪽 기록하기" : undefined}
         accessibilityLabel={
           progress && measured
             ? `${progress.totalPages}쪽 중 ${progress.currentPage}쪽까지 읽었어요`
@@ -106,19 +126,21 @@ export function BookHero({
               ? `${progress.currentPage}쪽까지 읽었어요`
               : undefined
         }
-        accessibilityHint={onPressProgress ? '읽은 데까지 옮기기' : undefined}>
+      >
         {progress ? (
           <>
-            {measured ? <ProgressBar value={ratio} /> : null}
+            {measured ? <ProgressBar value={ratio} height={8} /> : null}
             <AppText style={styles.progressLabel}>
               {measured
                 ? `p.${progress.currentPage} / ${progress.totalPages} · ${Math.round(ratio * 100)}%`
                 : `p.${progress.currentPage}`}
-              {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ''}
+              {progress.lastReadLabel ? ` · ${progress.lastReadLabel}` : ""}
             </AppText>
           </>
         ) : (
-          <AppText style={styles.progressLabel}>{book.pages ? `${book.pages}p` : ''}</AppText>
+          <AppText style={styles.progressLabel}>
+            {book.pages ? `${book.pages}p` : ""}
+          </AppText>
         )}
       </Tap>
     </View>
@@ -133,25 +155,37 @@ const styles = StyleSheet.create({
    * 왼쪽 칸을 표지 높이만큼 늘리고, 그 안에서 제목은 위·버튼은 아래로 벌린다.
    * 표지의 윗변·밑변과 글이 같은 선에서 만나 네모 하나로 읽힌다.
    */
-  row: { flexDirection: 'row', gap: 16, alignItems: 'stretch' },
-  left: { flex: 1, minWidth: 0, alignSelf: 'flex-end', gap: 16 },
+  row: { flexDirection: "row", gap: 16, alignItems: "stretch" },
+  left: { flex: 1, minWidth: 0, alignSelf: "flex-end", gap: 16 },
   /** 표지는 제 높이(200)만 쓴다 — stretch에 딸려 늘어나지 않게 못 박는다 */
-  coverTap: { alignSelf: 'flex-start' },
+  coverTap: { alignSelf: "flex-start" },
   titleBlock: { gap: 4 },
+  pinned: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginBottom: 2,
+  },
+  pinnedLabel: { ...type.caption2, fontWeight: "700", color: color.primary },
   title: {
     fontSize: 24,
     lineHeight: 31,
-    fontWeight: '600',
+    fontWeight: "600",
     color: color.text.primary,
     letterSpacing: -0.3,
   },
   author: { ...type.label2, color: color.text.secondary },
 
-  actions: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8 },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 8,
+  },
   /** 이름이 붙은 쪽이 주된 행동이다 */
   capture: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 7,
     height: 44,
     paddingHorizontal: 14,
@@ -159,17 +193,18 @@ const styles = StyleSheet.create({
     backgroundColor: color.primary,
     ...shadow.primary,
   },
-  captureLabel: { ...type.label2, fontWeight: '700', color: color.text.onInk },
+  captureLabel: { ...type.label2, fontWeight: "700", color: color.text.onInk },
   /** 곁의 길 — 찍을 수 없을 때 손으로 적는다 */
   write: {
     width: 44,
     height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 14,
     backgroundColor: color.primaryTint,
   },
 
-  progress: { gap: 6 },
+  /** 막대 위아래로 손가락이 닿을 자리를 준다 — 8pt 막대만으로는 누르기 어렵다 */
+  progress: { gap: 8, paddingVertical: 4 },
   progressLabel: { ...type.caption2, color: color.text.meta },
 });
