@@ -40,7 +40,9 @@ src/
   이 규칙을 우회하는 저장 경로를 만들지 않는다.
 - **문장에 '좋아서 담았음'을 적지 않는다.** 어휘 항목이 딸렸는지는 만남 쪽에
   물어본다(`GET /sentences?liked=true`). 같은 사실을 두 군데 적으면 어긋난다.
-- **로그인은 카카오·네이버·구글 셋뿐이다.** 비밀번호를 맡지 않는다. 이메일이
+  예외는 하트(`favorite`) 하나다 — 표현을 담은 문장도 마음에 든 문장으로 두고
+  싶다는 독자의 뜻이라 만남에서 셀 수 없다. `liked=true`는 이 둘을 합쳐 준다.
+- **로그인은 카카오·네이버·구글·Apple 넷뿐이다.** 비밀번호를 맡지 않는다. 이메일이
   같다고 다른 제공자 계정을 자동으로 합치지 않는다 — 남의 계정을 넘겨받는 길이 된다.
 - **리프레시 토큰은 해시로만 저장하고 쓰면 회전시킨다.** 폐기된 토큰이 다시 오면
   그 독자의 세션을 전부 끊는다.
@@ -63,7 +65,7 @@ src/
 로그인 셋을 뺀 나머지는 전부 `Authorization: Bearer <액세스 토큰>`이 필요하다.
 
 ```
-POST   /api/auth/:provider        kakao | naver | google — 인가 코드를 넘기면 토큰 두 장
+POST   /api/auth/:provider        kakao | naver | google | apple — SDK 토큰(또는 인가 코드)을 넘기면 토큰 두 장
 POST   /api/auth/refresh          리프레시 회전
 POST   /api/auth/logout           그 리프레시 하나만 폐기
 GET    /api/auth/me               지금 로그인한 독자
@@ -71,29 +73,36 @@ GET    /api/auth/me               지금 로그인한 독자
 GET    /api/readers/me            프로필
 PATCH  /api/readers/me            레벨 · 닉네임 · 끝낸 권수
 
-GET    /api/books/search ?q=       책 검색(구글 북스) — :id보다 먼저 선언돼 있어야 한다
+GET    /api/books/search ?q=       책 검색 — 한글은 카카오, 그 밖은 Open Library. :id보다 먼저 선언
+                                  구글 북스 결과에는 genre가 실려 온다(BISAC 분류를 접은 것). 카카오·
+                                  Open Library는 안 준다 — 없으면 등록 화면에서 독자가 고른다
 GET    /api/books ?finished=      내 책장
-POST   /api/books
+POST   /api/books                 genre는 `book.schema.ts`의 GENRES 중 하나만(없어도 된다)
 GET    /api/books/:id
-PATCH  /api/books/:id             진도 · 다 읽은 날
-DELETE /api/books/:id             문장까지 함께 지운다
+PATCH  /api/books/:id             진도 · 다 읽은 날 · genre · pinned(홈에 고정, 한 권뿐)
+DELETE /api/books/:id             문장·그 책에서만 만난 표현·읽은 기록까지 함께 지운다
 
 GET    /api/sentences ?bookId= &liked=
 POST   /api/sentences
 GET    /api/sentences/:id
-PATCH  /api/sentences/:id
+PATCH  /api/sentences/:id         글 · 쪽 · 메모 · 하트(favorite)
 DELETE /api/sentences/:id
+POST   /api/sentences/:id/thoughts            이 문장에 대고 내 생각 하나 달기 { text }
+DELETE /api/sentences/:id/thoughts/:thoughtId
 
 GET    /api/asks/quota            이번 달 남은 질문
 POST   /api/asks/split            찍은 쪽에서 읽어낸 줄들을 문장으로 잇는다 — 질문 횟수를 쓰지 않는다
 POST   /api/asks                  문장을 통째로 묻는다 — 문장은 먼저 저장된다
                                   sentenceId를 보내면 담아둔 문장을 그대로 쓴다(새로 만들지 않는다)
-GET    /api/asks ?status= &limit= status=pending이 '기다리는 문장'
+GET    /api/asks ?status= &limit= &sentenceId=  status=pending이 '기다리는 문장', sentenceId는 문장 하나의 질문
 GET    /api/asks/:id
 POST   /api/asks/:id/resolve      기다리던 질문을 다시 물어본다
 DELETE /api/asks/:id              질문만 지운다. 문장은 남는다
 
 GET    /api/reading/week          이레치 날짜와 쪽수 · 읽은 날 · 연속 일수
+GET    /api/reading/range         달력이 오갈 수 있는 달 — 가입한 달부터 이번 달(또는 마지막 기록의 달)까지
+GET    /api/reading/days ?year= &month=  그 달 1일부터 마지막 날까지, 날짜와 쪽수(안 읽은 날은 0)
+GET    /api/reading/genres        지금까지 읽은 쪽수를 책의 genre로 묶어서 — 장르 없는 책은 '장르 없음'
 
 POST   /api/retells                옮겨 적은 글을 남긴다
 GET    /api/retells ?bookId=
@@ -132,5 +141,6 @@ DELETE /api/items/:id
 안 낸다는 뜻이다. LexicalItem에 있던 review(streak·wrongCount) 서브스키마도
 그 퀴즈만 읽고 쓰던 값이라 함께 지웠다.
 
-소셜 로그인 셋과 모델 호출은 실제로 통신해 본 적이 없다 — 둘 다 자격 증명이
-있어야 검증된다.
+카카오·네이버·구글 로그인은 실기기에서 실제 제공자와 끝까지 도는 것을 확인했다.
+Apple 로그인과 모델 호출은 아직 실제로 통신해 본 적이 없다 — 각각 유료 개발자 계정과
+API 키가 있어야 검증된다.
