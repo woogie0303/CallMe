@@ -4,7 +4,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Book, type BookDocument } from '../books/book.schema';
 import { LexicalItem } from '../items/lexical-item.schema';
-import { Reader } from '../readers/reader.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
 import { Ask, type AskDocument, type Candidate } from './ask.schema';
 import { ModelUnavailable } from '../common/claude';
@@ -22,6 +21,13 @@ export type AskQuota = {
   resetsOn: Date;
 };
 
+/**
+ * 한 문장에서 골라 줄 표현의 상한. 프롬프트에도 적어 두지만 모델이 약속을
+ * 어길 수 있어서 여기서 한 번 더 자른다 — 넘치면 답이 길어지고(출력 토큰은
+ * 입력보다 비싸다) 서랍이 외울 필요 없는 것으로 찬다.
+ */
+const MAX_CANDIDATES = 8;
+
 /** 질문 하나와, 그 질문이 붙어 있는 문장과 책 */
 export type AskView = {
   ask: AskDocument;
@@ -35,7 +41,6 @@ export class AsksService {
     @InjectModel(Ask.name) private readonly asks: Model<Ask>,
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(Book.name) private readonly books: Model<Book>,
-    @InjectModel(Reader.name) private readonly readers: Model<Reader>,
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
     private readonly answer: AnswerService,
     private readonly splitter: SplitService,
@@ -212,19 +217,19 @@ export class AsksService {
       return ask.save();
     }
 
-    const reader = await this.readers.findById(readerId);
-
     try {
       const answer = await this.answer.answer({
         sentence: sentence.text,
-        level: reader?.level ?? '중급',
         bookTitle: book.title,
         author: book.author,
         page: sentence.page,
       });
 
       ask.translation = answer.translation;
-      ask.candidates = await this.markExisting(readerId, answer.candidates);
+      ask.candidates = await this.markExisting(
+        readerId,
+        answer.candidates.slice(0, MAX_CANDIDATES),
+      );
       ask.status = 'answered';
       ask.answeredAt = new Date();
       ask.answeredBy = this.answer.modelName;

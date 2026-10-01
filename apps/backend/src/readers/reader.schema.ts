@@ -1,10 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-/** 스스로 밝힌 영어 레벨. 어떤 항목을 추천할지와 뜻을 얼마나 풀어 쓸지를 함께 정한다. */
-export const LEVELS = ['입문', '중급', '고급'] as const;
-export type Level = (typeof LEVELS)[number];
-
 export const PROVIDERS = ['kakao', 'naver', 'google', 'apple'] as const;
 export type ProviderName = (typeof PROVIDERS)[number];
 
@@ -30,7 +26,13 @@ export class LinkedAccount {
 export const LinkedAccountSchema = SchemaFactory.createForClass(LinkedAccount);
 
 /**
- * 읽는 사람. 비밀번호가 없다 — 로그인은 카카오·네이버·구글로만 들어온다.
+ * 읽는 사람. 비밀번호가 없다 — 로그인은 카카오·네이버·구글·Apple로만 들어온다.
+ *
+ * 레벨은 두지 않는다. 한때 스스로 밝힌 영어 레벨(입문·중급·고급)을 받아 뜻을
+ * 풀어 쓰는 깊이를 정했는데, 한국어 책과 영어 밖의 원서까지 담게 되면서 사람
+ * 하나에 레벨 하나로는 맞지 않았다(영어는 고급이어도 일본어는 입문이고, 한국어는
+ * 모국어다). 무엇을 골라줄지는 독자가 이 문장에서 막혔다는 사실과, 담느냐
+ * 넘기느냐가 정한다. 예전 문서에 남은 `level` 필드는 읽지 않는다.
  */
 @Schema({ timestamps: true, collection: 'readers' })
 export class Reader {
@@ -43,10 +45,7 @@ export class Reader {
   @Prop()
   profileImage?: string;
 
-  @Prop({ type: String, enum: LEVELS, default: '중급' })
-  level!: Level;
-
-  /** 이 권을 다 읽으면 레벨을 다시 물어본다 */
+  /** 다 읽은 책의 수 */
   @Prop({ default: 0 })
   booksFinished!: number;
 

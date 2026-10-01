@@ -12,13 +12,16 @@ import {
   ActionButton,
   AltPanel,
   AppText,
-  DisclosureRow,
   Mark,
   ProgressBar,
 } from '@/shared/ui';
 
 /**
- * 마이 — 내 레벨과, 이번 달 남은 질문과, 쌓인 것들.
+ * 마이 — 이번 달 남은 질문과, 쌓인 것들.
+ *
+ * 레벨은 없다. 한때 '내 레벨'을 맨 위에 두고 책을 끝낼 때마다 다시 물었는데,
+ * 한국어 책과 영어 밖의 원서까지 담게 되면서 사람 하나에 레벨 하나가 맞지
+ * 않게 됐다(`readers/reader.schema.ts`).
  *
  * 기다리는 문장은 여기 없다. 답을 기다리는 문장은 **할 일**이지 설정이 아니라서,
  * 문장이 사는 곳(서랍)에서 말을 건다 — 여기 두면 세 탭을 건너야 닿고, 줄이
@@ -57,13 +60,6 @@ export default function MyScreen() {
         contentContainerStyle={styles.content}
         style={styles.scroll}
       >
-        <DisclosureRow
-          eyebrow="내 레벨"
-          title={reader?.level ?? '—'}
-          body={`책을 한 권 끝낼 때마다 다시 물어봐요 · 지금까지 ${reader?.booksFinished ?? 0}권`}
-          onPress={() => router.push('/level')}
-        />
-
         <AltPanel style={styles.quotaPanel}>
           <View style={styles.quotaHead}>
             <AppText style={styles.quotaLabel}>이번 달 질문</AppText>
@@ -92,6 +88,7 @@ export default function MyScreen() {
           <Row label="담아둔 표현" value={`${items.length}개`} />
           <Row label="다시 만난 표현" value={`${again}개`} />
           <Row label="이번 주에 읽은 날" value={`${week?.days ?? 0}일`} />
+          <Row label="다 읽은 책" value={`${reader?.booksFinished ?? 0}권`} />
         </AltPanel>
 
         {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}

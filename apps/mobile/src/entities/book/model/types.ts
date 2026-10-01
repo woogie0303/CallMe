@@ -27,10 +27,6 @@ export type Book = {
   genre?: Genre;
   /** 홈 맨 위에 고정했는지 — 고정한 책이 가장 최근에 읽은 책보다 앞에 선다 */
   pinned?: boolean;
-  level?: '쉬움' | '보통' | '어려움';
-  rating?: number;
-  raters?: number;
-  summary?: string;
   /** 읽기 전에 알아두면 좋은 것 — 이 책의 문장이 어떤 결인지 */
   primer?: string;
 };

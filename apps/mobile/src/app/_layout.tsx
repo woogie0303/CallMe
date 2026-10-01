@@ -84,7 +84,6 @@ function Gate() {
       <Stack.Screen name="scan" />
       <Stack.Screen name="pending" />
       <Stack.Screen name="genres" />
-      <Stack.Screen name="level" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

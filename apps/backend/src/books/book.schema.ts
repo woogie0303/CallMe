@@ -68,7 +68,7 @@ export class Book {
   @Prop()
   lastReadAt?: Date;
 
-  /** 다 읽은 날. 이 날이 찍히면 레벨을 다시 물어본다. */
+  /** 다 읽은 날 */
   @Prop()
   finishedAt?: Date;
 
