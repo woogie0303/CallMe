@@ -42,10 +42,13 @@ monthly asks are spent. Capture never fails: the sentence is stored and resolves
 A pile of pending asks is the reader's own reason to upgrade, so it is a surface, not an error.
 _Avoid_: Failed ask, Error, 오류
 
-**Level (레벨)**:
-The reader's self-declared English level — beginner, intermediate, advanced. It decides
-which candidates an ask returns and how deeply their meanings are explained, so meanings are
-per-reader, not shared facts. It is asked again each time a book is finished.
+**Level (레벨)** — _retired_:
+Once the reader's self-declared English level (beginner, intermediate, advanced), asked again
+each time a book was finished. Dropped when books widened beyond English originals to Korean
+books and other languages: one level per reader cannot describe someone advanced in English,
+new to Japanese, and native in Korean. What an ask picks out now rests on the fact that the
+reader stopped at this sentence, and on what they save or skip. Do not reintroduce it as a
+single per-reader value.
 _Avoid_: Proficiency, Grade, 등급
 
 **Re-encounter (재회)**:

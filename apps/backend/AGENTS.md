@@ -21,7 +21,7 @@ pnpm --filter backend dev     # http://localhost:4000/api
 src/
   common/     가드 · 현재 독자 데코레이터 · ObjectId 파이프
   auth/       소셜 로그인 · 토큰 두 장   (oauth/ 안에 제공자 셋)
-  readers/    독자와 레벨
+  readers/    독자
   books/      내 책과 진도
   sentences/  책에서 옮겨 적은 줄
   items/      어휘 항목과 만남 — 재회가 일어나는 곳
@@ -48,6 +48,11 @@ src/
   그 독자의 세션을 전부 끊는다.
 - **묻는 단위는 언제나 문장 하나다**(ADR-0001). 낱말이나 표제형을 받는 길을 만들지
   않는다 — 문장이 없으면 그 문장에서의 뜻을 고를 수 없다.
+- **책의 언어를 따로 적지 않는다.** 외국어 문장이면 한국어로 옮기고, 한국어 문장이면
+  쉬운 말로 풀어 쓰는데, 어느 쪽인지는 모델이 문장을 보고 정한다
+  (`asks/anthropic/answer.service.ts`). 독자 레벨도 두지 않는다 — 사람 하나에
+  레벨 하나로는 여러 언어를 담을 수 없다. 고르는 표현의 수는 문장에 있는 만큼이되
+  여덟을 넘기지 않고, 서버가 한 번 더 자른다.
 - **같은 글이 두 줄이 되게 두지 않는다**(ADR-0004). 담아둔 문장을 나중에 물을 때는
   `POST /api/asks`에 `sentenceId`를 보내 그 문장을 그대로 쓴다. 문장을 새로 만드는
   길은 옮겨 적는 순간 하나뿐이다.
@@ -57,21 +62,31 @@ src/
   않는다. 이번 달에 답을 받은 질문을 셀 뿐이라, 되돌리다 실패할 일이 없다.
 - **읽은 양을 따로 적게 하지 않는다.** 진도를 옮기면 그 차이가 그날 읽은 양이다.
   읽고 나서 한 번 더 적게 만들면 아무도 적지 않는다.
-- **프롬프트의 붙박이 부분만 캐시에 올린다.** 레벨·책·문장처럼 요청마다 달라지는
+- **프롬프트의 붙박이 부분만 캐시에 올린다.** 책·문장처럼 요청마다 달라지는
   것은 system이 아니라 user 메시지에 싣는다 — 캐시는 앞에서 한 글자만 달라도 깨진다.
 
 ## 길
 
 로그인 셋을 뺀 나머지는 전부 `Authorization: Bearer <액세스 토큰>`이 필요하다.
 
+로그인은 둘로 갈린다. Apple은 `/auth/apple`이 옛 방식 그대로 identityToken을
+대조해 토큰 두 장을 바로 준다. 카카오·네이버·구글은 브라우저 동의 화면을
+거친다 — `start`가 그 화면을 열고, provider가 `callback`으로 돌아오면 앱의
+딥링크에 1회용 티켓만 실어 돌려보내고(액세스 토큰은 싣지 않는다), 앱은
+`exchange`로 그 티켓과 자기만 아는 PKCE `code_verifier`를 들고 와야 진짜
+토큰을 받는다(`auth/oauth-session.service.ts`).
+
 ```
-POST   /api/auth/:provider        kakao | naver | google | apple — SDK 토큰(또는 인가 코드)을 넘기면 토큰 두 장
+POST   /api/auth/apple            identityToken을 대조해 토큰 두 장 — Apple만 이 문을 쓴다
+GET    /api/auth/:provider/start  kakao | naver | google — 동의 화면으로 302. ?challenge=&returnUrl=
+GET    /api/auth/:provider/callback  provider가 돌아오는 곳. returnUrl?ticket=…&state=… 로 302
+POST   /api/auth/exchange         { ticket, codeVerifier } → 토큰 두 장
 POST   /api/auth/refresh          리프레시 회전
 POST   /api/auth/logout           그 리프레시 하나만 폐기
 GET    /api/auth/me               지금 로그인한 독자
 
 GET    /api/readers/me            프로필
-PATCH  /api/readers/me            레벨 · 닉네임 · 끝낸 권수
+PATCH  /api/readers/me            닉네임 · 끝낸 권수
 
 GET    /api/books/search ?q=       책 검색 — 한글은 카카오, 그 밖은 Open Library. :id보다 먼저 선언
                                   구글 북스 결과에는 genre가 실려 온다(BISAC 분류를 접은 것). 카카오·
@@ -141,6 +156,10 @@ DELETE /api/items/:id
 안 낸다는 뜻이다. LexicalItem에 있던 review(streak·wrongCount) 서브스키마도
 그 퀴즈만 읽고 쓰던 값이라 함께 지웠다.
 
-카카오·네이버·구글 로그인은 실기기에서 실제 제공자와 끝까지 도는 것을 확인했다.
+카카오·네이버·구글 로그인은 **옛 네이티브 SDK 방식으로** 실기기에서 실제
+제공자와 끝까지 도는 것을 확인한 적이 있다. 브라우저 동의 화면 + 서버
+콜백으로 바꾼 지금 방식은 아직 실기기에서 확인하지 않았다 — 세 곳 콘솔에
+새 redirect URI(`{PUBLIC_BASE_URL}/api/auth/{provider}/callback`)를 등록하고,
+구글은 "웹 애플리케이션" 타입 클라이언트를 새로 만들어야 시험할 수 있다.
 Apple 로그인과 모델 호출은 아직 실제로 통신해 본 적이 없다 — 각각 유료 개발자 계정과
 API 키가 있어야 검증된다.
