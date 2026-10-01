@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,7 +21,6 @@ export type ReaderView = {
   nickname: string;
   email?: string;
   profileImage?: string;
-  level: string;
   booksFinished: number;
   providers: ProviderName[];
 };
@@ -36,9 +36,10 @@ export class AuthService {
   ) {}
 
   /**
-   * 앱이 토큰을 들고 오면 그 토큰이 우리 앱 것인지 대조하고(`verify`), 브라우저
-   * 동의 화면을 거쳐 인가 코드를 들고 오면 토큰으로 바꾼다(`exchange`).
-   * 어느 쪽이든 그다음은 같다 — 프로필로 독자를 찾거나 만든다.
+   * `POST /auth/:provider` — 이제 사실상 Apple 전용이다. Apple의 iOS 시스템
+   * 창이 앱에 바로 준 identityToken을 대조한다(`verify`). 카카오·네이버·구글은
+   * `OAuthSessionService`(브라우저 동의 화면 + 서버 콜백 + 티켓 교환)가
+   * `findOrCreate`·`configFor`를 그대로 가져다 쓴다.
    */
   async signIn(
     provider: ProviderName,
@@ -47,25 +48,15 @@ export class AuthService {
     const config = this.configFor(provider);
     const impl = PROVIDERS[provider];
 
-    const profile = dto.idToken
-      ? await impl.verify(
-          { idToken: dto.idToken, nickname: dto.nickname },
-          config,
-        )
-      : dto.accessToken
-        ? await impl.verify(
-            { accessToken: dto.accessToken, nickname: dto.nickname },
-            config,
-          )
-        : await impl.exchange(
-            {
-              code: dto.code!,
-              redirectUri: dto.redirectUri!,
-              codeVerifier: dto.codeVerifier,
-              state: dto.state,
-            },
-            config,
-          );
+    if (!impl.verify) {
+      throw new UnauthorizedException(
+        `${provider}은(는) 이 문으로 로그인하지 않아요.`,
+      );
+    }
+    const profile = await impl.verify(
+      { idToken: dto.idToken, nickname: dto.nickname },
+      config,
+    );
     const reader = await this.findOrCreate(provider, profile);
     const issued = await this.tokens.issue(reader.id);
 
@@ -85,7 +76,7 @@ export class AuthService {
    * 확인해 준 이메일이라는 보장이 없고, 남의 계정을 넘겨받는 길이 되기 때문이다.
    * 계정을 합치는 일은 로그인한 상태에서 따로 해야 한다.
    */
-  private async findOrCreate(
+  async findOrCreate(
     provider: ProviderName,
     profile: OAuthProfile,
   ): Promise<ReaderDocument> {
@@ -111,8 +102,17 @@ export class AuthService {
     });
   }
 
-  private configFor(provider: ProviderName): ProviderConfig {
-    const key = provider.toUpperCase();
+  /**
+   * 제공자별 client id·secret.
+   *
+   * 구글만 예외다 — `GOOGLE_WEB_CLIENT_ID`를 따로 쓴다. 브라우저 동의 화면 +
+   * 서버 콜백으로 코드를 받으려면 **"웹 애플리케이션" 타입** 클라이언트(시크릿이
+   * 있는 confidential client)가 있어야 하는데, 예전에 네이티브 앱에서 idToken을
+   * 대조하던 iOS 타입 클라이언트는 시크릿이 없어 이 길을 못 탄다. 카카오·네이버는
+   * REST API 키 하나로 두 길을 다 타서 이름을 나누지 않는다.
+   */
+  configFor(provider: ProviderName): ProviderConfig {
+    const key = provider === 'google' ? 'GOOGLE_WEB' : provider.toUpperCase();
     const clientId = this.config.get<string>(`${key}_CLIENT_ID`);
 
     if (!clientId) {
@@ -124,9 +124,6 @@ export class AuthService {
     return {
       clientId,
       clientSecret: this.config.get<string>(`${key}_CLIENT_SECRET`),
-      /** 앱이 네이티브 SDK로 받아온 토큰을 대조할 때 쓴다 — 카카오만 해당 */
-      nativeAppKey: this.config.get<string>(`${key}_NATIVE_APP_KEY`),
-      appId: this.config.get<string>(`${key}_APP_ID`),
     };
   }
 }
@@ -137,7 +134,6 @@ export function toView(reader: ReaderDocument): ReaderView {
     nickname: reader.nickname,
     email: reader.email,
     profileImage: reader.profileImage,
-    level: reader.level,
     booksFinished: reader.booksFinished,
     providers: reader.accounts.map((account) => account.provider),
   };

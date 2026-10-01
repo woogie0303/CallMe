@@ -9,7 +9,8 @@ import type { Tokens } from './types';
  * 주소로 잡히고, 그 주소엔 4000번(이 백엔드)이 없어서 연결이 조용히 실패한다.
  * 그래서 .env.example이 이 값을 비워두지 말고 채우라고 권한다.
  */
-function baseUrl(): string {
+/** 카카오·네이버·구글 로그인이 브라우저로 열 첫 주소를 짓는 데도 쓴다(oauth.ts) */
+export function baseUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
 

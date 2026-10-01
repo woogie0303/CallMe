@@ -49,10 +49,7 @@
             "enableSceneSupport": true
           }
         }
-      ],
-      "@react-native-kakao/core",
-      "@react-native-seoul/naver-login",
-      "@react-native-google-signin/google-signin"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

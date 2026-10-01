@@ -6,6 +6,8 @@ import {
   Param,
   ParseEnumPipe,
   Post,
+  Query,
+  Redirect,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentReader } from '../common/current-reader.decorator';
@@ -15,7 +17,14 @@ import {
   type ProviderName,
 } from '../readers/reader.schema';
 import { AuthService } from './auth.service';
-import { ExchangeCodeDto, RefreshDto } from './dto/auth.dto';
+import {
+  ExchangeCodeDto,
+  OAuthCallbackDto,
+  OAuthStartDto,
+  RefreshDto,
+  TicketExchangeDto,
+} from './dto/auth.dto';
+import { OAuthSessionService } from './oauth-session.service';
 import { TokenService } from './token.service';
 
 const ProviderEnum = Object.fromEntries(
@@ -27,14 +36,21 @@ const ProviderEnum = Object.fromEntries(
  * 만들고, 아니면 있던 독자로 이어준다 — 읽는 사람에게 '가입'이라는 단계를
  * 따로 만들 이유가 없다.
  *
- * refresh·logout이 :provider보다 먼저 선언돼 있어야 한다. 나중에 두면
- * /auth/refresh가 provider 이름으로 잡힌다.
+ * refresh·logout·exchange가 :provider보다 먼저 선언돼 있어야 한다. 나중에
+ * 두면 그 이름이 provider 이름 자리로 먼저 잡힌다.
+ *
+ * 로그인은 둘로 갈린다. **Apple**은 iOS 시스템 창이 앱에 identityToken을
+ * 바로 주므로 `POST /auth/apple`이 그대로 대조한다. **카카오·네이버·구글**은
+ * 브라우저 동의 화면을 거친다 — `start`가 그 화면을 열고, provider가
+ * `callback`으로 돌아오면 앱의 딥링크로 1회용 티켓을 실어 돌려보내고,
+ * 앱은 `exchange`로 그 티켓을 진짜 토큰과 바꾼다(`OAuthSessionService`).
  */
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly tokens: TokenService,
+    private readonly oauthSession: OAuthSessionService,
   ) {}
 
   @Post('refresh')
@@ -49,10 +65,36 @@ export class AuthController {
     await this.tokens.revoke(dto.refreshToken);
   }
 
+  @Post('exchange')
+  @HttpCode(200)
+  exchange(@Body() dto: TicketExchangeDto) {
+    return this.oauthSession.redeem(dto.ticket, dto.codeVerifier);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentReader() readerId: string) {
     return this.auth.me(readerId);
+  }
+
+  @Get(':provider/start')
+  @Redirect()
+  async start(
+    @Param('provider', new ParseEnumPipe(ProviderEnum)) provider: ProviderName,
+    @Query() dto: OAuthStartDto,
+  ) {
+    const url = await this.oauthSession.authorizeUrl(provider, dto);
+    return { url };
+  }
+
+  @Get(':provider/callback')
+  @Redirect()
+  async callback(
+    @Param('provider', new ParseEnumPipe(ProviderEnum)) provider: ProviderName,
+    @Query() dto: OAuthCallbackDto,
+  ) {
+    const url = await this.oauthSession.finish(provider, dto);
+    return { url };
   }
 
   @Post(':provider')

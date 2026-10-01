@@ -4,32 +4,22 @@ import {
   Matches,
   MaxLength,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 
 /**
- * 들어오는 길이 둘이다.
+ * `POST /auth/:provider`로 들어오는 것 — 이제 사실상 Apple 전용이다.
  *
- * - **인가 코드**(`code` + `redirectUri`) — 브라우저 동의 화면을 거친 경우.
- *   서버가 토큰으로 바꾼다.
- * - **토큰**(`idToken` 또는 `accessToken`) — 앱의 네이티브 SDK가 이미 받아온 경우.
- *   서버는 바꾸지 않고 **누구에게 발급된 것인지 대조**한다.
- *
- * 둘 중 하나는 반드시 와야 한다. 셋 다 비어 있으면 무엇을 하려는 요청인지
- * 알 수 없다.
+ * Apple의 iOS 시스템 창이 앱에 identityToken을 바로 주고, 서버는 바꾸지
+ * 않고 **누구에게 발급된 것인지 대조**한다. 카카오·네이버·구글은
+ * `/auth/:provider/start`·`/callback`·`/auth/exchange`(모두
+ * `OAuthSessionService`)가 대신 맡는다 — 브라우저 동의 화면을 거친 인가
+ * 코드는 이제 이 문으로 들어오지 않는다.
  */
 export class ExchangeCodeDto {
-  /** 네이티브 SDK가 준 서명된 토큰 — 가능한 제공자에서는 이쪽이 안전하다 */
-  @IsOptional()
+  /** Apple이 준 서명된 identityToken */
   @IsString()
   @MinLength(1)
-  idToken?: string;
-
-  /** idToken을 주지 않는 제공자(네이버)용 */
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  accessToken?: string;
+  idToken!: string;
 
   /**
    * 앱이 따로 알고 있는 이름 — Apple만 쓴다. Apple은 이름을 토큰에 넣지 않고
@@ -39,42 +29,72 @@ export class ExchangeCodeDto {
   @IsString()
   @MaxLength(40, { message: '이름은 40자까지만 받아요.' })
   nickname?: string;
-
-  @ValidateIf((dto: ExchangeCodeDto) => !dto.idToken && !dto.accessToken)
-  @IsString()
-  @MinLength(1)
-  code?: string;
-
-  /**
-   * 네이티브 앱의 돌아올 주소는 http(s)가 아니다.
-   *
-   * `@IsUrl`로 막아두면 앱이 보내는 `reread://oauth`가 제공자에 닿기도 전에
-   * 400으로 떨어진다. 구글 iOS 클라이언트는 `com.googleusercontent.apps.…:/`
-   * 꼴이고, Expo 프록시를 쓰면 https가 되기도 한다 — 모양이 하나가 아니다.
-   *
-   * 그래서 스킴이 붙어 있는지만 본다. 이 값이 실제로 허락된 주소인지는
-   * **제공자가 판단한다** — 콘솔에 등록해 둔 것과 글자 하나까지 맞아야 하고,
-   * 그 확인을 우리가 대신할 수도, 대신해서도 안 된다.
-   */
-  @ValidateIf((dto: ExchangeCodeDto) => !dto.idToken && !dto.accessToken)
-  @Matches(/^[a-z][a-z0-9+.-]*:\/\/?[^\s]+$/i, {
-    message: 'redirectUri는 스킴이 붙은 주소여야 해요 (예: reread://oauth).',
-  })
-  redirectUri?: string;
-
-  /** PKCE를 쓴 클라이언트만 */
-  @IsOptional()
-  @IsString()
-  codeVerifier?: string;
-
-  /** 네이버가 요구한다 */
-  @IsOptional()
-  @IsString()
-  state?: string;
 }
 
 export class RefreshDto {
   @IsString()
   @MinLength(1)
   refreshToken!: string;
+}
+
+/**
+ * 앱이 `GET /auth/:provider/start`를 열 때 실어 보내는 것.
+ *
+ * `challenge`는 앱이 만든 PKCE code_verifier를 SHA256 → base64url로 접은
+ * 것이다(43자, 패딩 없음). 이 요청에서 provider에게 넘기지는 않는다 — 서명한
+ * state 안에 실어 콜백까지 들고 갔다가, 나중에 `/auth/exchange`에서
+ * code_verifier와 대조하는 용도로만 쓴다.
+ */
+export class OAuthStartDto {
+  @IsString()
+  @Matches(/^[A-Za-z0-9_-]{43}$/, {
+    message: 'challenge는 SHA256을 base64url로 접은 43자여야 해요.',
+  })
+  challenge!: string;
+
+  /**
+   * 로그인이 끝나고 앱으로 돌아올 딥링크. `reread://auth`(빌드된 앱) 또는
+   * `exp://…/--/auth`(Expo Go, 개발용) 꼴 — 스킴이 허용 목록에 없으면 막는다
+   * (open redirect 방지).
+   */
+  @IsString()
+  @MinLength(1)
+  returnUrl!: string;
+}
+
+/**
+ * provider가 `GET /auth/:provider/callback`으로 돌려줄 때 붙여 오는 것.
+ *
+ * 성공하면 `code`가, 사용자가 동의 화면에서 거절하면 `error`가 온다 — 카카오·
+ * 네이버·구글 셋 다 실패를 이 모양으로 알린다. `state`는 늘 온다.
+ */
+export class OAuthCallbackDto {
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  error?: string;
+
+  @IsString()
+  @MinLength(1)
+  state!: string;
+}
+
+/**
+ * `POST /auth/exchange` — 딥링크로 받은 티켓을 진짜 토큰으로 바꾼다.
+ *
+ * `codeVerifier`의 SHA256(base64url)이 티켓에 적힌 challenge와 같아야 한다.
+ * 다르면 이 티켓은 내가 시작한 로그인이 아니라는 뜻이라 거절한다.
+ */
+export class TicketExchangeDto {
+  @IsString()
+  @MinLength(1)
+  ticket!: string;
+
+  @IsString()
+  @MinLength(43)
+  @MaxLength(128)
+  codeVerifier!: string;
 }

@@ -6,6 +6,8 @@ import { Reader, ReaderSchema } from '../readers/reader.schema';
 import { AuthController } from './auth.controller';
 import { DevLoginController } from './dev-login.controller';
 import { AuthService } from './auth.service';
+import { OAuthSessionService } from './oauth-session.service';
+import { OAuthTicket, OAuthTicketSchema } from './schemas/oauth-ticket.schema';
 import {
   RefreshToken,
   RefreshTokenSchema,
@@ -17,6 +19,7 @@ import { TokenService } from './token.service';
     MongooseModule.forFeature([
       { name: Reader.name, schema: ReaderSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: OAuthTicket.name, schema: OAuthTicketSchema },
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -29,7 +32,7 @@ import { TokenService } from './token.service';
     }),
   ],
   controllers: [AuthController, DevLoginController],
-  providers: [AuthService, TokenService],
+  providers: [AuthService, TokenService, OAuthSessionService],
   /** 가드가 JwtService를, 다른 모듈이 소유 검사를 위해 이 둘을 쓴다 */
   exports: [JwtModule, AuthService, TokenService],
 })

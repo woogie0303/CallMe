@@ -3,7 +3,6 @@
  * 화면이 바꾼 것이 한 파일에서 섞이면 어느 쪽이 원본인지 알 수 없어지기 때문이다.
  * 여기 있는 것이 원본이고, 화면 쪽 타입은 이걸 좁힌 것이다.
  */
-export type Level = '입문' | '중급' | '고급';
 
 /**
  * 장르 갈래. 백엔드 `book.schema.ts`의 GENRES와 같은 목록이다(교차 import가
@@ -40,7 +39,6 @@ export type ReaderView = {
   nickname: string;
   email?: string;
   profileImage?: string;
-  level: Level;
   booksFinished: number;
   providers: ProviderName[];
 };
