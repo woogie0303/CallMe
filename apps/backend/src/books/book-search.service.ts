@@ -83,6 +83,10 @@ const CACHE_MAX = 500;
  *
  * Open Library는 **서버 전체에 초당 1건**(연락처를 밝히면 3건)이 한도다 — 사용자마다가
  * 아니다. 그래서 같은 검색어는 잠시 캐시하고, 앱은 입력이 멈춘 뒤에만 묻는다.
+ *
+ * Open Library는 **3자 미만을 거절한다**(422, "Query too short"). 비한글 1~2자는
+ * (구글 키가 없으면) 부를 곳이 Open Library뿐이라 어차피 실패하므로, 아예 부르지
+ * 않고 빈 목록을 준다 — 이것도 "막힘"이 아니라 "아직 찾은 게 없음"이다.
  */
 @Injectable()
 export class BookSearchService {
@@ -97,6 +101,14 @@ export class BookSearchService {
   async search(query: string): Promise<BookSearchResult[]> {
     const q = query.trim();
     const key = q.toLowerCase();
+
+    /**
+     * Open Library는 3자 미만을 422로 거절한다("Query too short"). 비한글
+     * 1~2자는 (구글 키가 없으면) Open Library가 유일한 곳이라 이 요청은
+     * 어차피 실패한다 — 막힌 걸로 보고하지 않고 조용히 빈 목록을 준다.
+     * 카카오는 이런 하한이 없어서 한글은 이 줄에 걸리지 않는다.
+     */
+    if (!HANGUL.test(q) && q.length > 0 && q.length < 3) return [];
 
     const hit = this.cache.get(key);
     if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.results;
@@ -189,9 +201,17 @@ export class BookSearchService {
     const contact = this.config.get<string>('OPEN_LIBRARY_CONTACT');
     const agent = contact ? `Reread/1.0 (${contact})` : 'Reread/1.0';
 
-    const body = await fetchJson<OpenLibraryResponse>(url, 'Open Library', {
-      'User-Agent': agent,
-    });
+    /**
+     * 초당 1건(또는 3건) 한도라, 같은 서버에서 방금 다른 검색이 지나갔으면
+     * 429로 바로 떨어진다. 여기서만 한 번 쉬었다 재시도한다 — 카카오·구글은
+     * 한도가 넉넉해서 이럴 일이 없다.
+     */
+    const body = await fetchJson<OpenLibraryResponse>(
+      url,
+      'Open Library',
+      { 'User-Agent': agent },
+      { retryOn429After: 1100 },
+    );
     return (body.docs ?? []).map(fromOpenLibrary).filter(isResult);
   }
 }
@@ -201,6 +221,7 @@ async function fetchJson<T>(
   url: URL,
   name: string,
   headers?: Record<string, string>,
+  options?: { retryOn429After: number },
 ): Promise<T> {
   let response: Response;
   try {
@@ -208,8 +229,25 @@ async function fetchJson<T>(
   } catch (error) {
     throw new SourceFailed(`${name} 연결 실패: ${String(error)}`);
   }
+
+  if (response.status === 429 && options) {
+    await sleep(options.retryOn429After);
+    try {
+      response = await fetch(url, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (error) {
+      throw new SourceFailed(`${name} 연결 실패: ${String(error)}`);
+    }
+  }
+
   if (!response.ok) throw new SourceFailed(`${name} ${response.status}`);
   return (await response.json()) as T;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const isResult = (book: BookSearchResult | null): book is BookSearchResult =>

@@ -188,7 +188,8 @@ export type BookSearchResult = {
 export function useBookSearch(query: string) {
   return useQuery({
     queryKey: ['books', 'search', query],
-    enabled: query.trim().length > 1,
+    /** 한글은 한 음절도 완결된 낱말일 수 있다(예: "눈" → 눈의 여왕) — 빈 문자열만 막는다 */
+    enabled: query.trim().length > 0,
     queryFn: () =>
       api<BookSearchResult[]>(
         `/books/search?q=${encodeURIComponent(query.trim())}`,
