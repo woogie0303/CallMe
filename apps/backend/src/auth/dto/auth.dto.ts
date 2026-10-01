@@ -80,6 +80,23 @@ export class OAuthCallbackDto {
   @IsString()
   @MinLength(1)
   state!: string;
+
+  /** 구글이 더 붙여 보내는 것들 — 쓰지 않지만 whitelist가 거절하지 않게 선언만 해 둔다 */
+  @IsOptional()
+  @IsString()
+  scope?: string;
+
+  @IsOptional()
+  @IsString()
+  authuser?: string;
+
+  @IsOptional()
+  @IsString()
+  prompt?: string;
+
+  @IsOptional()
+  @IsString()
+  iss?: string;
 }
 
 /**

@@ -188,16 +188,12 @@ function cancelled(error: unknown): boolean {
 
 /**
  * 42~128자, RFC 7636이 허용하는 문자(A-Z a-z 0-9 - . _ ~)만으로 된 무작위
- * 문자열. UUID 넷을 이어 붙이면 하이픈 섞인 143자가 나온다 — base64
- * 인코딩 없이 바로 쓸 수 있어서 이렇게 만든다.
+ * 문자열. UUID 셋을 이어 붙이면 하이픈 섞인 108자가 나온다 — base64
+ * 인코딩 없이 바로 쓸 수 있어서 이렇게 만든다. 넷을 이으면 144자로 서버의
+ * MaxLength(128)을 넘긴다.
  */
 function randomVerifier(): string {
-  return (
-    Crypto.randomUUID() +
-    Crypto.randomUUID() +
-    Crypto.randomUUID() +
-    Crypto.randomUUID()
-  );
+  return Crypto.randomUUID() + Crypto.randomUUID() + Crypto.randomUUID();
 }
 
 /** 표준 base64 → base64url(패딩 없음). expo-crypto는 표준 base64만 준다 */
