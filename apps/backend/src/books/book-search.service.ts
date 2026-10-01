@@ -189,9 +189,17 @@ export class BookSearchService {
     const contact = this.config.get<string>('OPEN_LIBRARY_CONTACT');
     const agent = contact ? `Reread/1.0 (${contact})` : 'Reread/1.0';
 
-    const body = await fetchJson<OpenLibraryResponse>(url, 'Open Library', {
-      'User-Agent': agent,
-    });
+    /**
+     * 초당 1건(또는 3건) 한도라, 같은 서버에서 방금 다른 검색이 지나갔으면
+     * 429로 바로 떨어진다. 여기서만 한 번 쉬었다 재시도한다 — 카카오·구글은
+     * 한도가 넉넉해서 이럴 일이 없다.
+     */
+    const body = await fetchJson<OpenLibraryResponse>(
+      url,
+      'Open Library',
+      { 'User-Agent': agent },
+      { retryOn429After: 1100 },
+    );
     return (body.docs ?? []).map(fromOpenLibrary).filter(isResult);
   }
 }
@@ -201,6 +209,7 @@ async function fetchJson<T>(
   url: URL,
   name: string,
   headers?: Record<string, string>,
+  options?: { retryOn429After: number },
 ): Promise<T> {
   let response: Response;
   try {
@@ -208,8 +217,25 @@ async function fetchJson<T>(
   } catch (error) {
     throw new SourceFailed(`${name} 연결 실패: ${String(error)}`);
   }
+
+  if (response.status === 429 && options) {
+    await sleep(options.retryOn429After);
+    try {
+      response = await fetch(url, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (error) {
+      throw new SourceFailed(`${name} 연결 실패: ${String(error)}`);
+    }
+  }
+
   if (!response.ok) throw new SourceFailed(`${name} ${response.status}`);
   return (await response.json()) as T;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const isResult = (book: BookSearchResult | null): book is BookSearchResult =>

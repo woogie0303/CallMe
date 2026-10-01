@@ -79,7 +79,7 @@ export default function BookSearchScreen() {
           style={styles.input}
           returnKeyType="search"
         />
-        {busy && query.trim().length > 1 ? (
+        {busy && query.trim().length > 0 ? (
           <ActivityIndicator size="small" color={color.text.assistive} />
         ) : null}
       </View>
@@ -90,7 +90,7 @@ export default function BookSearchScreen() {
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          query.trim().length <= 1 || busy ? null : (
+          query.trim().length === 0 || busy ? null : (
             /**
              * 검색이 막힌 것과 책이 없는 것을 다르게 말한다. 막힌 걸 "없어요"로
              * 말하면 독자는 제목을 잘못 친 줄 알고 몇 번이고 다시 친다.
