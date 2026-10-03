@@ -26,6 +26,8 @@ import {
 } from './dto/auth.dto';
 import { OAuthSessionService } from './oauth-session.service';
 import { TokenService } from './token.service';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT } from '../common/rate-limit';
 
 const ProviderEnum = Object.fromEntries(
   PROVIDER_NAMES.map((p) => [p, p]),
@@ -53,6 +55,7 @@ export class AuthController {
     private readonly oauthSession: OAuthSessionService,
   ) {}
 
+  @Throttle({ default: RATE_LIMIT.auth })
   @Post('refresh')
   @HttpCode(200)
   refresh(@Body() dto: RefreshDto) {
@@ -65,6 +68,7 @@ export class AuthController {
     await this.tokens.revoke(dto.refreshToken);
   }
 
+  @Throttle({ default: RATE_LIMIT.auth })
   @Post('exchange')
   @HttpCode(200)
   exchange(@Body() dto: TicketExchangeDto) {
@@ -77,6 +81,7 @@ export class AuthController {
     return this.auth.me(readerId);
   }
 
+  @Throttle({ default: RATE_LIMIT.auth })
   @Get(':provider/start')
   @Redirect()
   async start(
@@ -87,6 +92,7 @@ export class AuthController {
     return { url };
   }
 
+  @Throttle({ default: RATE_LIMIT.auth })
   @Get(':provider/callback')
   @Redirect()
   async callback(
@@ -97,6 +103,7 @@ export class AuthController {
     return { url };
   }
 
+  @Throttle({ default: RATE_LIMIT.auth })
   @Post(':provider')
   @HttpCode(200)
   signIn(

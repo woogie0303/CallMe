@@ -1,9 +1,24 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { trustProxyHops } from './common/rate-limit';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  /**
+   * 호스팅의 프록시 뒤에서 진짜 클라이언트 IP를 읽으려면 몇 단을 믿을지 알려줘야 한다
+   * (`common/rate-limit.ts`). 틀리면 로그인 전 요청의 호출 횟수 제한이 사람이 아니라
+   * 서버 전체에 걸리므로, 어떻게 읽고 있는지 부팅할 때마다 말한다.
+   */
+  const hops = trustProxyHops();
+  app.set('trust proxy', hops);
+  console.log(`프록시 신뢰 단 수: ${hops}`);
+
+  /** 보안 헤더 — JSON만 주는 서버라 기본값 그대로 쓴다 */
+  app.use(helmet());
 
   app.setGlobalPrefix('api');
 

@@ -20,6 +20,8 @@ import {
   SearchBooksQuery,
   UpdateBookDto,
 } from './dto/book.dto';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT } from '../common/rate-limit';
 
 @Controller('books')
 @UseGuards(JwtAuthGuard)
@@ -30,6 +32,7 @@ export class BooksController {
   ) {}
 
   /** :id보다 먼저 선언돼 있어야 한다 — 나중에 두면 'search'가 id로 잡힌다 */
+  @Throttle({ default: RATE_LIMIT.search })
   @Get('search')
   searchBooks(@Query() query: SearchBooksQuery) {
     return this.search.search(query.q);

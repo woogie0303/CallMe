@@ -14,6 +14,8 @@ import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { ObjectIdPipe } from '../common/object-id.pipe';
 import { AsksService } from './asks.service';
 import { CreateAskDto, ListAsksQuery, SplitLinesDto } from './dto/ask.dto';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT } from '../common/rate-limit';
 
 /**
  * 묻는 단위는 언제나 문장 하나다(ADR-0001).
@@ -32,12 +34,14 @@ export class AsksController {
   }
 
   /** 찍은 쪽에서 읽어낸 줄들을 문장으로 — 아직 묻는 것이 아니라 고르기 전 단계다 */
+  @Throttle({ default: RATE_LIMIT.model })
   @Post('split')
   @HttpCode(200)
   split(@Body() dto: SplitLinesDto) {
     return this.asks.split(dto.lines);
   }
 
+  @Throttle({ default: RATE_LIMIT.model })
   @Post()
   create(@CurrentReader() readerId: string, @Body() dto: CreateAskDto) {
     return this.asks.create(readerId, dto);
@@ -57,6 +61,7 @@ export class AsksController {
   }
 
   /** 기다리던 질문을 다시 물어본다 */
+  @Throttle({ default: RATE_LIMIT.model })
   @Post(':id/resolve')
   @HttpCode(200)
   resolve(
