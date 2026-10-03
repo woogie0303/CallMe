@@ -63,7 +63,8 @@ export function ItemDetail({
         {gap ? (
           <View style={styles.gapRow}>
             <Icon name="clock" size={14} color={color.primary} />
-            <AppText style={styles.gapText}>
+            {/* 한글은 낱말 단위로 줄을 바꾼다 — 기본값은 '만났어/요'처럼 낱말 가운데서 끊는다 */}
+            <AppText style={styles.gapText} lineBreakStrategyIOS="hangul-word">
               {books.length > 1 ? `${books.length}권에서 ` : ''}
               {encounters.length}번 만났어요 — 처음 담은 뒤{' '}
               <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 다시

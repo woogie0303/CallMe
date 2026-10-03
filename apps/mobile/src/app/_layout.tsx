@@ -11,6 +11,7 @@ import { color } from '@/shared/config';
 import { configureNotifications } from '@/shared/notifications/reminder';
 import { QueryProvider } from '@/shared/query/provider';
 import { SessionProvider, useSession } from '@/shared/session/session';
+import { OnboardingRedirect } from '@/widgets/onboarding/model/onboarding-redirect';
 
 SplashScreen.preventAutoHideAsync();
 configureNotifications();
@@ -75,39 +76,52 @@ function Gate() {
   }, [status, segments, router]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: color.surface.base },
-      }}
-    >
-      <Stack.Screen name="sign-in" />
-      <Stack.Screen name="(tabs)" />
-      {/*
+    <>
+      {/* 처음 온 독자를 안내로 — 서버를 부르는 훅이 들어 있어 로그인한 뒤에만 세운다 */}
+      {status === 'in' ? <OnboardingRedirect /> : null}
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: color.surface.base },
+        }}
+      >
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="(tabs)" />
+        {/*
         책 추가는 화면을 다 차지할 일이 없다 — 고를 것이 둘뿐이라, 꽉 찬 모달로
         띄우면 아래가 통째로 빈다. 투명 모달로 띄우고 제 높이만 쓰는 시트를
         직접 그린다(`book-pick`). 뒤가 비치므로 바깥을 눌러 나갈 수 있다.
       */}
-      <Stack.Screen
-        name="book-pick"
-        options={{
-          presentation: 'transparentModal',
-          animation: 'fade',
-          /**
-           * 위의 screenOptions가 모든 화면에 불투명 종이색을 칠한다. 여기서
-           * 덮어쓰지 않으면 이 화면 뒤는 항상 그 불투명한 색이라, 시트 뒤로
-           * 드러나야 할 이전 화면이 하나도 비치지 않는다.
-           */
-          contentStyle: { backgroundColor: 'transparent' },
-        }}
-      />
-      <Stack.Screen name="book-add" />
-      <Stack.Screen name="book-edit" />
-      <Stack.Screen name="book-search" />
-      <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="scan" />
-      <Stack.Screen name="pending" />
-      <Stack.Screen name="genres" />
-    </Stack>
+        <Stack.Screen
+          name="book-pick"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            /**
+             * 위의 screenOptions가 모든 화면에 불투명 종이색을 칠한다. 여기서
+             * 덮어쓰지 않으면 이 화면 뒤는 항상 그 불투명한 색이라, 시트 뒤로
+             * 드러나야 할 이전 화면이 하나도 비치지 않는다.
+             */
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen name="book-add" />
+        <Stack.Screen name="book-edit" />
+        <Stack.Screen name="book-search" />
+        <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="scan" />
+        <Stack.Screen name="pending" />
+        <Stack.Screen name="genres" />
+        {/* 밀어서 닫으면 '봤다'가 적히지 않는다 — 버튼으로만 끝낸다 */}
+        <Stack.Screen
+          name="onboarding"
+          options={{
+            presentation: 'fullScreenModal',
+            animation: 'fade',
+            gestureEnabled: false,
+          }}
+        />
+      </Stack>
+    </>
   );
 }

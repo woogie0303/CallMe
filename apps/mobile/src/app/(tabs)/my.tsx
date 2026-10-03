@@ -12,6 +12,7 @@ import {
   ActionButton,
   AltPanel,
   AppText,
+  DisclosureRow,
   Mark,
   ProgressBar,
   Tap,
@@ -123,6 +124,12 @@ export default function MyScreen() {
         </AltPanel>
 
         <ReminderSettings />
+
+        <DisclosureRow
+          title="사용 방법"
+          body="찍고, 묻고, 다시 만나는 흐름을 다시 볼 수 있어요."
+          onPress={() => router.push('/onboarding')}
+        />
 
         {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}
         <View style={styles.exit}>
