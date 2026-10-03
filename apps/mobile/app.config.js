@@ -16,6 +16,32 @@ const { createRunOncePlugin } = require('expo/config-plugins');
  */
 const APPLE_SIGN_IN = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
 
+/**
+ * 출시 빌드(`eas build --profile production`)에서 빠지면 **조용히 망가지는** 값들을
+ * 빌드 시작 전에 막는다. EAS 클라우드 빌드는 gitignore된 `.env`를 못 받아서 이 값들이
+ * 비어 있기 쉽고, 비어 있으면 앱은 오류 없이 이렇게 된다:
+ *   - API 주소 없음 → 개발 서버 주소를 추측해 서버에 못 붙는다
+ *   - Apple 로그인 꺼짐 → 다른 소셜 로그인만 있는 앱이 된다(심사 지침 4.8 반려)
+ * EAS가 빌드 때 `EAS_BUILD_PROFILE`을 채워 주므로 개발 빌드와 로컬에서는 돌지 않는다.
+ */
+if (process.env.EAS_BUILD_PROFILE === 'production') {
+  const missing = [
+    ['EXPO_PUBLIC_API_URL', '서버 주소 (eas.json의 production env)'],
+  ].filter(([key]) => !process.env[key]);
+  if (!APPLE_SIGN_IN) {
+    missing.push([
+      'EXPO_PUBLIC_APPLE_SIGN_IN=true',
+      'Apple 로그인 (유료 개발자 계정 필요, 심사 지침 4.8)',
+    ]);
+  }
+  if (missing.length) {
+    throw new Error(
+      '출시 빌드에 필요한 값이 없어요:\n' +
+        missing.map(([key, why]) => `  - ${key}: ${why}`).join('\n'),
+    );
+  }
+}
+
 module.exports = ({ config }) => {
   return {
     ...config,
