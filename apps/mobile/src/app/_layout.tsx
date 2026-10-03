@@ -1,16 +1,19 @@
 import '@/global.css';
 
+import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { color } from '@/shared/config';
+import { configureNotifications } from '@/shared/notifications/reminder';
 import { QueryProvider } from '@/shared/query/provider';
 import { SessionProvider, useSession } from '@/shared/session/session';
 
 SplashScreen.preventAutoHideAsync();
+configureNotifications();
 
 /**
  * Reread는 흰 종이 위에서만 산다 — 화면은 라이트 하나뿐이다.
@@ -40,6 +43,27 @@ function Gate() {
   const { status } = useSession();
   const segments = useSegments();
   const router = useRouter();
+
+  /**
+   * 복습 알림을 눌러 앱이 열렸으면(꺼져 있던 앱도 포함) 알림이 말한 그 표현으로 간다.
+   * 로그인이 정해진 뒤에만 — 로그인 전에 밀어 넣으면 문이 그 길을 되돌려 보낸다.
+   * 같은 응답을 두 번 처리하지 않도록 어느 알림이었는지(시각까지)를 기억해 둔다.
+   */
+  const response = Notifications.useLastNotificationResponse();
+  const handled = useRef<string | null>(null);
+  useEffect(() => {
+    if (status !== 'in' || !response) return;
+    if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER)
+      return;
+
+    const { identifier, content } = response.notification.request;
+    const key = `${identifier}:${response.notification.date}`;
+    const itemId = content.data?.itemId;
+    if (handled.current === key || typeof itemId !== 'string') return;
+
+    handled.current = key;
+    router.push({ pathname: '/item/[id]', params: { id: itemId } });
+  }, [response, status, router]);
 
   useEffect(() => {
     if (status === 'loading') return;

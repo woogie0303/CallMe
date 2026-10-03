@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota } from '@/entities/ask/api/ask.api';
 import { useItems } from '@/entities/lexical-item/api/item.api';
-import { useReader } from '@/entities/reader/api/reader.api';
+import { useDeleteAccount, useReader } from '@/entities/reader/api/reader.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, gutter, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
@@ -14,7 +14,9 @@ import {
   AppText,
   Mark,
   ProgressBar,
+  Tap,
 } from '@/shared/ui';
+import { ReminderSettings } from '@/widgets/review-reminder/ui/reminder-settings';
 
 /**
  * 마이 — 이번 달 남은 질문과, 쌓인 것들.
@@ -31,6 +33,7 @@ export default function MyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signOut } = useSession();
+  const deleteAccount = useDeleteAccount();
   const { data: reader } = useReader();
   const { data: items = [] } = useItems();
   const { data: quota } = useAskQuota();
@@ -46,6 +49,34 @@ export default function MyScreen() {
       [
         { text: '그대로 둘게요', style: 'cancel' },
         { text: '로그아웃', style: 'destructive', onPress: signOut },
+      ],
+    );
+
+  /**
+   * 계정 삭제 — 로그아웃과 달리 되돌릴 수 없어서 무엇이 지워지는지를 그대로 말하고 한 번
+   * 묻는다. 서버가 끝내면 기기에서도 로그아웃과 같은 길로 정리한다(토큰·캐시·알림).
+   */
+  const confirmDelete = () =>
+    Alert.alert(
+      '계정을 삭제할까요?',
+      '담아둔 책과 문장, 표현, 읽은 기록이 모두 지워지고 되돌릴 수 없어요.',
+      [
+        { text: '그대로 둘게요', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () =>
+            deleteAccount.mutate(undefined, {
+              onSuccess: () => signOut(),
+              onError: (error) =>
+                Alert.alert(
+                  '삭제하지 못했어요',
+                  error instanceof Error
+                    ? error.message
+                    : '잠시 후 다시 시도해 주세요.',
+                ),
+            }),
+        },
       ],
     );
 
@@ -91,6 +122,8 @@ export default function MyScreen() {
           <Row label="다 읽은 책" value={`${reader?.booksFinished ?? 0}권`} />
         </AltPanel>
 
+        <ReminderSettings />
+
         {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}
         <View style={styles.exit}>
           <ActionButton
@@ -99,6 +132,19 @@ export default function MyScreen() {
             onPress={confirmSignOut}
           />
         </View>
+
+        {/* 되돌릴 수 없는 일은 눈에 띄는 버튼으로 세우지 않고, 찾으면 닿는 곳에 조용히 둔다 */}
+        <Tap
+          onPress={confirmDelete}
+          disabled={deleteAccount.isPending}
+          accessibilityRole="button"
+          accessibilityLabel="계정 삭제"
+          style={styles.delete}
+        >
+          <AppText style={styles.deleteLabel}>
+            {deleteAccount.isPending ? '삭제하는 중…' : '계정 삭제'}
+          </AppText>
+        </Tap>
 
         {/* 개발 빌드에서만 — 캐릭터 9개를 한 번에 확인하는 자리, 출시에는 안 나간다 */}
         {__DEV__ ? (
@@ -152,4 +198,6 @@ const styles = StyleSheet.create({
   rowValue: { ...type.label1, fontWeight: '700', color: color.text.primary },
 
   exit: { marginTop: 12 },
+  delete: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 20 },
+  deleteLabel: { ...type.label2, color: color.status.negative },
 });

@@ -59,6 +59,15 @@ module.exports = ({ config }) => {
       APPLE_SIGN_IN
         ? 'expo-apple-authentication'
         : createRunOncePlugin((c) => c, 'expo-apple-authentication'),
+      /**
+       * 복습 알림은 **기기 안에서 예약하는 로컬 알림**이라 서버가 보내는 푸시(APNs)가
+       * 필요 없다. 그런데 `expo-notifications` 플러그인은 설치돼 있기만 하면
+       * `aps-environment` 권한을 무조건 넣고, 그 권한도 유료 개발자 계정이 있어야
+       * 프로비저닝된다 — 무료 팀으로 지으면 위 Apple 로그인과 똑같이 빌드가 멈춘다.
+       * 로컬 알림에는 그 권한이 필요 없으니 같은 방법으로 자동 적용을 건너뛴다.
+       * 서버 푸시를 붙이는 날 이 줄을 지우고 플러그인을 켠다.
+       */
+      createRunOncePlugin((c) => c, 'expo-notifications'),
     ],
   };
 };

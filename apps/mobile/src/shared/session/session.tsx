@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 import { api, Unauthenticated } from '@/shared/api/client';
+import { clearReminder } from '@/shared/notifications/reminder';
 import { clearTokens, readTokens, saveTokens } from '@/shared/api/tokens';
 import type {
   ProviderName,
@@ -132,6 +133,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signIn: async (provider) => enter(await signInWith(provider)),
       signInAsDeveloper: async () => enter(await devSignIn()),
       signOut: async () => {
+        /** 남의 계정으로 알림이 울리지 않게 — 예약과 설정을 먼저 지운다 */
+        await clearReminder();
         const stored = await readTokens();
         if (stored) {
           /** 서버에서도 끊는다. 실패해도 기기에서는 지운다. */
