@@ -156,6 +156,69 @@ Apple 로그인과 OCR은 네이티브 모듈이라 **Expo Go에서는 영영 �
 앱스토어에 낼 때는 켜야 한다 — 다른 소셜 로그인을 내면 Apple 로그인도 함께 내야
 한다(심사 지침 4.8).
 
+## 복습 알림은 기기 안에서 예약하는 로컬 알림이다
+
+서버가 보내는 푸시가 **아니다.** 기기가 스스로 때를 보고 울려서 APNs 권한도, 푸시 토큰도,
+서버가 독자의 기기를 알 일도 없다. 마이 탭에서 켜면(그 순간에 처음 알림 허락을 묻는다)
+하루에 한 번, 아직 **헷갈려요**인 표현 하나를 알려준다 — 고르는 순서는 홈의 '오늘 다시 볼
+문장'과 같다(`widgets/review-reminder/lib/plan.ts`).
+
+- **이레치를 미리 예약하고 앱을 열 때마다 다시 짠다**(`useReminderSync`, 탭 레이아웃).
+  반복 알림은 글이 고정이라 오늘의 표현을 말해줄 수 없어서다. 이레 넘게 앱을 안 열면
+  알림도 끊기는데, 쉬는 독자에게 계속 말을 거는 것이 이 앱이 원하는 일은 아니다.
+- **`app.config.js`가 `expo-notifications` 플러그인의 자동 적용을 일부러 막는다.** 그
+  플러그인은 설치돼 있기만 하면 `aps-environment` 권한을 넣는데, 유료 개발자 계정이
+  있어야 프로비저닝돼서 무료 팀 빌드가 Apple 로그인처럼 멈춘다. 로컬 알림에는 그 권한이
+  필요 없다. **서버 푸시를 붙이는 날 그 줄을 지운다.**
+- 알림을 누르면 그 표현 화면(`/item/[id]`)으로 간다(루트 레이아웃). 로그아웃·계정 삭제는
+  예약과 설정을 함께 지운다(`clearReminder`) — 남의 계정으로 알림이 울리면 안 된다.
+- 네이티브 모듈이라 이 기능을 넣은 뒤에는 개발 빌드를 다시 지어야 한다
+  (`npx expo prebuild --clean` → `npx expo run:ios`).
+
+## 계정 삭제
+
+마이 탭 맨 아래의 조용한 줄이다(심사 지침 5.1.1(v)가 요구한다). 서버가 `DELETE /readers/me`로
+독자의 모든 것을 지우고(`apps/backend/src/readers/account-deletion.service.ts`), 앱은 그
+뒤 `signOut`과 같은 길로 기기의 토큰·캐시·알림 예약을 지운다. 서버에 이미 없는 계정이라
+`/auth/logout` 호출은 실패해도 기기에서는 지워진다.
+
+**Apple로 로그인한 독자의 Apple 쪽 토큰 회수는 아직 안 붙였다**(`apps/backend/AGENTS.md`).
+
+## 릴리스 빌드
+
+`eas.json`에 프로필이 셋 있다 — `development`(개발 클라이언트), `development-simulator`,
+`production`(TestFlight·앱스토어). **`.env`는 gitignore라 EAS 클라우드 빌드가 받지 못한다.**
+그래서 서버 주소 같은 공개 값은 `eas.json`의 production `env`에 있다. 이 값들이 빠진 채
+출시 빌드를 지으면 앱이 오류 없이 조용히 망가지므로(서버에 못 붙거나, Apple 로그인이 빠짐)
+`app.config.js`가
+`EAS_BUILD_PROFILE=production`일 때 **빌드를 시작하기 전에 막는다.**
+
+처음 한 번:
+
+```bash
+cd apps/mobile
+npx eas-cli login
+npx eas-cli init                      # app.json에 projectId·owner를 적는다 — 이 변경은 커밋한다
+```
+
+짓기와 올리기:
+
+```bash
+npx eas-cli build --platform ios --profile production   # 처음엔 Apple 로그인으로 인증서·프로비저닝을 만든다
+npx eas-cli submit --platform ios --profile production  # App Store Connect에 앱(번들 id)을 먼저 만들어 둔다
+```
+
+빌드 전에 확인할 것: 유료 개발자 계정 · 서버의 `ALLOW_DEV_LOGIN`이 꺼져 있고 `NODE_ENV=production`
+· `PUBLIC_BASE_URL`이 실제 주소 · 세 소셜 콘솔의 redirect URI.
+
+**개인정보처리방침·이용약관은 아직 없다.** 앱스토어 제출에는 공개된 방침 URL이 필요하고
+(심사 지침 5.1.1), 앱 안에도 링크가 있어야 한다. 한때 웹 앱에 만들었다가 어디에 올릴지
+정해지지 않아 걷어냈다 — 출시 전에 따로 정한다.
+
+로컬에서 Release로 컴파일만 확인하려면 `npx expo run:ios --configuration Release`다.
+`ITSAppUsesNonExemptEncryption=false`는 앱이 표준 HTTPS와 OS 암호화만 쓴다는 선언이다 —
+수출 규정 질문을 매번 받지 않게 `app.json`에 넣어 뒀다. 암호화를 직접 구현하게 되면 다시 본다.
+
 ## 아직 안 된 것
 
 **안드로이드는 사진 위에서 짚지 못한다.** `modules/page-reader`가 iOS만 있어서
