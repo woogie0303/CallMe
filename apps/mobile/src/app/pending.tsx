@@ -18,6 +18,7 @@ import {
   ActionButton,
   AltPanel,
   AppText,
+  AskingOverlay,
   Icon,
   Mark,
   ScreenHeader,
@@ -203,6 +204,8 @@ export default function PendingScreen() {
           }}
         />
       </View>
+
+      <AskingOverlay visible={resolve.isPending} />
     </View>
   );
 }

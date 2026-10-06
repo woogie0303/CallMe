@@ -18,9 +18,17 @@ import {
   useSentence,
 } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, type } from '@/shared/config';
-import { ActionButton, AppText, ScreenHeader } from '@/shared/ui';
+import { MAX_PICKS, runsOf, surfaceOf, tokenize } from '@/shared/ocr/selection';
+import { usePicks } from '@/shared/ocr/use-picks';
+import {
+  ActionButton,
+  AppText,
+  AskingOverlay,
+  ScreenHeader,
+} from '@/shared/ui';
 import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 import { SentenceField } from '@/widgets/ask/ui/sentence-field';
+import { WordPicker } from '@/widgets/ask/ui/word-picker';
 
 /**
  * 어느 책에 대고 묻는지는 들어온 길이 정한다. 홈의 ✎에서 오면 지금 읽는 책이고,
@@ -34,7 +42,6 @@ type Params = {
   sentenceId?: string;
 };
 
-import { WordPicker } from '@/widgets/ask/ui/word-picker';
 /**
  * 03 질문 — 막힌 문장을 적고, **그 안에서 모르는 낱말을 골라** 묻는다.
  *
@@ -52,6 +59,9 @@ export default function AskScreen() {
   const openScan = useOpenScan();
 
   const params = useLocalSearchParams<Params>();
+  /** 담아둔 문장을 묻는 길 — 글은 그 문장 그대로다 */
+  const saved = useSentence(params.sentenceId);
+  const fixed = Boolean(params.sentenceId);
   /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
   const [typed, setTyped] = useState(params.text ?? '');
   const sentence = fixed ? (saved.data?.text ?? '') : typed;
@@ -70,9 +80,6 @@ export default function AskScreen() {
   const { data: current } = useCurrentBook();
   const { data: chosen } = useBook(params.bookId);
   const book = chosen ?? current?.book;
-  /** 담아둔 문장을 묻는 길 — 글은 그 문장 그대로다 */
-  const saved = useSentence(params.sentenceId);
-  const fixed = Boolean(params.sentenceId);
   /**
    * 쪽수는 꼭 적는다 — 나중에 이 문장을 다시 찾을 때 붙잡을 곳이 쪽수뿐이다.
    * 미리 채워 두지 않는다. 지난번 쪽이 들어 있으면 확인도 없이 그대로 담긴다.
@@ -90,18 +97,18 @@ export default function AskScreen() {
   /** 책에 없는 쪽은 쪽이 아니다 — 아래 글이 이유를 말하고, 서버도 한 번 더 막는다 */
   const tooFar = Boolean(book?.pages && typedPage > book.pages);
   const page = typedPage > 0 && !tooFar ? typedPage : undefined;
+  /** 그냥 담기는 문장과 쪽수만, 묻기는 고른 표현까지 있어야 한다 */
   const ready = Boolean(book && sentence.trim() && page);
+  const askable = fixed
+    ? Boolean(saved.data && surfaces.length)
+    : ready && surfaces.length > 0;
   const moveProgress = useUpdateProgress(book?.id ?? '');
 
   const createAsk = useCreateAsk();
   const keepSentence = useCreateSentence();
 
   const left = quota?.remaining ?? 0;
-  /** 그냥 담기는 문장과 쪽수만, 묻기는 고른 표현까지 있어야 한다 */
 
-  const askable = fixed
-    ? Boolean(saved.data && surfaces.length)
-    : ready && surfaces.length > 0;
   /**
    * 문장을 적은 쪽까지는 읽은 것이다 — 담을 때 진도도 그만큼 옮긴다.
    * 앞으로만 간다: 예전 쪽을 다시 펴서 적었다고 진도가 뒤로 가면 안 된다.
@@ -208,13 +215,6 @@ export default function AskScreen() {
             몇 쪽인지 적어야 담을 수 있어요.
           </AppText>
         ) : null}
-      </ScrollView>
-
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <ActionButton
-          label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
-          variant={left > 0 ? 'primary' : 'ink'}
-          disabled={!askable || keepSentence.isPending}
 
         {words.length ? (
           <View style={styles.pick}>
@@ -236,6 +236,13 @@ export default function AskScreen() {
             />
           </View>
         ) : null}
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
+        <ActionButton
+          label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
+          variant={left > 0 ? 'primary' : 'ink'}
+          disabled={!askable || keepSentence.isPending}
           loading={createAsk.isPending}
           onPress={ask}
         />
@@ -250,6 +257,8 @@ export default function AskScreen() {
           />
         )}
       </View>
+
+      <AskingOverlay visible={createAsk.isPending} />
     </KeyboardAvoidingView>
   );
 }
@@ -267,8 +276,8 @@ const styles = StyleSheet.create({
   },
 
   needPage: { ...type.caption1, color: color.status.cautionary, marginTop: -8 },
-  footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
-});
   pick: { gap: 8 },
   pickTitle: { ...type.label1, fontWeight: '700', color: color.text.primary },
   pickHint: { ...type.caption1, color: color.text.meta, marginBottom: 4 },
+  footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
+});

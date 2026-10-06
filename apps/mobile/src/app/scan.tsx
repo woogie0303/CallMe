@@ -19,15 +19,16 @@ import { usePicks } from '@/shared/ocr/use-picks';
 import {
   ActionButton,
   AppText,
+  AskingOverlay,
   HeaderAction,
   ScreenHeader,
   Tap,
 } from '@/shared/ui';
 import { AskSheet } from '@/widgets/capture/ui/ask-sheet';
-import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
 import type { SheetSentence } from '@/widgets/capture/ui/ask-sentence';
-
+import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
 import { PickBadge } from '@/widgets/capture/ui/pick-badge';
+
 type Params = { bookId?: string };
 
 /**
@@ -96,7 +97,6 @@ export default function ScanScreen() {
 
   const busy = createAsk.isPending || keepSentence.isPending;
 
-  const shoot = async () => {
   /** 시트에 세울 문장들 — 고친 글이 있으면 그것, 표현이 아직 그 글에 있는지까지 */
   const sheet: SheetSentence[] = useMemo(
     () =>
@@ -118,6 +118,7 @@ export default function ScanScreen() {
   );
   const pickCount = sheet.reduce((sum, s) => sum + s.picks.length, 0);
 
+  const shoot = async () => {
     if (!camera.current || reading) return;
     setReading(true);
     try {
@@ -174,11 +175,11 @@ export default function ScanScreen() {
       const views = await createAsk.mutateAsync({
         bookId: book.id,
         page,
-      });
         sentences: sheet.map((sentence) => ({
           text: sentence.text.trim(),
           picks: sentence.picks.map((pick) => pick.surface),
         })),
+      });
       recordPage();
       /**
        * 답이 하나 왔으면 그 문장 화면에서 뜻을 편 채로, 여럿이면 그 책의 '담은
@@ -358,6 +359,8 @@ export default function ScanScreen() {
           onClose={() => setSheetOpen(false)}
         />
       ) : null}
+
+      <AskingOverlay visible={createAsk.isPending} sentences={sheet.length} />
     </View>
   );
 }
@@ -405,9 +408,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
   },
-
-  /** 뷰파인더는 잉크 위에 둔다 — 종이를 비추는 동안은 화면이 물러나야 한다 */
-  viewfinder: {
   /** 사진 아래 한 줄 — 안내 글이나 배지가 선다. 배지가 드나들어도 사진이 흔들리지 않게 높이를 둔다. */
   below: {
     minHeight: 64,
@@ -420,6 +420,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingBottom: 14,
   },
+
+  /** 뷰파인더는 잉크 위에 둔다 — 종이를 비추는 동안은 화면이 물러나야 한다 */
+  viewfinder: {
     flex: 1,
     margin: 16,
     borderRadius: 20,
