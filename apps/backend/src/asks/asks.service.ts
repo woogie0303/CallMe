@@ -140,7 +140,12 @@ export class AsksService {
       .sort({ createdAt: -1 })
       .limit(query.limit ?? 50);
 
-    return this.attach(asks);
+    /**
+     * 문장이 사라진 질문은 세우지 않는다. 문장을 지울 때 질문도 함께 지우지만, 그렇게
+     * 하기 전에 지운 문장의 질문이 남아 있을 수 있다 — 글 없는 빈 줄이 된다.
+     */
+    const views = await this.attach(asks);
+    return views.filter((view) => view.sentence);
   }
 
   async find(readerId: string, id: string): Promise<AskView> {

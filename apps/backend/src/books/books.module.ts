@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Ask, AskSchema } from '../asks/ask.schema';
 import { AuthModule } from '../auth/auth.module';
 import { LexicalItem, LexicalItemSchema } from '../items/lexical-item.schema';
 import { ReadingModule } from '../reading/reading.module';
@@ -15,6 +16,7 @@ import { BooksService } from './books.service';
       { name: Book.name, schema: BookSchema },
       { name: Sentence.name, schema: SentenceSchema },
       { name: LexicalItem.name, schema: LexicalItemSchema },
+      { name: Ask.name, schema: AskSchema },
     ]),
     AuthModule,
     ReadingModule,

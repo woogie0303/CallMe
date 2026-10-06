@@ -111,13 +111,13 @@ GET    /api/books ?finished=      내 책장
 POST   /api/books                 genre는 `book.schema.ts`의 GENRES 중 하나만(없어도 된다)
 GET    /api/books/:id
 PATCH  /api/books/:id             진도 · 다 읽은 날 · genre · pinned(홈에 고정, 한 권뿐)
-DELETE /api/books/:id             문장·그 책에서만 만난 표현·읽은 기록까지 함께 지운다
+DELETE /api/books/:id             문장·그 문장들의 질문·그 책에서만 만난 표현·읽은 기록까지 함께 지운다
 
 GET    /api/sentences ?bookId= &liked=
 POST   /api/sentences
 GET    /api/sentences/:id
 PATCH  /api/sentences/:id         글 · 쪽 · 메모 · 하트(favorite)
-DELETE /api/sentences/:id
+DELETE /api/sentences/:id         그 문장의 질문·그 문장에서만 만난 표현도 함께
 POST   /api/sentences/:id/thoughts            이 문장에 대고 내 생각 하나 달기 { text }
 DELETE /api/sentences/:id/thoughts/:thoughtId
 

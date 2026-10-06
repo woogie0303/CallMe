@@ -138,7 +138,11 @@ export class SentencesService {
     return sentence;
   }
 
-  /** 문장이 사라지면 그 문장을 가리키던 만남도, 만남이 다 없어진 항목도 함께 간다. */
+  /**
+   * 문장이 사라지면 그 문장을 가리키던 만남도, 만남이 다 없어진 항목도, 그 문장에
+   * 대고 물은 질문도 함께 간다. 질문을 남겨두면 글 없는 질문이 '기다리는 문장'에
+   * 빈 줄로 선다.
+   */
   async remove(readerId: string, id: string): Promise<{ ok: true }> {
     const sentence = await this.find(readerId, id);
     const owner = new Types.ObjectId(readerId);
@@ -148,6 +152,7 @@ export class SentencesService {
       { $pull: { encounters: { sentenceId: sentence._id } } },
     );
     await this.items.deleteMany({ readerId: owner, encounters: { $size: 0 } });
+    await this.asks.deleteMany({ readerId: owner, sentenceId: sentence._id });
     await this.sentences.deleteOne({ _id: sentence._id });
 
     return { ok: true };

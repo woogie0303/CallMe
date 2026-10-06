@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Ask } from '../asks/ask.schema';
 import { assertPageInBook } from '../common/page-in-book';
 import { LexicalItem } from '../items/lexical-item.schema';
 import { ReadingService } from '../reading/reading.service';
@@ -14,6 +15,7 @@ export class BooksService {
     @InjectModel(Book.name) private readonly books: Model<Book>,
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
+    @InjectModel(Ask.name) private readonly asks: Model<Ask>,
     private readonly reading: ReadingService,
   ) {}
 
@@ -118,6 +120,11 @@ export class BooksService {
       { $pull: { encounters: { sentenceId: { $in: sentenceIds } } } },
     );
     await this.items.deleteMany({ readerId: owner, encounters: { $size: 0 } });
+    /** 문장에 대고 물은 질문도 — 남겨두면 글 없는 질문이 '기다리는 문장'에 선다 */
+    await this.asks.deleteMany({
+      readerId: owner,
+      sentenceId: { $in: sentenceIds },
+    });
     await this.sentences.deleteMany({ _id: { $in: sentenceIds } });
     await this.reading.forgetBook(readerId, String(book._id));
     await this.books.deleteOne({ _id: book._id });
