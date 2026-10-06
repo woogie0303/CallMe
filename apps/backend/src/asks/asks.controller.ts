@@ -33,6 +33,13 @@ export class AsksController {
     return this.asks.quota(readerId);
   }
 
+  /** 광고를 보고 받는 질문 — 한도를 다 쓴 독자에게만 열린다 */
+  @Post('quota/ad-bonus')
+  @HttpCode(200)
+  adBonus(@CurrentReader() readerId: string) {
+    return this.asks.grantAdBonus(readerId);
+  }
+
   /** 찍은 쪽에서 읽어낸 줄들을 문장으로 — 아직 묻는 것이 아니라 고르기 전 단계다 */
   @Throttle({ default: RATE_LIMIT.model })
   @Post('split')

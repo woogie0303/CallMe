@@ -33,6 +33,30 @@ export class LinkedAccount {
 export const LinkedAccountSchema = SchemaFactory.createForClass(LinkedAccount);
 
 /**
+ * 광고를 보고 받은 질문 횟수. 달이 바뀌면 저절로 비워진다 — 남은 횟수를 되돌리는
+ * 일 없이, 적힌 달이 이번 달이 아니면 0으로 읽는다(`AsksService.quota`와 같은 생각).
+ */
+@Schema({ _id: false })
+export class AskBonus {
+  /** 이 보너스가 속한 달, `YYYY-MM` */
+  @Prop({ required: true })
+  month!: string;
+
+  /** 이번 달에 광고로 받은 질문 수 */
+  @Prop({ default: 0 })
+  granted!: number;
+
+  /** 오늘 날짜 `YYYY-MM-DD`와 오늘 본 광고 수 — 하루에 받을 수 있는 횟수를 막는다 */
+  @Prop({ required: true })
+  day!: string;
+
+  @Prop({ default: 0 })
+  dayCount!: number;
+}
+
+export const AskBonusSchema = SchemaFactory.createForClass(AskBonus);
+
+/**
  * 읽는 사람. 비밀번호가 없다 — 로그인은 카카오·네이버·구글·Apple로만 들어온다.
  *
  * 레벨은 두지 않는다. 한때 스스로 밝힌 영어 레벨(입문·중급·고급)을 받아 뜻을
@@ -58,6 +82,9 @@ export class Reader {
 
   @Prop({ type: [LinkedAccountSchema], default: [] })
   accounts!: LinkedAccount[];
+
+  @Prop({ type: AskBonusSchema })
+  askBonus?: AskBonus;
 }
 
 export type ReaderDocument = HydratedDocument<Reader>;

@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Book, type BookDocument } from '../books/book.schema';
 import { LexicalItem } from '../items/lexical-item.schema';
+import { Reader } from '../readers/reader.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
 import { Ask, type AskDocument, type Candidate } from './ask.schema';
 import { ModelUnavailable } from '../common/claude';
@@ -42,6 +47,7 @@ export class AsksService {
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(Book.name) private readonly books: Model<Book>,
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
+    @InjectModel(Reader.name) private readonly readers: Model<Reader>,
     private readonly answer: AnswerService,
     private readonly splitter: SplitService,
     private readonly config: ConfigService,
@@ -177,8 +183,11 @@ export class AsksService {
    * 되돌리는 일이 없으면 되돌리다 실패할 일도 없다.
    */
   async quota(readerId: string): Promise<AskQuota> {
-    const limit = Number(this.config.get('ASK_MONTHLY_LIMIT') ?? 30);
     const now = new Date();
+    const reader = await this.readers.findById(readerId).select('askBonus');
+    const bonus =
+      reader?.askBonus?.month === monthKey(now) ? reader.askBonus.granted : 0;
+    const limit = Number(this.config.get('ASK_MONTHLY_LIMIT') ?? 30) + bonus;
     const used = await this.asks.countDocuments({
       readerId: new Types.ObjectId(readerId),
       status: 'answered',
@@ -191,6 +200,48 @@ export class AsksService {
       remaining: Math.max(0, limit - used),
       resetsOn: startOfNextMonth(now),
     };
+  }
+
+  /**
+   * 광고를 한 번 보고 질문을 더 받는다. **한도를 다 쓴 뒤에만** 연다 — 남아 있는데
+   * 받게 두면 광고가 읽는 흐름 속으로 들어온다(ADR-0003). 하루에 받을 수 있는
+   * 횟수도 막는다. 앱이 보고하는 것을 서버가 광고 네트워크에 되묻지는 않아서(SSV 없음),
+   * 이 상한이 조작된 요청이 낼 수 있는 손해의 크기를 정한다.
+   */
+  async grantAdBonus(readerId: string): Promise<AskQuota> {
+    const now = new Date();
+    const month = monthKey(now);
+    const day = dayKey(now);
+    const perAd = Number(this.config.get('ASK_AD_BONUS') ?? 3);
+    const perDay = Number(this.config.get('ASK_AD_DAILY_LIMIT') ?? 5);
+
+    const before = await this.quota(readerId);
+    if (before.remaining > 0) {
+      throw new BadRequestException('아직 이번 달 질문이 남아 있어요.');
+    }
+
+    const reader = await this.readers.findById(readerId).select('askBonus');
+    const prev = reader?.askBonus;
+    const sameMonth = prev?.month === month;
+    const todayCount = prev?.day === day ? prev.dayCount : 0;
+    if (todayCount >= perDay) {
+      throw new BadRequestException(
+        '오늘 받을 수 있는 광고 보상을 다 받았어요.',
+      );
+    }
+
+    await this.readers.updateOne(
+      { _id: readerId },
+      {
+        askBonus: {
+          month,
+          granted: (sameMonth ? prev.granted : 0) + perAd,
+          day,
+          dayCount: todayCount + 1,
+        },
+      },
+    );
+    return this.quota(readerId);
   }
 
   /** 질문만 지운다. 옮겨 적은 문장은 남는다 — 답이 필요 없어졌을 뿐이다. */
@@ -326,6 +377,14 @@ export class AsksService {
       };
     });
   }
+}
+
+function monthKey(now: Date): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function dayKey(now: Date): string {
+  return `${monthKey(now)}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function startOfMonth(now: Date): Date {
