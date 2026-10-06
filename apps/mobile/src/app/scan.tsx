@@ -325,7 +325,7 @@ export default function ScanScreen() {
       </View>
 
       {/* 고른 것이 생기면 배지가 뜨고, 고르기 전에는 무엇을 하는 화면인지 한 줄이 말한다 */}
-      <View style={[styles.below, { paddingBottom: insets.bottom + 12 }]}>
+      <View style={styles.below}>
         {!picks.groups.length ? (
           <AppText style={styles.guide}>
             모르는 낱말을 누르세요 · 끌면 여러 낱말을 한 번에
@@ -408,18 +408,18 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
   },
-  /** 사진 아래 한 줄 — 안내 글이나 배지가 선다. 배지가 드나들어도 사진이 흔들리지 않게 높이를 둔다. */
+  /**
+   * 사진 아래 빈 자리 — 안내 글이나 배지가 **가운데**에 선다. 바닥(홈 인디케이터)에
+   * 붙이면 엄지가 닿기 전에 눈이 먼저 사진 쪽으로 가 버린다. 배지가 드나들어도 사진이
+   * 흔들리지 않게 높이를 고정한다.
+   */
   below: {
-    minHeight: 64,
+    height: 92,
     paddingHorizontal: gutter,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  guide: {
-    ...type.label2,
-    color: color.text.meta,
-    textAlign: 'center',
-    paddingBottom: 14,
-  },
+  guide: { ...type.label2, color: color.text.meta, textAlign: 'center' },
 
   /** 뷰파인더는 잉크 위에 둔다 — 종이를 비추는 동안은 화면이 물러나야 한다 */
   viewfinder: {

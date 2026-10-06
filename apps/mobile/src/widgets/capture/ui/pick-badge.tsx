@@ -13,7 +13,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { color, type } from '@/shared/config';
+import { color, shadow, type } from '@/shared/config';
 import { MAX_PICKS, MAX_SENTENCES, type Limit } from '@/shared/ocr/selection';
 import { AppText, Icon, Tap } from '@/shared/ui';
 
@@ -92,6 +92,7 @@ export function PickBadge({
           entering={FadeIn.duration(140)}
           exiting={FadeOut.duration(200)}
           style={styles.note}
+          pointerEvents="none"
         >
           <AppText style={styles.noteText}>
             {limit?.reason === 'picks'
@@ -153,13 +154,15 @@ function Rolling({ value }: { value: number }) {
 const LINE = 20;
 
 const styles = StyleSheet.create({
+  /** 사진 아래 빈 자리의 가운데에 선다. 안내 글이 배지 위에 떠도 배지는 움직이지 않는다. */
   wrap: {
     position: 'absolute',
-    left: 0,
+    top: 0,
     right: 0,
     bottom: 0,
+    left: 0,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
   badge: {
     flexDirection: 'row',
@@ -169,7 +172,9 @@ const styles = StyleSheet.create({
     paddingRight: 14,
     paddingVertical: 12,
     borderRadius: 999,
-    backgroundColor: color.surface.ink,
+    /** 이 화면의 포인트는 이 배지 하나다 — 사진 위 칠과 같은 색이라 '고른 것'이 이어져 보인다 */
+    backgroundColor: color.primary,
+    ...shadow.primary,
   },
   counts: { flexDirection: 'row', alignItems: 'center' },
   label: { ...type.label2, fontWeight: '600', color: color.text.onInk },
@@ -184,7 +189,10 @@ const styles = StyleSheet.create({
     color: color.text.onInk,
     fontVariant: ['tabular-nums'],
   },
+  /** 배지 위에 얹힌다 — 흐름에 넣으면 나타날 때 배지가 아래로 밀린다 */
   note: {
+    position: 'absolute',
+    top: -2,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
