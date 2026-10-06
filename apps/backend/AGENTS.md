@@ -168,10 +168,14 @@ DELETE /api/items/:id
 
 ## 아직 없는 것
 
-**Apple 로그인 토큰 회수.** 계정을 지울 때 Apple 쪽 연결도 끊어야 한다(Apple 요구). 로그인
-때 받은 `authorizationCode`를 Apple 토큰 엔드포인트에 보내 refresh token으로 바꿔 두었다가
-`/auth/revoke`로 회수하는 건데, 지금은 `authorizationCode`를 받아 두지 않는다. 유료 개발자
-계정이 있어야 시험할 수 있어서 Apple 로그인을 켜는 날 함께 붙인다.
+**Apple 로그인 토큰 회수는 코드만 있고 Apple과 통신해 본 적이 없다.** 로그인 때 앱이 보낸
+`authorizationCode`를 서버가 Apple에서 refresh token으로 바꿔 `accounts[].refreshToken`에 적어
+두고(`AppleTokenService`), 계정을 지울 때 먼저 회수한다(`AccountDeletionService`). 유료 개발자
+계정에서 만든 `.p8` 키로 서명해야 해서 `APPLE_TEAM_ID`·`APPLE_KEY_ID`·`APPLE_PRIVATE_KEY`가
+없으면 아무 일도 하지 않는다 — 로그인과 삭제는 그대로 돈다. **출시 전에 그 셋을 채우고
+실기기에서 로그인 → 삭제를 한 번 돌려 Apple 설정의 '앱 연결'에서 사라지는지 본다.** 키를 넣기 전에
+만들어진 Apple 계정은 refresh token이 없어서 회수할 수 없다. 회수가 실패해도 삭제는 계속한다 —
+Apple이 응답하지 않는다고 삭제 요청을 막을 수는 없어서, 대신 로그에 남긴다.
 
 퀴즈는 MVP에서 뺀다는 결정으로 걷어냈다 — 아직 안 만든 게 아니라 이번 출시엔
 안 낸다는 뜻이다. LexicalItem에 있던 review(streak·wrongCount) 서브스키마도

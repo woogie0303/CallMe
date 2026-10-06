@@ -21,6 +21,13 @@ export class LinkedAccount {
 
   @Prop({ default: () => new Date() })
   linkedAt!: Date;
+
+  /**
+   * Apple 로그인만. 계정을 지울 때 Apple 쪽 연결을 끊는 데 쓴다(`AppleTokenService`).
+   * 앱으로 내려가는 `toView`에는 싣지 않는다.
+   */
+  @Prop()
+  refreshToken?: string;
 }
 
 export const LinkedAccountSchema = SchemaFactory.createForClass(LinkedAccount);

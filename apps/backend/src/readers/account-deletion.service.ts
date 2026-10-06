@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { AppleTokenService } from '../auth/oauth/apple-token.service';
 import { Ask } from '../asks/ask.schema';
 import { OAuthTicket } from '../auth/schemas/oauth-ticket.schema';
 import { RefreshToken } from '../auth/schemas/refresh-token.schema';
@@ -44,10 +45,13 @@ export class AccountDeletionService {
     @InjectModel(OAuthTicket.name)
     private readonly tickets: Model<OAuthTicket>,
     @InjectModel(Reader.name) private readonly readers: Model<Reader>,
+    private readonly appleToken: AppleTokenService,
   ) {}
 
   async remove(readerId: string): Promise<void> {
     const owner = { readerId: new Types.ObjectId(readerId) };
+
+    await this.revokeApple(readerId);
 
     /** 서로 기대지 않는 것들이라 한꺼번에 — 독자 문서만 이것들이 끝난 뒤에 */
     await Promise.all([
@@ -63,5 +67,29 @@ export class AccountDeletionService {
     await this.readers.deleteOne({ _id: owner.readerId });
 
     this.log.warn(`계정을 삭제했어요: ${readerId}`);
+  }
+
+  /**
+   * Apple로 로그인한 독자면 Apple 쪽 연결을 먼저 끊는다. **실패해도 삭제는 계속한다** —
+   * Apple이 응답하지 않는다고 독자의 삭제 요청을 막으면 그게 더 큰 문제다(5.1.1(v)).
+   * 대신 눈에 띄게 남긴다. 독자 문서보다 **먼저** 하는 이유는, 지운 뒤에는 어느 토큰을
+   * 끊어야 하는지 알 길이 없어서다.
+   */
+  private async revokeApple(readerId: string): Promise<void> {
+    if (!this.appleToken.enabled()) return;
+    const reader = await this.readers.findById(readerId);
+    const tokens = (reader?.accounts ?? [])
+      .filter((account) => account.provider === 'apple' && account.refreshToken)
+      .map((account) => account.refreshToken as string);
+
+    for (const token of tokens) {
+      try {
+        await this.appleToken.revoke(token);
+      } catch (error) {
+        this.log.error(
+          `Apple 연결을 끊지 못했어요(삭제는 계속해요): ${readerId} ${String(error)}`,
+        );
+      }
+    }
   }
 }

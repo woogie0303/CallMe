@@ -29,6 +29,15 @@ export class ExchangeCodeDto {
   @IsString()
   @MaxLength(40, { message: '이름은 40자까지만 받아요.' })
   nickname?: string;
+
+  /**
+   * Apple이 로그인 때 함께 준 1회용 코드. 서버가 refresh token으로 바꿔 두었다가
+   * 계정을 지울 때 Apple 쪽 연결을 끊는 데 쓴다.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  authorizationCode?: string;
 }
 
 export class RefreshDto {

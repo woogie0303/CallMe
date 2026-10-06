@@ -13,7 +13,12 @@ function fakeModel(name: string, calls: string[], failWith?: Error) {
   return { deleteMany: record('deleteMany'), deleteOne: record('deleteOne') };
 }
 
-function build(options: { failing?: string } = {}) {
+function build(
+  options: {
+    failing?: string;
+    apple?: { enabled: boolean; revoke?: jest.Mock; refreshToken?: string };
+  } = {},
+) {
   const calls: string[] = [];
   const err = new Error('몽고가 끊겼어요');
   const make = (name: string) =>
@@ -31,6 +36,23 @@ function build(options: { failing?: string } = {}) {
     readers: make('readers'),
   };
 
+  const apple = {
+    enabled: jest.fn(() => options.apple?.enabled ?? false),
+    revoke: options.apple?.revoke ?? jest.fn().mockResolvedValue(undefined),
+  };
+  (models.readers as Record<string, unknown>).findById = jest.fn(() =>
+    Promise.resolve(
+      options.apple?.refreshToken
+        ? {
+            accounts: [
+              { provider: 'apple', refreshToken: options.apple.refreshToken },
+              { provider: 'kakao' },
+            ],
+          }
+        : null,
+    ),
+  );
+
   const service = new AccountDeletionService(
     models.books as never,
     models.sentences as never,
@@ -41,8 +63,9 @@ function build(options: { failing?: string } = {}) {
     models.refreshTokens as never,
     models.tickets as never,
     models.readers as never,
+    apple as never,
   );
-  return { service, models, calls, err };
+  return { service, models, calls, err, apple };
 }
 
 describe('AccountDeletionService', () => {
@@ -102,5 +125,33 @@ describe('AccountDeletionService', () => {
     await service.remove(readerId);
     await expect(service.remove(readerId)).resolves.toBeUndefined();
     expect(models.readers.deleteOne).toHaveBeenCalledTimes(2);
+  });
+
+  it('Apple로 로그인한 독자면 그 refresh token을 Apple에 회수한다', async () => {
+    const { service, apple } = build({
+      apple: { enabled: true, refreshToken: 'r-token' },
+    });
+    await service.remove(readerId);
+    expect(apple.revoke).toHaveBeenCalledTimes(1);
+    expect(apple.revoke).toHaveBeenCalledWith('r-token');
+  });
+
+  it('Apple 회수가 실패해도 삭제는 끝까지 한다', async () => {
+    const revoke = jest.fn().mockRejectedValue(new Error('Apple이 죽었어요'));
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const { service, models } = build({
+      apple: { enabled: true, revoke, refreshToken: 'r-token' },
+    });
+    await expect(service.remove(readerId)).resolves.toBeUndefined();
+    expect(revoke).toHaveBeenCalled();
+    expect(models.readers.deleteOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('Apple 키가 없으면 Apple에 아무것도 묻지 않는다', async () => {
+    const { service, apple } = build({
+      apple: { enabled: false, refreshToken: 'r-token' },
+    });
+    await service.remove(readerId);
+    expect(apple.revoke).not.toHaveBeenCalled();
   });
 });

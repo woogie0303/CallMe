@@ -14,6 +14,7 @@ import {
 } from '../readers/reader.schema';
 import { PROVIDERS, type OAuthProfile, type ProviderConfig } from './oauth';
 import type { ExchangeCodeDto } from './dto/auth.dto';
+import { AppleTokenService } from './oauth/apple-token.service';
 import { TokenService, type IssuedTokens } from './token.service';
 
 export type ReaderView = {
@@ -33,6 +34,7 @@ export class AuthService {
     @InjectModel(Reader.name) private readonly readers: Model<Reader>,
     private readonly tokens: TokenService,
     private readonly config: ConfigService,
+    private readonly appleToken: AppleTokenService,
   ) {}
 
   /**
@@ -58,9 +60,38 @@ export class AuthService {
       config,
     );
     const reader = await this.findOrCreate(provider, profile);
+    if (provider === 'apple' && dto.authorizationCode) {
+      await this.keepAppleRefreshToken(
+        reader.id,
+        profile.providerId,
+        dto.authorizationCode,
+      );
+    }
     const issued = await this.tokens.issue(reader.id);
 
     return { ...issued, reader: toView(reader) };
+  }
+
+  /**
+   * 코드를 refresh token으로 바꿔 그 Apple 계정에 적어 둔다. 못 바꿔도 로그인은
+   * 그대로 된다(`AppleTokenService.exchangeCode`가 던지지 않는다).
+   */
+  private async keepAppleRefreshToken(
+    readerId: string,
+    providerId: string,
+    authorizationCode: string,
+  ): Promise<void> {
+    const refreshToken = await this.appleToken.exchangeCode(authorizationCode);
+    if (!refreshToken) return;
+    await this.readers.updateOne(
+      { _id: readerId },
+      { $set: { 'accounts.$[apple].refreshToken': refreshToken } },
+      {
+        arrayFilters: [
+          { 'apple.provider': 'apple', 'apple.providerId': providerId },
+        ],
+      },
+    );
   }
 
   async me(readerId: string): Promise<ReaderView> {

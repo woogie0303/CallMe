@@ -40,6 +40,7 @@ type AppleSdk = {
   AppleAuthenticationScope: { FULL_NAME: number; EMAIL: number };
   signInAsync: (p: { requestedScopes: number[] }) => Promise<{
     identityToken: string | null;
+    authorizationCode: string | null;
     fullName: {
       givenName: string | null;
       familyName: string | null;
@@ -173,6 +174,8 @@ async function appleSignIn(): Promise<SignInResult> {
       nickname:
         name?.nickname ??
         joinName(name?.givenName ?? null, name?.familyName ?? null),
+      /** 서버가 refresh token으로 바꿔 두었다가 계정을 지울 때 Apple 연결을 끊는다 */
+      authorizationCode: credential.authorizationCode ?? undefined,
     },
   });
 }
