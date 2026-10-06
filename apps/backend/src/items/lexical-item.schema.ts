@@ -1,8 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-export const REGISTERS = ['구어체', '중립', '문어체'] as const;
-export type Register = (typeof REGISTERS)[number];
 
 export const STATUSES = ['헷갈려요', '외웠어요'] as const;
 export type ItemStatus = (typeof STATUSES)[number];
@@ -62,9 +60,6 @@ export class LexicalItem {
 
   @Prop({ required: true })
   meaning!: string;
-
-  @Prop({ type: String, enum: REGISTERS, default: '중립' })
-  register!: Register;
 
   @Prop({ type: String, enum: STATUSES, default: '헷갈려요' })
   status!: ItemStatus;

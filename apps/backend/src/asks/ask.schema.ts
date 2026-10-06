@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { REGISTERS, type Register } from '../items/lexical-item.schema';
 
 export const ASK_STATUSES = ['answered', 'pending'] as const;
 export type AskStatus = (typeof ASK_STATUSES)[number];
@@ -24,9 +23,6 @@ export class Candidate {
 
   @Prop({ required: true })
   meaning!: string;
-
-  @Prop({ type: String, enum: REGISTERS, default: '중립' })
-  register!: Register;
 
   /** 이미 서랍에 있는 표현이면 그 항목 — 담는 순간 재회가 된다 */
   @Prop({ type: Types.ObjectId, ref: 'LexicalItem' })

@@ -9,7 +9,6 @@ import {
   unavailable,
   type Claude,
 } from '../../common/claude';
-import { REGISTERS } from '../../items/lexical-item.schema';
 
 /**
  * 모델이 돌려줘야 하는 모양. 구조화 출력(structured outputs)으로 강제하므로
@@ -43,7 +42,6 @@ const AnswerFormat = z.object({
           .describe(
             '이 문장에서의 뜻 하나를 한국어 한 줄로. 사전 뜻을 나열하지 않는다.',
           ),
-        register: z.enum(REGISTERS).describe('구어체 / 중립 / 문어체'),
       }),
     )
     .describe(

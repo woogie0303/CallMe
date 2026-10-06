@@ -10,10 +10,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import {
-  REGISTERS,
   STATUSES,
   type ItemStatus,
-  type Register,
 } from '../lexical-item.schema';
 
 export class ConfusedWithDto {
@@ -38,10 +36,6 @@ export class SaveItemDto {
   @MinLength(1)
   meaning!: string;
 
-  @IsOptional()
-  @IsIn(REGISTERS)
-  register?: Register;
-
   /** 이 표현을 만난 문장 */
   @IsMongoId()
   sentenceId!: string;
@@ -57,10 +51,6 @@ export class UpdateItemDto {
   @IsString()
   @MinLength(1)
   meaning?: string;
-
-  @IsOptional()
-  @IsIn(REGISTERS)
-  register?: Register;
 
   @IsOptional()
   @IsIn(STATUSES)

@@ -236,7 +236,6 @@ export default function SentenceScreen() {
       await save.mutateAsync({
         term: candidate.term,
         meaning: candidate.meaning,
-        register: candidate.register,
         surface: candidate.surface,
         sentenceId: id,
       });

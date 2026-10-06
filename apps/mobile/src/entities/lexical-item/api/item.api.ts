@@ -115,7 +115,6 @@ export function useSaveItem() {
     mutationFn: (body: {
       term: string;
       meaning: string;
-      register?: string;
       sentenceId: string;
       surface?: string;
     }) => api<SaveItemResult>('/items', { method: 'POST', body }),

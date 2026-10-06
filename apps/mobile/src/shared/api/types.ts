@@ -30,7 +30,6 @@ export const GENRES = [
   '기타',
 ] as const;
 export type Genre = (typeof GENRES)[number];
-export type Register = '구어체' | '중립' | '문어체';
 export type ItemStatus = '헷갈려요' | '외웠어요';
 export type ProviderName = 'kakao' | 'naver' | 'google' | 'apple';
 
@@ -94,7 +93,6 @@ export type ApiItem = {
   _id: string;
   term: string;
   meaning: string;
-  register: Register;
   status: ItemStatus;
   encounters: ApiEncounter[];
   confusedWith?: { itemId: string; note: string };
@@ -116,7 +114,6 @@ export type ApiCandidate = {
   term: string;
   surface?: string;
   meaning: string;
-  register: Register;
   existingItemId?: string;
   /** 이미 서랍에 있던 표현일 때만 — 담는 순간이 재회가 된다 */
   existing?: { met: number; lastSavedAt?: string; lastBookTitle?: string };

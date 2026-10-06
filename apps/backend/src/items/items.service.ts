@@ -80,7 +80,6 @@ export class ItemsService {
         readerId: owner,
         term,
         meaning: dto.meaning,
-        register: dto.register,
         encounters: [
           {
             sentenceId: sentence._id,

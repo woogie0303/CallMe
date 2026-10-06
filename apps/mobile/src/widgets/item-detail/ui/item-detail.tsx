@@ -53,12 +53,7 @@ export function ItemDetail({
   return (
     <View style={styles.wrap}>
       <Card style={styles.hero}>
-        <View style={styles.heroHead}>
-          <Quote style={styles.term}>{item.term}</Quote>
-          <View style={styles.register}>
-            <AppText style={styles.registerLabel}>{item.register}</AppText>
-          </View>
-        </View>
+        <Quote style={styles.term}>{item.term}</Quote>
         <AppText style={styles.meaning}>{item.meaning}</AppText>
         {gap ? (
           <View style={styles.gapRow}>
@@ -138,29 +133,11 @@ const styles = StyleSheet.create({
   wrap: { gap: 20 },
 
   hero: { padding: 22, gap: 12 },
-  heroHead: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
   term: {
     fontSize: 26,
     lineHeight: 32,
     fontWeight: '600',
     color: color.text.primary,
-    flex: 1,
-  },
-  register: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 7,
-    backgroundColor: color.fill.default,
-  },
-  registerLabel: {
-    ...type.caption2,
-    fontWeight: '600',
-    color: color.text.secondary,
   },
   meaning: { ...type.body2, color: color.text.body },
   gapRow: {

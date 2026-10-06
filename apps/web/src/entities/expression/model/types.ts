@@ -1,11 +1,8 @@
-export type Register = '구어체' | '중립' | '문어체';
-
 export type Expression = {
   id: string;
   /** 표현 자체 — 언제나 세리프로 조판한다. */
   term: string;
   meaning: string;
-  register: Register;
   /** 책에서 이 표현이 쓰인 문장 */
   example: string;
   bookId: string;

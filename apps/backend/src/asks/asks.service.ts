@@ -318,7 +318,6 @@ export class AsksService {
         term: candidate.term,
         surface: candidate.surface,
         meaning: candidate.meaning,
-        register: candidate.register,
         existingItemId: item?._id,
         existing: item
           ? {
