@@ -58,13 +58,18 @@ export class ReadingService {
   }
 
   /**
-   * 읽은 양을 더한다. 같은 날 같은 책이면 한 줄에 쌓인다.
+   * 진도가 옮겨 간 만큼 읽은 양을 맞춘다. 같은 날 같은 책이면 한 줄에 쌓인다.
    *
-   * 뒤로 돌아가는 것(다시 읽기, 잘못 적은 쪽수 고치기)은 세지 않는다 —
-   * 음수를 더하면 어제 읽은 것이 오늘 지워진다.
+   * **뒤로 가면 그만큼 덜어낸다.** 67쪽으로 잘못 적었다가 30쪽으로 고치면 읽은 쪽도 37쪽
+   * 줄어야 한다 — 그대로 두면 '67쪽 읽었어요'가 통계에 남는다. 한 책의 기록을 모두 더한 값은
+   * 늘 그 책의 현재 쪽수를 따라가게 만든다(등록할 때 적은 쪽수도 기록하고, 옮길 때마다
+   * 차이를 더하거나 덜어서). 덜어내는 순서는 **가장 최근 날부터**다 — 방금 잘못 적은 것을
+   * 먼저 되돌리고, 그 날의 기록이 모자라면 그 전날로 거슬러 간다. 다시 읽어서 앞으로 가면
+   * 다시 더해지므로 합은 어긋나지 않는다. 기록보다 많이 덜어낼 일은 없다(0에서 멈춘다).
    */
   async record(readerId: string, bookId: string, pages: number): Promise<void> {
-    if (pages <= 0) return;
+    if (pages === 0) return;
+    if (pages < 0) return this.trim(readerId, bookId, -pages);
 
     await this.logs.updateOne(
       {
@@ -75,6 +80,34 @@ export class ReadingService {
       { $inc: { pages } },
       { upsert: true },
     );
+  }
+
+  /** 가장 최근 날의 기록부터 `pages`만큼 덜어낸다. 0이 된 줄은 지운다. */
+  private async trim(
+    readerId: string,
+    bookId: string,
+    pages: number,
+  ): Promise<void> {
+    const rows = await this.logs
+      .find({
+        readerId: new Types.ObjectId(readerId),
+        bookId: new Types.ObjectId(bookId),
+        pages: { $gt: 0 },
+      })
+      .sort({ day: -1 })
+      .lean();
+
+    let left = pages;
+    for (const row of rows) {
+      if (left <= 0) break;
+      const take = Math.min(row.pages, left);
+      if (take === row.pages) {
+        await this.logs.deleteOne({ _id: row._id });
+      } else {
+        await this.logs.updateOne({ _id: row._id }, { $inc: { pages: -take } });
+      }
+      left -= take;
+    }
   }
 
   /**

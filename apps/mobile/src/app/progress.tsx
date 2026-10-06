@@ -98,9 +98,7 @@ export default function ProgressScreen() {
 
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
         <AppText style={[styles.hint, tooFar ? styles.hintWarn : null]}>
-          {tooFar
-            ? `이 책은 ${total}쪽까지예요. 그 안의 쪽수를 적어주세요.`
-            : '지난번보다 앞으로 간 만큼이 오늘 읽은 양이 돼요.'}
+          {tooFar && `이 책은 ${total}쪽까지예요. 그 안의 쪽수를 적어주세요.`}
         </AppText>
       </View>
 
