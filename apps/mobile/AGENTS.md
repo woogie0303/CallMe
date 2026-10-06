@@ -250,9 +250,9 @@ npx eas-cli submit --platform ios --profile production  # App Store Connect에 �
 빌드 전에 확인할 것: 유료 개발자 계정 · 서버의 `ALLOW_DEV_LOGIN`이 꺼져 있고 `NODE_ENV=production`
 · `PUBLIC_BASE_URL`이 실제 주소 · 세 소셜 콘솔의 redirect URI.
 
-**개인정보처리방침·이용약관은 아직 없다.** 앱스토어 제출에는 공개된 방침 URL이 필요하고
-(심사 지침 5.1.1), 앱 안에도 링크가 있어야 한다. 한때 웹 앱에 만들었다가 어디에 올릴지
-정해지지 않아 걷어냈다 — 출시 전에 따로 정한다.
+**개인정보 처리방침은 노션에 올려 두었고**(`shared/config/legal.ts`의 `PRIVACY_POLICY_URL`) 마이 탭에서
+링크로 연다. 공유 설정이 '웹에 게시'에서 풀리면 심사관이 못 열어서 반려된다. 이용약관은 아직 없다.
+앱스토어 제출 때 같은 URL을 App Store Connect의 개인정보 정책 URL에 넣는다.
 
 로컬에서 Release로 컴파일만 확인하려면 `npx expo run:ios --configuration Release`다.
 `ITSAppUsesNonExemptEncryption=false`는 앱이 표준 HTTPS와 OS 암호화만 쓴다는 선언이다 —

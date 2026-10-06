@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota } from '@/entities/ask/api/ask.api';
 import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useDeleteAccount, useReader } from '@/entities/reader/api/reader.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
-import { color, gutter, type } from '@/shared/config';
+import { PRIVACY_POLICY_URL, color, gutter, type } from '@/shared/config';
 import { useSession } from '@/shared/session/session';
 import {
   ActionButton,
@@ -129,6 +129,15 @@ export default function MyScreen() {
           title="사용 방법"
           body="찍고, 묻고, 다시 만나는 흐름을 다시 볼 수 있어요."
           onPress={() => router.push('/onboarding')}
+        />
+
+        <DisclosureRow
+          title="개인정보 처리방침"
+          onPress={() =>
+            Linking.openURL(PRIVACY_POLICY_URL).catch(() =>
+              Alert.alert('열지 못했어요', '잠시 뒤에 다시 시도해 주세요.'),
+            )
+          }
         />
 
         {/* 나가는 문은 쌓인 것들과 한 덩어리로 두지 않는다 */}
