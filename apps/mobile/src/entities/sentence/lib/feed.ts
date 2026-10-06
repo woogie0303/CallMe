@@ -24,6 +24,9 @@ export function buildFeed(input: {
 }): SentenceCardData[] {
   const byId = new Map(input.books.map((b) => [b.id, b]));
   const marks = marksBySentence(input.items);
+  const claimed = new Set(
+    input.items.flatMap((item) => item.encounters.map((met) => met.sentenceId)),
+  );
 
   /** 물어본 문장 — 책과 번역이 이미 붙어서 온다 */
   const asked: SentenceCardData[] = input.asks.flatMap((view) => {
@@ -40,6 +43,7 @@ export function buildFeed(input: {
         pending: !answered,
         translation: answered ? view.ask.translation : undefined,
         marks: marks.get(view.sentence._id) ?? [],
+        claimed: claimed.has(view.sentence._id),
         savedLabel: savedLabel(view.sentence.createdAt),
         savedAt: view.sentence.createdAt,
       },
@@ -58,6 +62,7 @@ export function buildFeed(input: {
     asked: false,
     favorite: s.favorite,
     marks: marks.get(s._id) ?? [],
+    claimed: claimed.has(s._id),
     savedLabel: savedLabel(s.createdAt),
     savedAt: s.createdAt,
   }));

@@ -102,6 +102,7 @@ export const color = {
     positiveBg: 'rgba(14,138,62,0.1)',
     cautionary: '#B25E00',
     negative: '#C62828',
+    negativeBg: 'rgba(198,40,40,0.08)',
   },
 } as const;
 

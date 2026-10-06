@@ -53,8 +53,16 @@ export function useSentenceFeed() {
    * 기다리고 있어요"를 누르면 모두 모여 있다 — 목록에도 섞어 두면 같은 문장이 두
    * 군데에 서고, 아직 뜻도 표현도 없는 줄이 서랍을 채운다. 답이 오면 목록으로 온다.
    */
-  const feed = all.filter((row) => !row.pending);
   const waiting = all.filter((row) => row.pending);
+  /**
+   * 물어서 답은 왔는데 표현을 하나도 안 고른 문장. 이것도 목록에 세우지 않는다 —
+   * 좋아서 담은 문장이 아니고, 담은 표현도 아직 없다. 서랍 위 한 줄이 모으고,
+   * 거기서 하나씩 들어가 표현을 고르거나 지운다. 하나라도 담으면 '담은 표현'으로 간다.
+   */
+  const unpicked = all.filter(
+    (row) => row.asked && !row.pending && !row.claimed && !row.favorite,
+  );
+  const feed = all.filter((row) => !row.pending && !unpicked.includes(row));
   const settled = !asks.isPending && !liked.isPending;
 
   /** 어느 한쪽이라도 상한만큼 받아왔으면 더 있을 수 있다 */
@@ -66,6 +74,8 @@ export function useSentenceFeed() {
     feed: __DEV__ && settled && !all.length ? sampleFeed() : feed,
     /** 답을 기다리는 문장 — 목록 대신 서랍 위 한 줄이 알린다 */
     waiting,
+    /** 답은 왔는데 표현을 안 고른 문장 — 이것도 서랍 위 한 줄이 알린다 */
+    unpicked,
     isPending: asks.isPending || liked.isPending,
     error: asks.error ?? liked.error ?? null,
     hasMore: settled && brimming && limit < MAX,

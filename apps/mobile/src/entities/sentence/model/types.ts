@@ -40,6 +40,11 @@ export type SentenceCardData = {
   pending?: boolean;
   translation?: string;
   marks: SentenceMark[];
+  /**
+   * 이 문장에서 표현을 하나라도 담았는지. `marks`와 다르다 — 밑줄은 `surface`가
+   * 있는 만남에서만 그어지지만, 담았는지는 만남이 있는지로 센다.
+   */
+  claimed: boolean;
   /** 하트를 켰는지 — 켜면 표현이 있어도 '마음에 들었던 문장'에 선다 */
   favorite?: boolean;
   /** 언제 담았는지 — 이미 사람이 읽을 말로 옮겨진 것 */

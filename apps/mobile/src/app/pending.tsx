@@ -10,6 +10,7 @@ import {
   useResolveAsk,
 } from '@/entities/ask/api/ask.api';
 import { toBook } from '@/entities/book/api/book.api';
+import { useDeleteSentence } from '@/entities/sentence/api/sentence.api';
 import { showRewarded } from '@/shared/ads/ads';
 import { color, gutter, type } from '@/shared/config';
 import { savedLabel } from '@/shared/lib/date';
@@ -35,10 +36,62 @@ export default function PendingScreen() {
   const { data: pending = [] } = usePendingAsks();
   const { data: quota } = useAskQuota();
   const resolve = useResolveAsk();
+  const remove = useDeleteSentence();
   const claim = useClaimAdBonus();
   const [watching, setWatching] = useState(false);
   const left = quota?.remaining ?? 0;
   const oldest = pending[pending.length - 1];
+
+  /**
+   * 하나를 골라 다시 묻는다. 답이 오면 그 문장 화면을 뜻을 편 채로 연다 — 표현을
+   * 고르는 자리가 거기라서다. 한동안 여기서 묻기만 하고 화면은 그대로여서, 답은
+   * 왔는데 표현을 고를 길이 없었다.
+   */
+  async function open(askId: string) {
+    if (resolve.isPending) return;
+    try {
+      const view = await resolve.mutateAsync(askId);
+      if (view.ask.status === 'answered' && view.sentence) {
+        router.push({
+          pathname: '/sentence/[id]',
+          params: { id: view.sentence._id, reveal: '1' },
+        });
+        return;
+      }
+      Alert.alert(
+        view.ask.pendingReason === '질문 소진'
+          ? '이번 달 질문을 다 쓰셨어요'
+          : '아직 답을 받지 못했어요',
+        view.ask.pendingReason === '질문 소진'
+          ? '다음 달 1일에 다시 물어볼 수 있어요.'
+          : '잠시 뒤에 다시 눌러주세요. 문장은 그대로 기다려요.',
+      );
+    } catch (error) {
+      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
+    }
+  }
+
+  /** 더 물어볼 필요가 없어진 문장 — 질문과 함께 지운다 */
+  function confirmRemove(askId: string) {
+    const sentenceId = pending.find((view) => view.ask._id === askId)?.sentence
+      ?._id;
+    if (!sentenceId || remove.isPending) return;
+    Alert.alert('이 문장을 지울까요?', '기다리던 질문도 함께 지워져요.', [
+      { text: '그대로 둘게요', style: 'cancel' },
+      {
+        text: '지우기',
+        style: 'destructive',
+        onPress: () =>
+          remove.mutate(sentenceId, {
+            onError: (error) =>
+              Alert.alert(
+                '지우지 못했어요',
+                error instanceof Error ? error.message : '',
+              ),
+          }),
+      },
+    ]);
+  }
 
   /** 광고를 끝까지 봤을 때만 서버에 보상을 청구한다 */
   async function watchAd() {
@@ -99,9 +152,12 @@ export default function PendingScreen() {
             page: view.sentence?.page,
             capturedLabel: savedLabel(view.ask.createdAt),
             reason: view.ask.pendingReason ?? '기다리는 중',
+            failed: view.ask.pendingReason === '연결 실패',
             book: view.book ? toBook(view.book) : undefined,
           }))}
-          onPressAsk={(id) => resolve.mutate(id)}
+          onPressAsk={open}
+          onRemove={confirmRemove}
+          busyId={resolve.isPending ? resolve.variables : undefined}
         />
 
         {/*
@@ -142,8 +198,7 @@ export default function PendingScreen() {
           variant={pending.length && left > 0 ? 'primary' : 'ink'}
           loading={resolve.isPending}
           onPress={() => {
-            if (pending.length && left > 0 && oldest)
-              resolve.mutate(oldest.ask._id);
+            if (pending.length && left > 0 && oldest) open(oldest.ask._id);
             else router.back();
           }}
         />
@@ -168,6 +223,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: color.text.primary,
     lineHeight: 30,
+    textAlign: 'center',
+  },
+  heroBody: {
+    ...type.label2,
+    lineHeight: 21,
+    color: color.text.secondary,
+    textAlign: 'center',
   },
   rewarded: { padding: 16, gap: 10 },
   rewardedHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
@@ -180,10 +242,3 @@ const styles = StyleSheet.create({
   rewardedBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
   footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });
-    textAlign: 'center',
-  },
-  heroBody: {
-    ...type.label2,
-    lineHeight: 21,
-    color: color.text.secondary,
-    textAlign: 'center',

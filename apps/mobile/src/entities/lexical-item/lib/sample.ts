@@ -214,6 +214,7 @@ export function sampleFeed(): SentenceCardData[] {
           met: seed.met,
         },
       ],
+      claimed: true,
       savedLabel: savedLabel(at),
       savedAt: at,
     };

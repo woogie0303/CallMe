@@ -111,6 +111,7 @@ function Gate() {
         <Stack.Screen name="ask" options={{ presentation: 'modal' }} />
         <Stack.Screen name="scan" />
         <Stack.Screen name="pending" />
+        <Stack.Screen name="unpicked" />
         <Stack.Screen name="genres" />
         {/* 밀어서 닫으면 '봤다'가 적히지 않는다 — 버튼으로만 끝낸다 */}
         <Stack.Screen
