@@ -28,17 +28,6 @@ export function AltPanel({
   return <View style={[styles.alt, style]}>{children}</View>;
 }
 
-/** 잉크 판. 지금 집중해야 할 것 하나에만 쓴다. */
-export function InkPanel({
-  children,
-  style,
-}: {
-  children: ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return <View style={[styles.ink, style]}>{children}</View>;
-}
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: color.surface.card,
@@ -50,9 +39,5 @@ const styles = StyleSheet.create({
   alt: {
     backgroundColor: color.surface.alt,
     borderRadius: 18,
-  },
-  ink: {
-    backgroundColor: color.surface.ink,
-    borderRadius: 26,
   },
 });

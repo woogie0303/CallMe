@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import { toBook } from '@/entities/book/api/book.api';
 import { CoverThumb } from '@/entities/book/ui/cover-thumb';
 import type { ApiItemDetail } from '@/shared/api/types';
-import { accent, color, type } from '@/shared/config';
+import { color, type } from '@/shared/config';
 import { daysBetween, gapLabel, savedLabel } from '@/shared/lib/date';
 import {
   AltPanel,
   AppText,
+  Card,
   Icon,
-  InkPanel,
   Quote,
   Tap,
   emphasis,
@@ -52,7 +52,7 @@ export function ItemDetail({
 
   return (
     <View style={styles.wrap}>
-      <InkPanel style={styles.hero}>
+      <Card style={styles.hero}>
         <View style={styles.heroHead}>
           <Quote style={styles.term}>{item.term}</Quote>
           <View style={styles.register}>
@@ -67,12 +67,12 @@ export function ItemDetail({
             <AppText style={styles.gapText} lineBreakStrategyIOS="hangul-word">
               {books.length > 1 ? `${books.length}권에서 ` : ''}
               {encounters.length}번 만났어요 — 처음 담은 뒤{' '}
-              <AppText style={emphasis(color.text.onInk)}>{gap}</AppText> 다시
+              <AppText style={emphasis(color.primary)}>{gap}</AppText> 다시
               만났어요
             </AppText>
           </View>
         ) : null}
-      </InkPanel>
+      </Card>
 
       <View style={styles.section}>
         <AppText style={styles.sectionTitle}>만난 문장</AppText>
@@ -148,21 +148,21 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
     fontWeight: '600',
-    color: color.text.onInk,
+    color: color.text.primary,
     flex: 1,
   },
   register: {
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 7,
-    backgroundColor: color.fill.onInkStrong,
+    backgroundColor: color.fill.default,
   },
   registerLabel: {
     ...type.caption2,
     fontWeight: '600',
-    color: color.text.onInkMuted,
+    color: color.text.secondary,
   },
-  meaning: { ...type.body2, color: color.text.onInkBody },
+  meaning: { ...type.body2, color: color.text.body },
   gapRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,13 +171,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: accent(0.24),
+    backgroundColor: color.primaryTint,
   },
   gapText: {
     flex: 1,
     ...type.caption1,
     lineHeight: 17,
-    color: color.text.onInkBody,
+    color: color.text.body,
   },
 
   section: { gap: 10 },

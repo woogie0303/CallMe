@@ -7,7 +7,6 @@ import {
   Card,
   Chip,
   Icon,
-  InkPanel,
   Quote,
   emphasis,
 } from '@/shared/ui';
@@ -75,14 +74,16 @@ export function AskPreview() {
 /** 3. 다른 책에서 다시 만나면 처음 만난 때와 이어준다 */
 export function ReunionPreview() {
   return (
-    <InkPanel style={styles.ink}>
-      <Quote style={styles.inkTerm}>make out</Quote>
-      <AppText style={styles.inkMeaning}>알아보다, 분간하다 · 이해하다</AppText>
+    <Card style={styles.reunion}>
+      <Quote style={styles.reunionTerm}>make out</Quote>
+      <AppText style={styles.reunionMeaning}>
+        알아보다, 분간하다 · 이해하다
+      </AppText>
       <View style={styles.gapRow}>
         <Icon name="clock" size={14} color={color.primary} />
         <AppText style={styles.gapText} lineBreakStrategyIOS="hangul-word">
           2권에서 2번 만났어요 — 처음 담은 뒤{' '}
-          <AppText style={emphasis(color.text.onInk)}>3개월 만에</AppText> 다시
+          <AppText style={emphasis(color.primary)}>3개월 만에</AppText> 다시
           만났어요
         </AppText>
       </View>
@@ -92,7 +93,7 @@ export function ReunionPreview() {
         </AppText>
         <AppText style={styles.bookLine}>Jane Eyre · 9월</AppText>
       </View>
-    </InkPanel>
+    </Card>
   );
 }
 
@@ -136,14 +137,14 @@ const styles = StyleSheet.create({
   term: { ...type.label1, color: color.text.secondary },
   termQuote: { fontSize: 15, color: color.text.primary },
 
-  ink: { padding: 22, gap: 12 },
-  inkTerm: {
+  reunion: { padding: 22, gap: 12 },
+  reunionTerm: {
     fontSize: 26,
     lineHeight: 32,
     fontWeight: '600',
-    color: color.text.onInk,
+    color: color.text.primary,
   },
-  inkMeaning: { ...type.body2, color: color.text.onInkBody },
+  reunionMeaning: { ...type.body2, color: color.text.body },
   gapRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,14 +153,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: accent(0.24),
+    backgroundColor: color.primaryTint,
   },
   gapText: {
     flex: 1,
     ...type.caption1,
     lineHeight: 17,
-    color: color.text.onInkBody,
+    color: color.text.body,
   },
   books: { gap: 4, marginTop: 2 },
-  bookLine: { ...type.caption1, color: color.text.onInkMuted },
+  bookLine: { ...type.caption1, color: color.text.meta },
 });

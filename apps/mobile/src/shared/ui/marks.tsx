@@ -1,6 +1,4 @@
-import { Image, View } from 'react-native';
-
-import { color } from '@/shared/config';
+import { Image } from 'react-native';
 
 /**
  * 빈 자리·막힌 자리·기다리는 자리마다 세우는 우리 앱만의 캐릭터.
@@ -34,41 +32,14 @@ const SOURCES = {
 
 export type MarkName = keyof typeof SOURCES;
 
-/**
- * `tile`은 캐릭터를 **흰 카드 위에** 올린다. 그림이 투명 배경으로 오려져 있어서 잉크색
- * 바탕 위에 직접 놓으면 윤곽선 바깥의 원본 흰 찌꺼기가 지저분하게 비친다 — 어두운
- * 판 위에서는 카드에 담아 세운다.
- */
-export function Mark({
-  name,
-  size = 96,
-  tile = false,
-}: {
-  name: MarkName;
-  size?: number;
-  tile?: boolean;
-}) {
-  const image = (
+export function Mark({ name, size = 96 }: { name: MarkName; size?: number }) {
+  return (
     <Image
       source={SOURCES[name]}
       style={{ width: size, height: size }}
       resizeMode="contain"
       accessible={false}
     />
-  );
-  if (!tile) return image;
-
-  const pad = Math.round(size * 0.14);
-  return (
-    <View
-      style={{
-        padding: pad,
-        borderRadius: Math.round(size * 0.28),
-        backgroundColor: color.surface.card,
-      }}
-    >
-      {image}
-    </View>
   );
 }
 

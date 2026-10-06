@@ -18,7 +18,6 @@ import {
   AltPanel,
   AppText,
   Icon,
-  InkPanel,
   Mark,
   ScreenHeader,
 } from '@/shared/ui';
@@ -77,8 +76,8 @@ export default function PendingScreen() {
         style={styles.scroll}
       >
         {/* 마지막 하나를 풀고 나면 0개가 된다 — 그때 '0개가 기다린다'고 하지 않는다 */}
-        <InkPanel style={styles.hero}>
-          <Mark name={pending.length ? 'waiting' : 'empty'} size={80} tile />
+        <AltPanel style={styles.hero}>
+          <Mark name={pending.length ? 'waiting' : 'empty'} size={104} />
           <AppText style={styles.heroTitle}>
             {pending.length
               ? `문장 ${pending.length}개가\n답을 기다리고 있어요`
@@ -91,7 +90,7 @@ export default function PendingScreen() {
                 ? `이번 달 질문이 ${left}번 남았어요. 하나씩 풀어볼까요?`
                 : '이번 달 질문을 다 쓰셨어요. 다음 달 1일에 자동으로 풀려요.'}
           </AppText>
-        </InkPanel>
+        </AltPanel>
 
         <PendingList
           asks={pending.map((view) => ({
@@ -157,14 +156,19 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface.base },
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 16 },
-  hero: { padding: 22, gap: 10 },
+  /** 용과 말이 한 줄로 가운데에 선다 — 왼쪽에 붙으면 오른쪽이 빈다 */
+  hero: {
+    paddingVertical: 26,
+    paddingHorizontal: 22,
+    gap: 10,
+    alignItems: 'center',
+  },
   heroTitle: {
     ...type.heading1,
     fontWeight: '700',
-    color: color.text.onInk,
+    color: color.text.primary,
     lineHeight: 30,
   },
-  heroBody: { ...type.label2, lineHeight: 21, color: color.text.onInkMuted },
   rewarded: { padding: 16, gap: 10 },
   rewardedHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   rewardedTitle: {
@@ -176,3 +180,10 @@ const styles = StyleSheet.create({
   rewardedBody: { ...type.label2, lineHeight: 21, color: color.text.secondary },
   footer: { paddingHorizontal: gutter, paddingTop: 12 },
 });
+    textAlign: 'center',
+  },
+  heroBody: {
+    ...type.label2,
+    lineHeight: 21,
+    color: color.text.secondary,
+    textAlign: 'center',
