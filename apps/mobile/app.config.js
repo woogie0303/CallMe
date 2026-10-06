@@ -6,7 +6,12 @@
  * 없다. Apple만 여전히 네이티브 권한이 필요해서, 이 파일에 남은 일은 그
  * 권한을 켤지 끌지뿐이다.
  */
-const { createRunOncePlugin } = require('expo/config-plugins');
+const {
+  createRunOncePlugin,
+  withDangerousMod,
+} = require('expo/config-plugins');
+const fs = require('node:fs');
+const path = require('node:path');
 
 /**
  * Apple 로그인 권한(`com.apple.developer.applesignin`)은 **유료 개발자 계정**에서만
@@ -56,8 +61,40 @@ if (process.env.EAS_BUILD_PROFILE === 'production') {
 const ADMOB_TEST_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 const ADMOB_TEST_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 
+/**
+ * 일부 Pod(Google-Mobile-Ads, RNSVG 등)의 리소스 번들은 배포 대상이 12.0·12.4로 남아 있다.
+ * 새 Xcode는 15.0 미만을 받지 않아서(`supported deployment target versions is 15.0 to 27.0`)
+ * 빌드가 시작도 못 하고 죽는다. `prebuild --clean`이 Podfile을 다시 만들 때마다 지워지지
+ * 않도록 post_install에 올리는 줄을 플러그인으로 넣는다.
+ */
+const withPodDeploymentFloor = (config) =>
+  withDangerousMod(config, [
+    'ios',
+    (c) => {
+      const file = path.join(c.modRequest.platformProjectRoot, 'Podfile');
+      let podfile = fs.readFileSync(file, 'utf8');
+      if (podfile.includes('REREAD_POD_FLOOR')) return c;
+      const patch = `    # REREAD_POD_FLOOR: 오래된 배포 대상을 Xcode가 받아주는 15.0으로 올린다
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |bc|
+        current = bc.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current && Gem::Version.new(current) < Gem::Version.new('15.0')
+          bc.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+        end
+      end
+    end
+`;
+      podfile = podfile.replace(
+        /(react_native_post_install\([\s\S]*?\n    \)\n)/,
+        (m) => m + patch,
+      );
+      fs.writeFileSync(file, podfile);
+      return c;
+    },
+  ]);
+
 module.exports = ({ config }) => {
-  return {
+  return withPodDeploymentFloor({
     ...config,
     ios: { ...config.ios, usesAppleSignIn: APPLE_SIGN_IN },
     plugins: [
@@ -94,5 +131,5 @@ module.exports = ({ config }) => {
         },
       ],
     ],
-  };
+  });
 };
