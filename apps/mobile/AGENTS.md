@@ -119,10 +119,10 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
 
 ## 개발 빌드 (네이티브 모듈이 필요한 것 전부)
 
-Apple 로그인과 OCR은 네이티브 모듈이라 **Expo Go에서는 영영 안 돈다.**
-`npx expo run:ios`로 개발 빌드를 만들어야 한다. 카카오·네이버·구글은 이제
-브라우저 동의 화면 + 서버 콜백으로 로그인해서(`shared/session/oauth.ts`)
-네이티브 모듈이 아니다 — Expo Go에서도 된다. 그 길에서 걸린 것 셋:
+Apple 로그인·OCR·광고는 네이티브 모듈이라 **Expo Go에서는 영영 안 돈다** — 광고 SDK를 맨 위에서
+import해서 앱이 켜지는 순간 죽는다. Expo Go는 쓰지 않고 `npx expo run:ios`로 만든 개발 빌드를
+쓴다. (카카오·네이버·구글 로그인 자체는 브라우저 방식이라 네이티브 모듈이 아니다.) 그 길에서
+걸린 것 셋:
 
 - **Xcode 26 이상이어야 한다.** Expo 57의 `expo-modules-jsi`와
   `@expo/expo-modules-macros-plugin`이 `swift-tools-version: 6.2`를 요구한다.
@@ -164,8 +164,9 @@ Apple 로그인과 OCR은 네이티브 모듈이라 **Expo Go에서는 영영 �
 **이번 달 질문을 다 쓴 뒤 기다리는 문장 화면**(보상형, 끝까지 보면 질문 3번). 직접 적어
 묻는 길과 읽는 중에는 없다(ADR-0003). 촬영 화면을 여는 길은 `useOpenScan` 하나다.
 
-- `shared/ads/ads.ts`가 SDK를 늦게 불러온다. 네이티브 모듈이라 **Expo Go에서는 광고가
-  없는 앱처럼 지나간다.** 광고가 안 떠도(못 불러옴·시간 초과·출시 ID 없음) 촬영은 열린다.
+- `shared/ads/ads.ts`가 SDK를 맨 위에서 import한다. 네이티브 모듈이라 **Expo Go에서는 앱이
+  켜지는 순간 죽는다** — Expo Go는 쓰지 않는다(개발 빌드나 출시 빌드만). 광고가 안 떠도
+  (못 불러옴·시간 초과·출시 ID 없음) 촬영은 열린다.
 - 개발 중에는 구글 시험용 광고 단위를 쓴다(`__DEV__`) — 내 광고 단위로 개발하다 내 기기를
   누르면 계정이 정지될 수 있다. 출시 빌드는 `EXPO_PUBLIC_ADMOB_*` 환경 변수를 쓰고,
   `app.config.js`가 비어 있으면 **빌드 전에** 막는다.
@@ -223,7 +224,7 @@ Apple 로그인과 OCR은 네이티브 모듈이라 **Expo Go에서는 영영 �
 뒤 `signOut`과 같은 길로 기기의 토큰·캐시·알림 예약을 지운다. 서버에 이미 없는 계정이라
 `/auth/logout` 호출은 실패해도 기기에서는 지워진다.
 
-**Apple로 로그인한 독자의 Apple 쪽 토큰 회수는 아직 안 붙였다**(`apps/backend/AGENTS.md`).
+Apple로 로그인한 독자의 Apple 쪽 토큰 회수는 코드는 붙었고 Apple과 통신해 본 적은 없다(`apps/backend/AGENTS.md`).
 
 ## 릴리스 빌드
 
@@ -263,7 +264,7 @@ npx eas-cli submit --platform ios --profile production  # App Store Connect에 �
 ## 아직 안 된 것
 
 **안드로이드는 사진 위에서 짚지 못한다.** `modules/page-reader`가 iOS만 있어서
-안드로이드는 `expo-text-extractor`로 글자만 읽고 조판으로 물러난다. 같은 모듈에
+안드로이드는 `expo-text-extractor`로 글자만 읽을 뿐 사진으로 고르지 못하고 '직접 적기'로 물러난다. 같은 모듈에
 ML Kit(`TextRecognition`의 `Text.TextBlock.lines[].elements[].boundingBox`)으로
 안드로이드 쪽을 채우면 된다 — 돌려주는 모양은 iOS와 같게.
 
