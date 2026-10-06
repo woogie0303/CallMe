@@ -13,7 +13,14 @@ of concluding they want more of it.
   ~150 out on a small model) is roughly ₩2, and a single ask returns every candidate in the
   sentence, so cost per saved item is lower still.
 - Running out of asks must not break anything — the capture still succeeds and becomes a
-  _Pending Ask_. The pile of unanswered sentences is the upsell surface, which is why ads,
-  when they come, are rewarded ads offered there rather than interstitials before an ask.
+  _Pending Ask_. The pile of unanswered sentences is the upsell surface, which is why
+  rewarded ads are offered there, only once the monthly quota is spent, rather than
+  interstitials before an ask.
+- **One exception, decided later:** tapping the photo (OCR) button shows a single
+  interstitial before the camera opens. Typing a sentence by hand never shows an ad, and a
+  failed ad load never blocks the camera. The rewarded ad grants `ASK_AD_BONUS` asks (default
+  3), capped at `ASK_AD_DAILY_LIMIT` per day (default 5). There is no server-side
+  verification (SSV) of the ad network's callback yet, so the daily cap is what bounds the
+  damage of a forged request.
 - Pricing is hard to walk back once public. Moving later from a quantity cap to a quality
   split would take features away from existing free users.

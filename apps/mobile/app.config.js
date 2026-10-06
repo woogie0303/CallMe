@@ -27,6 +27,12 @@ const APPLE_SIGN_IN = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
 if (process.env.EAS_BUILD_PROFILE === 'production') {
   const missing = [
     ['EXPO_PUBLIC_API_URL', '서버 주소 (eas.json의 production env)'],
+    [
+      'EXPO_PUBLIC_ADMOB_IOS_APP_ID',
+      'AdMob iOS 앱 ID (구글 시험용 ID로는 출시 못 한다)',
+    ],
+    ['EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID', '사진 질문 앞 전면 광고 단위 ID'],
+    ['EXPO_PUBLIC_ADMOB_REWARDED_ID', '한도 소진 뒤 보상형 광고 단위 ID'],
   ].filter(([key]) => !process.env[key]);
   if (!APPLE_SIGN_IN) {
     missing.push([
@@ -41,6 +47,14 @@ if (process.env.EAS_BUILD_PROFILE === 'production') {
     );
   }
 }
+
+/**
+ * AdMob 앱 ID. 빠지면 앱이 **켜지자마자 죽는다**(SDK가 ID 없이 시작하지 않는다) —
+ * 그래서 개발 빌드는 구글이 공개한 시험용 앱 ID로 채운다. 출시 빌드는 위 검사가
+ * 진짜 ID가 없으면 빌드 전에 막는다.
+ */
+const ADMOB_TEST_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
+const ADMOB_TEST_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 
 module.exports = ({ config }) => {
   return {
@@ -68,6 +82,17 @@ module.exports = ({ config }) => {
        * 서버 푸시를 붙이는 날 이 줄을 지우고 플러그인을 켠다.
        */
       createRunOncePlugin((c) => c, 'expo-notifications'),
+      [
+        'react-native-google-mobile-ads',
+        {
+          iosAppId:
+            process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? ADMOB_TEST_IOS_APP_ID,
+          androidAppId:
+            process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ??
+            ADMOB_TEST_ANDROID_APP_ID,
+          /** 맞춤 광고를 요청하지 않으므로(requestNonPersonalizedAdsOnly) 추적 허용 창은 띄우지 않는다 */
+        },
+      ],
     ],
   };
 };

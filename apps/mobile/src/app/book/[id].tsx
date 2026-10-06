@@ -25,6 +25,7 @@ import {
   Tap,
   TrashIcon,
 } from '@/shared/ui';
+import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 import { BookDetail } from '@/widgets/book-detail/ui/book-detail';
 import type { BookTab } from '@/widgets/book-detail/ui/book-tabs';
 
@@ -33,6 +34,7 @@ export default function BookScreen() {
   /** tab — 방금 담은 곳을 펴서 보여줄 때 넘어온다(예: 촬영에서 '마음에 든 문장') */
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: BookTab }>();
   const router = useRouter();
+  const openScan = useOpenScan();
   const { data: book, isPending } = useBook(id);
   const { data: reading } = useCurrentBook();
   const remove = useDeleteBook();
@@ -193,9 +195,7 @@ export default function BookScreen() {
             onAsk={() =>
               router.push({ pathname: '/ask', params: { bookId: book.id } })
             }
-            onCapture={() =>
-              router.push({ pathname: '/scan', params: { bookId: book.id } })
-            }
+            onCapture={() => openScan(book.id)}
           />
         ) : (
           <AppText style={styles.missing}>그 책을 찾지 못했어요.</AppText>

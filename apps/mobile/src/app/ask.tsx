@@ -16,6 +16,7 @@ import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, ScreenHeader } from '@/shared/ui';
+import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 import { SentenceField } from '@/widgets/ask/ui/sentence-field';
 
 /**
@@ -33,6 +34,7 @@ type Params = { bookId?: string; page?: string; text?: string };
 export default function AskScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const openScan = useOpenScan();
 
   const params = useLocalSearchParams<Params>();
   /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
@@ -152,13 +154,7 @@ export default function AskScreen() {
         <SentenceField
           value={sentence}
           onChangeText={setSentence}
-          onCapture={() =>
-            router.replace(
-              book
-                ? { pathname: '/scan', params: { bookId: book.id } }
-                : '/scan',
-            )
-          }
+          onCapture={() => openScan(book?.id, { replace: true })}
           page={pageText}
           onChangePage={setPageText}
         />

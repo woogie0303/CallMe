@@ -84,3 +84,12 @@ export function useResolveAsk() {
 }
 
 export type { ApiAsk, ApiAskView };
+
+/** 광고를 끝까지 보고 질문을 더 받는다. 한도가 남아 있으면 서버가 거절한다. */
+export function useClaimAdBonus() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<ApiQuota>('/asks/quota/ad-bonus', { method: 'POST' }),
+    onSuccess: (quota) => client.setQueryData(quotaKey, quota),
+  });
+}

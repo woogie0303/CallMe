@@ -7,6 +7,7 @@ import { useTodayItem } from '@/entities/lexical-item/api/item.api';
 import { useReadingWeek } from '@/entities/reading/api/reading.api';
 import { color, gutter } from '@/shared/config';
 import { ActionButton, EmptyState } from '@/shared/ui';
+import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 import { BookHero } from '@/widgets/book-hero/ui/book-hero';
 import { ReadingShelf } from '@/widgets/reading-shelf/ui/reading-shelf';
 import { ReadingWeekChart } from '@/widgets/reading-week/ui/reading-week';
@@ -35,6 +36,7 @@ import { TodayItem, TodayItemEmpty } from '@/widgets/today-item/ui/today-item';
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const openScan = useOpenScan();
   const { data: shelf, isPending } = useReadingBooks();
   /** 맨 위에 크게 서는 한 권과, 그 아래 줄에 서는 나머지 */
   const reading = shelf?.[0];
@@ -78,7 +80,7 @@ export default function HomeScreen() {
               })
             }
             onAsk={() => router.push('/ask')}
-            onCapture={() => router.push('/scan')}
+            onCapture={() => openScan()}
           />
           <ReadingShelf
             books={others}
