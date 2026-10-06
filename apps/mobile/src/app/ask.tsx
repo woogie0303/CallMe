@@ -46,7 +46,8 @@ export default function AskScreen() {
   const book = chosen ?? current?.book;
   /**
    * 쪽수는 꼭 적는다 — 나중에 이 문장을 다시 찾을 때 붙잡을 곳이 쪽수뿐이다.
-   * 손대기 전까지는 지난번에 적은 쪽이 들어가 있어서 대개 확인만 하면 된다.
+   * 미리 채워 두지 않는다. 지난번 쪽이 들어 있으면 확인도 없이 그대로 담긴다.
+   * 지난번 쪽은 진도를 뒤로 되돌리지 않는 데만 쓴다(`recordPage`).
    */
   const lastPage =
     (current?.book.id === book?.id
@@ -55,7 +56,7 @@ export default function AskScreen() {
     book?.currentPage ??
     0;
   const [pageEdit, setPageText] = useState<string | undefined>(params.page);
-  const pageText = pageEdit ?? (lastPage > 0 ? String(lastPage) : '');
+  const pageText = pageEdit ?? '';
   const typedPage = Number(pageText);
   /** 책에 없는 쪽은 쪽이 아니다 — 아래 글이 이유를 말하고, 서버도 한 번 더 막는다 */
   const tooFar = Boolean(book?.pages && typedPage > book.pages);

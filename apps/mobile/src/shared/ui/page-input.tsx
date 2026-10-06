@@ -17,6 +17,9 @@ const PREFIX = 'p.';
  * 가운데 맞춤으로 나란히 놓으면 밑줄(베이스라인)이 어긋나고, 사이의 간격과 입력칸
  * 안쪽 여백 때문에 'p. 12'처럼 벌어졌다. 한 입력칸이 'p.'까지 함께 들고 있으면
  * 같은 줄 위에 붙어 선다. 부르는 쪽은 숫자만 주고받는다.
+ *
+ * 비어 있어도 'p.'는 늘 적어 둔다. 예전엔 비었을 때 'p. 쪽' 자리표시자를 깔았는데,
+ * 커서가 그 글자 앞에 서서 'p'를 가리고 숫자를 치는 순간 글자가 바뀌며 흔들렸다.
  */
 export function PageInput({
   value,
@@ -33,13 +36,11 @@ export function PageInput({
 }) {
   return (
     <TextInput
-      value={value ? `${PREFIX}${value}` : ''}
+      value={`${PREFIX}${value}`}
       onChangeText={(next) => onChangeValue(next.replace(/[^0-9]/g, ''))}
       keyboardType="number-pad"
       maxLength={PREFIX.length + 5}
-      selectTextOnFocus
-      placeholder={`${PREFIX} 쪽`}
-      placeholderTextColor={color.text.assistive}
+      selectTextOnFocus={Boolean(value)}
       accessibilityLabel="몇 쪽인지"
       style={[styles.input, warn ? styles.warn : null, style]}
     />

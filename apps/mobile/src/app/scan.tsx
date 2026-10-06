@@ -75,7 +75,7 @@ export default function ScanScreen() {
       : undefined) ??
     book?.currentPage ??
     0;
-  const pageText = pageEdit ?? (lastPage > 0 ? String(lastPage) : '');
+  const pageText = pageEdit ?? '';
   /** 책에 없는 쪽은 쪽이 아니다 — 시트가 이유를 말하고, 서버도 한 번 더 막는다 */
   const typedPage = Number(pageText);
   const page =

@@ -9,8 +9,7 @@ import { CameraIcon, PageIcon, PageInput, Tap } from '@/shared/ui';
  *
  * 왼쪽 아래에 카메라와 쪽수가 나란히 선다. 옮겨 적으려고 책을 편 그 순간이
  * 몇 쪽인지 가장 잘 아는 때라, 따로 기록하러 가지 않고 여기서 적게 한다.
- * 쪽수는 꼭 적어야 해서 처음부터 'p.___' 칸으로 펴져 있다.
- * 지난번에 적은 쪽은 부르는 쪽이 미리 채워 넘긴다.
+ * 쪽수는 꼭 적어야 해서 처음부터 'p.' 칸으로 펴져 있고, 미리 채워 두지 않는다.
  */
 export function SentenceField({
   value,
