@@ -77,18 +77,18 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
 
 - 인식기가 좌표를 주면 사진 위에 얹는다. 좌표가 없으면 사진으로 고르지 못한다.
   갈아끼울 자리는 `shared/ocr/text-extractor.ts`의 `readLines` 하나다.
-- iOS의 좌표는 앱 안의 로컬 모듈 `modules/page-reader`(Apple Vision)가 준다.
-  `expo-text-extractor`도 같은 Vision을 쓰지만 좌표를 버리고 글자만 넘긴다 —
-  그래서 안드로이드처럼 page-reader가 없는 곳의 물러날 자리로만 남겨뒀다.
-  ML Kit 패키지를 쓰지 않은 이유: 1년 넘게 배포가 없었고, iOS에서 구글 로그인과
-  같은 구글 라이브러리(GoogleUtilities, GTMSessionFetcher)를 끌고 와 버전이 부딪힌다.
+- 좌표는 앱 안의 로컬 모듈 `modules/page-reader`(Apple Vision)가 준다. 글자만 넘기고
+  좌표를 버리는 `expo-text-extractor`는 걷어냈다 — 좌표 없이는 짚을 수 없어서
+  물러날 자리로도 쓸모가 없었다.
 - 좌표는 **화면에 보이는 방향(EXIF 적용 후)의 픽셀**이다. 카메라가 알려주는
   크기는 방향 적용 전일 수 있어서, 사진을 놓을 때는 인식기가 함께 준
   `width`/`height`를 쓴다.
 - **서버에 줄을 보내 문장으로 잇는 길(`/asks/split`)은 걷어냈다.** 짚는 사람이 어디서
-  막혔는지 알고 있고, 문장 경계는 `shared/ocr/selection.ts`가 마침표로 넓힌다. 그래서
-  낱말 좌표를 못 주는 곳(안드로이드)에서는 사진으로 고를 수 없고 '직접 적어서 물어봐
-  주세요'라고 안내한다 — 안드로이드를 낼 때 `modules/page-reader`를 채운다.
+  막혔는지 알고 있고, 문장 경계는 `shared/ocr/selection.ts`가 마침표로 넓힌다.
+- **이 앱은 iOS만 낸다.** 안드로이드 설정·코드는 걷어냈다(`app.json`의 android, AdMob
+  안드로이드 ID, 알림 채널, `expo-text-extractor`). 안드로이드를 내는 날에는 OCR이
+  제일 큰 일이다 — `modules/page-reader`와 같은 모양으로 ML Kit(`TextRecognition`의
+  `Text.TextBlock.lines[].elements[].boundingBox`) 쪽을 채워야 사진으로 짚는다.
 
 ## 지켜야 할 것
 
@@ -266,13 +266,6 @@ npx eas-cli submit --platform ios --profile production  # App Store Connect에 �
 로컬에서 Release로 컴파일만 확인하려면 `npx expo run:ios --configuration Release`다.
 `ITSAppUsesNonExemptEncryption=false`는 앱이 표준 HTTPS와 OS 암호화만 쓴다는 선언이다 —
 수출 규정 질문을 매번 받지 않게 `app.json`에 넣어 뒀다. 암호화를 직접 구현하게 되면 다시 본다.
-
-## 아직 안 된 것
-
-**안드로이드는 사진 위에서 짚지 못한다.** `modules/page-reader`가 iOS만 있어서
-안드로이드는 `expo-text-extractor`로 글자만 읽을 뿐 사진으로 고르지 못하고 '직접 적기'로 물러난다. 같은 모듈에
-ML Kit(`TextRecognition`의 `Text.TextBlock.lines[].elements[].boundingBox`)으로
-안드로이드 쪽을 채우면 된다 — 돌려주는 모양은 iOS와 같게.
 
 ## 현재 상태
 

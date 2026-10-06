@@ -31,7 +31,6 @@ const FLING = 900;
 
 /**
  * 자판 높이. iOS는 자판이 움직이기 전에 알려줘서 시트가 같이 움직일 수 있다.
- * 안드로이드는 다 올라온 뒤에만 안다.
  */
 function useKeyboardHeight() {
   const [height, setHeight] = useState(0);

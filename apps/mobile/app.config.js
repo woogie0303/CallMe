@@ -59,7 +59,6 @@ if (process.env.EAS_BUILD_PROFILE === 'production') {
  * 진짜 ID가 없으면 빌드 전에 막는다.
  */
 const ADMOB_TEST_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
-const ADMOB_TEST_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 
 /**
  * 일부 Pod(Google-Mobile-Ads, RNSVG 등)의 리소스 번들은 배포 대상이 12.0·12.4로 남아 있다.
@@ -124,9 +123,6 @@ module.exports = ({ config }) => {
         {
           iosAppId:
             process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? ADMOB_TEST_IOS_APP_ID,
-          androidAppId:
-            process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ??
-            ADMOB_TEST_ANDROID_APP_ID,
           /** 맞춤 광고를 요청하지 않으므로(requestNonPersonalizedAdsOnly) 추적 허용 창은 띄우지 않는다 */
         },
       ],

@@ -10,14 +10,13 @@ import { Platform, type TextStyle } from 'react-native';
 export const family = {
   /** 앱이 하는 말 — 한국어 UI */
   sans: Platform.select({
-    // iOS·Android는 시스템 서체(San Francisco / Roboto)를 그대로 쓴다.
+    // iOS는 시스템 서체(San Francisco)를 그대로 쓴다.
     web: "'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif",
     default: undefined,
   }),
   /** 책에서 온 영어 */
   serif: Platform.select({
     ios: 'Iowan Old Style',
-    android: 'serif',
     web: "'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif",
     default: 'serif',
   }),

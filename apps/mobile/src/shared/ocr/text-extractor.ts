@@ -1,5 +1,5 @@
 /**
- * 기기에서 글자를 읽는 일 — iOS는 Apple Vision, Android는 ML Kit.
+ * 기기에서 글자를 읽는 일 — iOS의 Apple Vision.
  *
  * 네이티브 모듈이라 **없을 수 있다.** Expo Go거나, 모듈을 넣고 나서 아직 개발
  * 빌드를 다시 만들지 않았으면 없다. 그때 최상단에서 import하면 화면 파일 자체가
@@ -11,13 +11,10 @@
  * ## 좌표에 대하여
  *
  * 찍은 사진 **위에서** 문장을 짚으려면 글자가 사진의 어디에 있는지 알아야 한다.
- * iOS는 앱 안의 `modules/page-reader`가 Apple Vision으로 읽고 줄·낱말의 좌표를
- * 함께 준다. `expo-text-extractor`도 같은 Vision을 쓰지만 좌표를 버리고 글자만
- * 넘겨서(`string[]`), 좌표가 필요한 자리에는 쓸 수 없다 — 안드로이드처럼
- * page-reader가 없는 곳에서만 물러날 자리로 남긴다.
+ * 앱 안의 `modules/page-reader`가 Apple Vision으로 읽고 줄·낱말의 좌표를 함께 준다.
  *
  * 화면은 `readLines`가 돌려주는 모양만 안다. `located`가 참이면 사진 위에 얹고,
- * 아니면 글자만 다시 조판해 보여준다.
+ * 아니면(글자를 하나도 못 읽었을 때) 글자만 다시 조판해 보여준다.
  */
 
 import { requireOptionalNativeModule } from 'expo';
@@ -73,11 +70,6 @@ export type OcrResult = {
   height?: number;
 };
 
-type TextExtractor = {
-  isSupported: boolean;
-  extractTextFromImage: (uri: string) => Promise<string[]>;
-};
-
 type PageReading = {
   width: number;
   height: number;
@@ -87,52 +79,30 @@ type PageReading = {
 
 type PageReader = { read: (uri: string) => Promise<PageReading> };
 
-function load(): TextExtractor | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('expo-text-extractor') as TextExtractor;
-  } catch {
-    return null;
-  }
-}
-
-const module = load();
-
 /**
- * 좌표까지 주는 인식기 — 앱 안의 `modules/page-reader`(iOS, Apple Vision).
- * 안드로이드와, 이 모듈이 들어가기 전에 지은 빌드에는 없다.
+ * 앱 안의 `modules/page-reader`(Apple Vision). Expo Go와, 이 모듈이 들어가기
+ * 전에 지은 빌드에는 없다.
  */
 const pageReader = requireOptionalNativeModule<PageReader>('PageReader');
 
 /** 이 기기에서 사진의 글자를 읽을 수 있는지 */
-export const available: boolean =
-  Boolean(pageReader) || Boolean(module?.isSupported);
+export const available: boolean = Boolean(pageReader);
 
 /**
  * 사진에서 줄과 낱말을 읽어낸다.
  *
- * 좌표를 주는 인식기가 있으면 그것으로 읽어 `located: true`로 돌려준다. 없으면
- * 글자만 주는 인식기로 물러나 `located: false` — 화면은 조판으로 물러난다.
+ * 낱말을 하나라도 읽으면 `located: true`다. 하나도 못 읽었으면 `false` — 화면은
+ * 조판으로 물러난다.
  */
 export async function readLines(uri: string): Promise<OcrResult> {
-  if (pageReader) {
-    const page = await pageReader.read(uri);
-    return {
-      lines: page.lines,
-      words: page.words,
-      located: page.words.length > 0,
-      width: page.width,
-      height: page.height,
-    };
-  }
-
-  if (!module) throw new Error('이 빌드에는 글자 인식기가 들어 있지 않아요.');
-  const lines = await module.extractTextFromImage(uri);
-  return { lines: lines.map((text) => ({ text })), words: [], located: false };
-}
-
-/** 글자만 필요할 때 — 문장으로 잇는 일은 서버가 한다 */
-export async function extractText(uri: string): Promise<string[]> {
-  const { lines } = await readLines(uri);
-  return lines.map((l) => l.text);
+  if (!pageReader)
+    throw new Error('이 빌드에는 글자 인식기가 들어 있지 않아요.');
+  const page = await pageReader.read(uri);
+  return {
+    lines: page.lines,
+    words: page.words,
+    located: page.words.length > 0,
+    width: page.width,
+    height: page.height,
+  };
 }

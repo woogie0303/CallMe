@@ -1,6 +1,5 @@
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 
 /**
  * 복습 알림의 기기 쪽 일 — 허락 받기 · 설정 저장 · 예약과 취소. 무엇을 말할지는
@@ -33,7 +32,6 @@ export type ScheduledReminder = {
 const SETTING_KEY = 'reminder.setting';
 /** 이 앱이 예약한 알림만 골라 지우려고 붙이는 이름표 */
 const ID_PREFIX = 'reread-reminder-';
-const CHANNEL_ID = 'reminders';
 
 /**
  * 앱이 켜져 있는 동안에도 알림을 보여준다 — 기본값은 앞에 떠 있는 앱에는 조용히
@@ -131,13 +129,6 @@ export async function scheduleReminders(
 ): Promise<void> {
   await cancelReminders();
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-      name: '복습 알림',
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
-  }
-
   await Promise.all(
     entries.map((entry, i) =>
       Notifications.scheduleNotificationAsync({
@@ -150,7 +141,6 @@ export async function scheduleReminders(
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: entry.at,
-          channelId: CHANNEL_ID,
         },
       }),
     ),
