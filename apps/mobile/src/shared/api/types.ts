@@ -110,13 +110,15 @@ export type ApiItemDetail = {
   }[];
 };
 
-export type ApiCandidate = {
-  term: string;
-  surface?: string;
-  meaning: string;
-  existingItemId?: string;
-  /** 이미 서랍에 있던 표현일 때만 — 담는 순간이 재회가 된다 */
-  existing?: { met: number; lastSavedAt?: string; lastBookTitle?: string };
+/**
+ * 독자가 그 문장에서 고른 표현. 답이 오기 전에는 `surface`뿐이고, 답이 오면
+ * 사전 꼴(`term`)과 뜻이 채워지며 서버가 그 순간 서랍에 담는다(`itemId`).
+ */
+export type ApiPick = {
+  surface: string;
+  term?: string;
+  meaning?: string;
+  itemId?: string;
 };
 
 export type ApiAsk = {
@@ -124,7 +126,7 @@ export type ApiAsk = {
   sentenceId: string;
   status: 'answered' | 'pending';
   translation?: string;
-  candidates: ApiCandidate[];
+  picks: ApiPick[];
   pendingReason?: '질문 소진' | '연결 실패';
   answeredAt?: string;
   createdAt: string;
@@ -141,13 +143,4 @@ export type ApiQuota = {
   limit: number;
   remaining: number;
   resetsOn: string;
-};
-
-export type SaveItemResult = {
-  item: ApiItem;
-  reencountered: boolean;
-  /** 처음 만난 날과 이번 사이의 날수 — '2개월 만에'로 옮기는 일은 앱이 한다 */
-  gapDays?: number;
-  previousSavedAt?: string;
-  previousSentenceId?: string;
 };

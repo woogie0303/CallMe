@@ -12,9 +12,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useCreateAsk } from '@/entities/ask/api/ask.api';
 import { useBooks } from '@/entities/book/api/book.api';
-import { useItems, useSaveItem } from '@/entities/lexical-item/api/item.api';
+import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useReader } from '@/entities/reader/api/reader.api';
 import {
   useAddThought,
@@ -29,7 +28,6 @@ import {
   deleteMessage,
 } from '@/entities/sentence/lib/delete-impact';
 import { buildFeed } from '@/entities/sentence/lib/feed';
-import type { ApiCandidate } from '@/shared/api/types';
 import { color, gutter, type } from '@/shared/config';
 import {
   AppText,
@@ -93,8 +91,6 @@ export default function SentenceScreen() {
   const { data: books = [] } = useBooks();
   const { data: items = [] } = useItems();
 
-  const ask = useCreateAsk();
-  const save = useSaveItem();
   const remove = useDeleteSentence();
   const favorite = useFavoriteSentence();
   const addThought = useAddThought(id);
@@ -132,7 +128,6 @@ export default function SentenceScreen() {
           }),
       },
     ]);
-  const [savingTerm, setSavingTerm] = useState<string>();
 
   const view = asked.data ?? null;
   const row = sentence.data
@@ -212,38 +207,11 @@ export default function SentenceScreen() {
   const saved = items.filter((item) =>
     item.encounters.some((met) => met.sentenceId === id),
   );
-  const savedTerms = new Set(saved.map((item) => item.term));
-  const candidates =
-    view?.ask.status === 'answered'
-      ? view.ask.candidates.filter(
-          (candidate) => !savedTerms.has(candidate.term),
-        )
-      : [];
 
-  const askNow = async () => {
-    if (!id || ask.isPending) return;
-    try {
-      await ask.mutateAsync({ sentenceId: id });
-    } catch (error) {
-      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
-    }
-  };
-
-  const saveCandidate = async (candidate: ApiCandidate) => {
-    if (!id || savingTerm) return;
-    setSavingTerm(candidate.term);
-    try {
-      await save.mutateAsync({
-        term: candidate.term,
-        meaning: candidate.meaning,
-        surface: candidate.surface,
-        sentenceId: id,
-      });
-    } catch (error) {
-      Alert.alert('담지 못했어요', error instanceof Error ? error.message : '');
-    } finally {
-      setSavingTerm(undefined);
-    }
+  /** 담아둔 문장을 묻는다 — 모르는 낱말을 고르는 질문 화면에서, 이 문장 그대로 */
+  const askNow = () => {
+    if (!id) return;
+    router.push({ pathname: '/ask', params: { sentenceId: id } });
   };
 
   /**
@@ -298,16 +266,14 @@ export default function SentenceScreen() {
       {/*
         문장 전체에 대한 일(묻기·마음에 든 문장·지우기)은 ⋮ 하나로 접는다 — 책 화면과
         같은 시트다. 한동안 아이콘 셋이 머리에 나란히 섰는데, 문장보다 아이콘이 먼저
-        눈에 들어왔고 책 화면과 모양이 달랐다. 묻는 중에는 ⋮ 자리에 도는 표시가 선다.
+        눈에 들어왔고 책 화면과 모양이 달랐다.
       */}
       <ScreenHeader
         leading="back"
         onLeadingPress={() => router.back()}
         title="서랍"
         trailing={
-          !sentence.data ? undefined : ask.isPending ? (
-            <ActivityIndicator size="small" color={color.text.meta} />
-          ) : (
+          !sentence.data ? undefined : (
             <Tap
               hitSlop={10}
               onPress={() => setMenuOpen(true)}
@@ -341,9 +307,6 @@ export default function SentenceScreen() {
             row={row}
             initialReveal={reveal === '1'}
             saved={saved}
-            candidates={candidates}
-            onSave={saveCandidate}
-            savingTerm={savingTerm}
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })
             }
@@ -384,7 +347,7 @@ export default function SentenceScreen() {
           <DisclosureRow
             icon={<AskIcon size={19} color={color.text.primary} />}
             title="이 문장 물어보기"
-            body="이 문장에서의 뜻과 담아둘 만한 표현을 알려줘요."
+            body="모르는 낱말을 고르면 이 문장에서의 뜻을 알려줘요."
             onPress={() => afterSheet(askNow)}
           />
         ) : null}

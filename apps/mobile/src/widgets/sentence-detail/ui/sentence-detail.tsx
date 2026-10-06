@@ -5,29 +5,27 @@ import { BookCover } from '@/entities/book/ui/book-cover';
 import type { ItemSummary } from '@/entities/lexical-item/api/item.api';
 import { markSegments } from '@/entities/sentence/lib/segments';
 import type { SentenceCardData } from '@/entities/sentence/model/types';
-import type { ApiCandidate } from '@/shared/api/types';
 import { color, type } from '@/shared/config';
 import { AltPanel, AppText, Icon, Quote, Tap } from '@/shared/ui';
 
 /**
  * 문장 하나 — 서랍에서 줄을 누르면 온다.
  *
- * 위에서 아래로 **문장 → 뜻 → 담은 표현(재회) → 담지 않은 표현** 순이다.
+ * 위에서 아래로 **문장 → 뜻 → 담은 표현(재회)** 순이다.
  *
  * - **뜻은 여전히 눌러야 열린다.** 상세 화면에 들어왔다고 한국어를 먼저 내밀면,
  *   눈은 아는 쪽(한국어)을 읽고 문장은 장식이 된다 — 이 앱이 거부하는 단어장이다.
  * - **재회는 여기 한가운데 선다.** 이 표현을 다른 책에서도 만났는지. 몇 번
  *   만났는지는 누르고 들어간 표현 화면이 말한다.
- * - **담지 않은 표현도 보인다.** 물을 때 모델이 짚어준 후보 중 그때 담지 않은 것을
- *   지금 담을 수 있다. 이미 서랍에 있는 표현이면 담는 순간이 재회가 된다.
+ *
+ * 물을 때 고른 표현은 답이 오는 순간 이미 담겨 있다 — 여기서 따로 담는 일은 없다.
+ * 한때 모델이 짚어준 후보를 여기서 골라 담게 했는데, 고르지 않은 문장이 서랍
+ * 어디에도 서지 못했다.
  */
 export function SentenceDetail({
   row,
   initialReveal,
   saved,
-  candidates,
-  onSave,
-  savingTerm,
   onOpenItem,
   expressions = true,
 }: {
@@ -41,11 +39,6 @@ export function SentenceDetail({
   initialReveal?: boolean;
   /** 이 문장에서 담은 표현들 */
   saved: ItemSummary[];
-  /** 물을 때 짚어준 표현 중 아직 담지 않은 것 */
-  candidates: ApiCandidate[];
-  onSave: (candidate: ApiCandidate) => void;
-  /** 지금 담는 중인 표현 — 그 버튼만 도는 중으로 */
-  savingTerm?: string;
   onOpenItem: (itemId: string) => void;
 }) {
   const [reveal, setReveal] = useState(Boolean(initialReveal));
@@ -159,38 +152,6 @@ export function SentenceDetail({
           })}
         </View>
       ) : null}
-
-      {/* 물을 때 짚어줬지만 아직 담지 않은 표현 */}
-      {expressions && candidates.length ? (
-        <View style={styles.section}>
-          <AppText style={styles.sectionTitle}>이 문장의 다른 표현</AppText>
-          {candidates.map((candidate) => (
-            <View key={candidate.term} style={styles.itemRow}>
-              <View style={styles.itemText}>
-                <Quote style={styles.term}>{candidate.term}</Quote>
-                <AppText style={styles.meaning}>{candidate.meaning}</AppText>
-                {candidate.existing ? (
-                  <AppText style={styles.others}>
-                    서랍에 있어요 · {candidate.existing.met}번 만남 — 담으면 또
-                    만난 거예요
-                  </AppText>
-                ) : null}
-              </View>
-              <Tap
-                style={styles.saveChip}
-                onPress={() => onSave(candidate)}
-                disabled={savingTerm !== undefined}
-                accessibilityRole="button"
-                accessibilityLabel={`${candidate.term} 담기`}
-              >
-                <AppText style={styles.saveLabel}>
-                  {savingTerm === candidate.term ? '담는 중' : '담기'}
-                </AppText>
-              </Tap>
-            </View>
-          ))}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -254,12 +215,4 @@ const styles = StyleSheet.create({
   },
   meaning: { ...type.label2, lineHeight: 20, color: color.text.body },
   others: { ...type.caption2, color: color.primary },
-
-  saveChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 9,
-    backgroundColor: color.primaryTint,
-  },
-  saveLabel: { ...type.caption1, fontWeight: '700', color: color.primary },
 });

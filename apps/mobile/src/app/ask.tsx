@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,7 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
-import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
+import {
+  useCreateSentence,
+  useSentence,
+} from '@/entities/sentence/api/sentence.api';
 import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, ScreenHeader } from '@/shared/ui';
 import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
@@ -21,12 +24,24 @@ import { SentenceField } from '@/widgets/ask/ui/sentence-field';
 
 /**
  * 어느 책에 대고 묻는지는 들어온 길이 정한다. 홈의 ✎에서 오면 지금 읽는 책이고,
- * 책 화면에서 오면 그 책이다.
+ * 책 화면에서 오면 그 책이다. `sentenceId`로 오면 **이미 담아둔 문장**을 묻는다 —
+ * 글은 그 문장 그대로라 고칠 수 없고, 책과 쪽수도 그 문장이 안다.
  */
-type Params = { bookId?: string; page?: string; text?: string };
+type Params = {
+  bookId?: string;
+  page?: string;
+  text?: string;
+  sentenceId?: string;
+};
 
+import { WordPicker } from '@/widgets/ask/ui/word-picker';
 /**
- * 03 질문 — 막힌 문장을 통째로 묻는다.
+ * 03 질문 — 막힌 문장을 적고, **그 안에서 모르는 낱말을 골라** 묻는다.
+ *
+ * 적은 글은 아래에 낱말로 다시 펼쳐지고, 거기서 사진 위에서처럼 누르거나 끌어서
+ * 고른다. 무엇을 모르는지는 독자가 정한다 — 모델이 짐작해 골라 주던 때는 짐작이
+ * 빗나간 문장이 아무것도 담기지 않은 채 남았다. 글을 고치면 고른 것은 풀린다
+ * (낱말 자리가 달라져서).
  *
  * 질문이 떨어졌거나 신호가 없으면 답만 미뤄질 뿐, 담는 일은 실패하지 않는다.
  * 읽던 흐름이 끊기는 것이 이 앱이 막으려는 바로 그 일이기 때문이다.
@@ -38,12 +53,26 @@ export default function AskScreen() {
 
   const params = useLocalSearchParams<Params>();
   /** 찍어온 쪽에서 고른 문장이 있으면 그걸로 시작한다 */
-  const [sentence, setSentence] = useState(params.text ?? '');
+  const [typed, setTyped] = useState(params.text ?? '');
+  const sentence = fixed ? (saved.data?.text ?? '') : typed;
+
+  /** 적은 글 전체가 한 문장이다 — 표현 수도 글 전체에서 센다 */
+  const words = useMemo(() => tokenize(sentence), [sentence]);
+  const picks = usePicks(words, { whole: true });
+  const surfaces = runsOf(picks.selected)
+    .map((run) => surfaceOf(words, run.from, run.to))
+    .filter(Boolean);
+  const clearPicks = picks.clear;
+  /** 글을 고치면 낱말 자리가 바뀐다 — 고른 것을 풀어야 엉뚱한 낱말이 칠해지지 않는다 */
+  useEffect(() => clearPicks(), [sentence, clearPicks]);
 
   const { data: quota } = useAskQuota();
   const { data: current } = useCurrentBook();
   const { data: chosen } = useBook(params.bookId);
   const book = chosen ?? current?.book;
+  /** 담아둔 문장을 묻는 길 — 글은 그 문장 그대로다 */
+  const saved = useSentence(params.sentenceId);
+  const fixed = Boolean(params.sentenceId);
   /**
    * 쪽수는 꼭 적는다 — 나중에 이 문장을 다시 찾을 때 붙잡을 곳이 쪽수뿐이다.
    * 미리 채워 두지 않는다. 지난번 쪽이 들어 있으면 확인도 없이 그대로 담긴다.
@@ -68,7 +97,11 @@ export default function AskScreen() {
   const keepSentence = useCreateSentence();
 
   const left = quota?.remaining ?? 0;
+  /** 그냥 담기는 문장과 쪽수만, 묻기는 고른 표현까지 있어야 한다 */
 
+  const askable = fixed
+    ? Boolean(saved.data && surfaces.length)
+    : ready && surfaces.length > 0;
   /**
    * 문장을 적은 쪽까지는 읽은 것이다 — 담을 때 진도도 그만큼 옮긴다.
    * 앞으로만 간다: 예전 쪽을 다시 펴서 적었다고 진도가 뒤로 가면 안 된다.
@@ -87,15 +120,19 @@ export default function AskScreen() {
    * 길이다 — 어디서 물었든 결과는 한 화면에서 본다.
    */
   const ask = async () => {
-    if (!book || !sentence.trim() || !page) return;
+    if (!askable) return;
     try {
-      const view = await createAsk.mutateAsync({
-        bookId: book.id,
-        text: sentence.trim(),
-        page,
-      });
-      recordPage();
-      if (view.ask.status === 'answered' && view.sentence) {
+      const [view] = await createAsk.mutateAsync(
+        fixed && params.sentenceId
+          ? { sentenceId: params.sentenceId, picks: surfaces }
+          : {
+              bookId: book!.id,
+              page,
+              sentences: [{ text: sentence.trim(), picks: surfaces }],
+            },
+      );
+      if (!fixed) recordPage();
+      if (view?.ask.status === 'answered' && view.sentence) {
         router.replace({
           pathname: '/sentence/[id]',
           params: { id: view.sentence._id, reveal: '1' },
@@ -152,15 +189,17 @@ export default function AskScreen() {
         style={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
-        <SentenceField
-          value={sentence}
-          onChangeText={setSentence}
-          onCapture={() => openScan(book?.id, { replace: true })}
-          page={pageText}
-          onChangePage={setPageText}
-        />
+        {fixed ? null : (
+          <SentenceField
+            value={typed}
+            onChangeText={setTyped}
+            onCapture={() => openScan(book?.id, { replace: true })}
+            page={pageText}
+            onChangePage={setPageText}
+          />
+        )}
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
-        {tooFar ? (
+        {fixed ? null : tooFar ? (
           <AppText style={styles.needPage}>
             이 책은 {book?.pages}쪽까지예요.
           </AppText>
@@ -175,18 +214,41 @@ export default function AskScreen() {
         <ActionButton
           label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
           variant={left > 0 ? 'primary' : 'ink'}
-          disabled={!ready || keepSentence.isPending}
+          disabled={!askable || keepSentence.isPending}
+
+        {words.length ? (
+          <View style={styles.pick}>
+            <AppText style={styles.pickTitle}>
+              {surfaces.length
+                ? `고른 표현 ${surfaces.length}개`
+                : '모르는 낱말을 누르세요'}
+            </AppText>
+            <AppText style={styles.pickHint}>
+              {picks.limit && surfaces.length >= MAX_PICKS
+                ? `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요.`
+                : '옆으로 끌면 여러 낱말을 한 번에 골라요. 붙은 낱말은 한 표현이 돼요.'}
+            </AppText>
+            <WordPicker
+              words={words}
+              selected={picks.selected}
+              onChange={picks.change}
+              onToggle={picks.toggle}
+            />
+          </View>
+        ) : null}
           loading={createAsk.isPending}
           onPress={ask}
         />
-        {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다 */}
-        <ActionButton
-          label="그냥 마음에 든 문장이에요"
-          variant="subtle"
-          disabled={!ready || createAsk.isPending}
-          loading={keepSentence.isPending}
-          onPress={keepOnly}
-        />
+        {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다. 이미 담은 문장에는 없다. */}
+        {fixed ? null : (
+          <ActionButton
+            label="그냥 마음에 든 문장이에요"
+            variant="subtle"
+            disabled={!ready || createAsk.isPending}
+            loading={keepSentence.isPending}
+            onPress={keepOnly}
+          />
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -207,3 +269,6 @@ const styles = StyleSheet.create({
   needPage: { ...type.caption1, color: color.status.cautionary, marginTop: -8 },
   footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
 });
+  pick: { gap: 8 },
+  pickTitle: { ...type.label1, fontWeight: '700', color: color.text.primary },
+  pickHint: { ...type.caption1, color: color.text.meta, marginBottom: 4 },

@@ -1,43 +1,49 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 
 import { accent, color, ink } from '@/shared/config';
-import { previewWords, type Selection } from '@/shared/ocr/selection';
-import type { OcrWord } from '@/shared/ocr/text-extractor';
-import { Tap } from '@/shared/ui';
+import { useWordPaint } from '@/shared/lib/use-word-paint';
+import type { SentenceGroup } from '@/shared/ocr/selection';
+import type { OcrFrame, OcrWord } from '@/shared/ocr/text-extractor';
 
 export type Shot = { uri: string; width: number; height: number };
 
+/** 낱말 칸보다 조금 넓게 잡는다 — 손가락은 글자보다 굵다(사진 픽셀이 아니라 화면 pt) */
+const SLOP = 4;
+
 /**
- * 찍은 쪽에서 물어볼 글을 고르는 자리.
+ * 찍은 쪽에서 **모르는 낱말을 고르는** 자리.
  *
  * **사진을 버리지 않는다.** 예전에는 글자만 읽어내고 사진을 지운 뒤 다시 조판해
  * 보여줬는데, 그러면 방금 내가 본 쪽과 화면에 뜬 글이 서로 다른 것이 되어
  * '이 줄'을 짚는 감각이 사라진다.
  *
- * 고르는 법은 **처음 낱말과 끝 낱말을 한 번씩 누르는 것**이다. 끌지 않는 이유가
- * 둘 있다 — 끄는 동작은 사진을 넘기거나 확대하는 손짓과 부딪히고, 스크린리더
- * 에서는 아예 할 수 없다. 두 번 누르기는 둘 다 피한다.
+ * 누르면 낱말 하나, 끌면 지나간 만큼(`useWordPaint`). 붙은 낱말은 한 표현(구)이
+ * 된다. 고른 낱말이 든 문장은 옅게 칠해져서 무엇을 묻게 되는지 시트를 열기 전에
+ * 보인다 — 문장 경계는 `shared/ocr/selection`이 정한다.
  *
- * 짚은 범위는 문장 경계까지 저절로 넓어진다(`shared/ocr/selection`). 조각만
- * 물으면 맥락 없는 뜻풀이가 되기 때문이다 — 넓어진 만큼이 화면에 그대로 칠해져서
- * 무엇을 묻게 되는지 누르기 전에 보인다.
+ * 한동안은 문장의 처음과 끝 낱말을 짚어 문장을 골랐다. 그러면 무엇을 모르는지는
+ * 모델이 짐작해야 했고, 짐작이 빗나간 문장은 아무것도 담기지 않은 채 남았다.
  */
 export function PhotoPicker({
   shot,
   words,
-  selection,
-  anchor,
-  onTapWord,
+  selected,
+  groups,
+  onChange,
+  onToggle,
 }: {
   shot: Shot;
   words: OcrWord[];
-  /** 지금 정해진 범위 — 넓어진 뒤의 값 */
-  selection: Selection | null;
-  /** 첫 낱말만 짚어둔 상태 */
-  anchor: number | null;
-  onTapWord: (index: number) => void;
+  selected: ReadonlySet<number>;
+  /** 고른 낱말이 든 문장들 — 옅게 칠한다 */
+  groups: SentenceGroup[];
+  /** 끄는 동안 통째로 바꾼다. 받았으면 true */
+  onChange: (next: ReadonlySet<number>) => boolean;
+  /** 스크린리더가 낱말 하나를 눌렀을 때 */
+  onToggle: (index: number) => void;
 }) {
   const [box, setBox] = useState<{ width: number; height: number } | null>(
     null,
@@ -63,50 +69,89 @@ export function PhotoPicker({
       })()
     : null;
 
-  /** 지금 칠할 범위 — 아직 끝을 안 짚었으면 첫 낱말 하나만 */
-  const shown =
-    selection ?? (anchor !== null ? previewWords(words, anchor) : null);
+  /** 화면의 한 점이 어느 낱말 위인지 — 기울어진 칸은 거꾸로 돌려서 잰다 */
+  const hit = ({ x, y }: { x: number; y: number }) => {
+    if (!fit) return null;
+    for (let i = 0; i < words.length; i += 1) {
+      if (inside(words[i].frame, x, y, fit)) return i;
+    }
+    return null;
+  };
+
+  const gesture = useWordPaint({ hit, selected, onChange });
+
+  const inSentence = (i: number) =>
+    groups.some((group) => i >= group.from && i <= group.to);
 
   return (
-    <View style={styles.stage} onLayout={onLayout}>
-      <Image
-        source={{ uri: shot.uri }}
-        style={StyleSheet.absoluteFill}
-        contentFit="contain"
-      />
+    <GestureDetector gesture={gesture}>
+      <View style={styles.stage} onLayout={onLayout}>
+        <Image
+          source={{ uri: shot.uri }}
+          style={StyleSheet.absoluteFill}
+          contentFit="contain"
+        />
 
-      {fit
-        ? words.map((word, i) => {
-            const on = shown ? i >= shown.from && i <= shown.to : false;
-            const isAnchor = anchor === i && !selection;
-            return (
-              <Tap
-                key={i}
-                onPress={() => onTapWord(i)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={word.text}
-                accessibilityHint={
-                  anchor === null ? '여기서부터 고르기' : '여기까지 고르기'
-                }
-                style={[
-                  styles.word,
-                  on ? styles.wordOn : null,
-                  isAnchor ? styles.wordAnchor : null,
-                  {
-                    left: fit.dx + word.frame.x * fit.scale,
-                    top: fit.dy + word.frame.y * fit.scale,
-                    width: word.frame.width * fit.scale,
-                    height: word.frame.height * fit.scale,
-                    /** RN은 중심을 축으로 돌린다 — 인식기가 준 네모도 중심 기준이다 */
-                    transform: [{ rotate: `${word.frame.angle ?? 0}rad` }],
-                  },
-                ]}
-              />
-            );
-          })
-        : null}
-    </View>
+        {fit
+          ? words.map((word, i) => {
+              const on = selected.has(i);
+              return (
+                <View
+                  key={i}
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={word.text}
+                  accessibilityHint={
+                    on ? '눌러서 빼기' : '모르는 낱말로 고르기'
+                  }
+                  onAccessibilityTap={() => onToggle(i)}
+                  style={[
+                    styles.word,
+                    inSentence(i) ? styles.wordSentence : null,
+                    on ? styles.wordOn : null,
+                    {
+                      left: fit.dx + word.frame.x * fit.scale,
+                      top: fit.dy + word.frame.y * fit.scale,
+                      width: word.frame.width * fit.scale,
+                      height: word.frame.height * fit.scale,
+                      /** RN은 중심을 축으로 돌린다 — 인식기가 준 네모도 중심 기준이다 */
+                      transform: [{ rotate: `${word.frame.angle ?? 0}rad` }],
+                    },
+                  ]}
+                />
+              );
+            })
+          : null}
+      </View>
+    </GestureDetector>
+  );
+}
+
+/** 점이 낱말 칸 안에 있는지. 칸은 중심을 축으로 `angle`만큼 돌아 있다. */
+function inside(
+  frame: OcrFrame,
+  x: number,
+  y: number,
+  fit: { scale: number; dx: number; dy: number },
+): boolean {
+  const left = fit.dx + frame.x * fit.scale;
+  const top = fit.dy + frame.y * fit.scale;
+  const width = frame.width * fit.scale;
+  const height = frame.height * fit.scale;
+  const cx = left + width / 2;
+  const cy = top + height / 2;
+
+  /** 칸이 돈 만큼 점을 거꾸로 돌리면 곧은 칸에 대고 잴 수 있다 */
+  const angle = -(frame.angle ?? 0);
+  const px = cx + (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle);
+  const py = cy + (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle);
+
+  return (
+    px >= left - SLOP &&
+    px <= left + width + SLOP &&
+    py >= top - SLOP &&
+    py <= top + height + SLOP
   );
 }
 
@@ -123,10 +168,11 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: accent(0.16),
   },
-  wordOn: { backgroundColor: accent(0.42) },
-  /** 첫 낱말만 짚어둔 상태 — 여기서 시작한다는 표시 */
-  wordAnchor: {
-    backgroundColor: accent(0.5),
+  /** 고른 낱말이 든 문장 — 무엇을 묻게 되는지 */
+  wordSentence: { backgroundColor: accent(0.26) },
+  /** 고른 낱말 — 지금 모르는 것 */
+  wordOn: {
+    backgroundColor: accent(0.55),
     borderWidth: 1.5,
     borderColor: color.primary,
   },

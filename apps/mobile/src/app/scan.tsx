@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,12 +9,13 @@ import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, ink, type } from '@/shared/config';
-import { selectWords, type Selection } from '@/shared/ocr/selection';
+import { pickStillIn } from '@/shared/ocr/selection';
 import {
   available,
   readLines,
   type OcrWord,
 } from '@/shared/ocr/text-extractor';
+import { usePicks } from '@/shared/ocr/use-picks';
 import {
   ActionButton,
   AppText,
@@ -24,20 +25,22 @@ import {
 } from '@/shared/ui';
 import { AskSheet } from '@/widgets/capture/ui/ask-sheet';
 import { PhotoPicker, type Shot } from '@/widgets/capture/ui/photo-picker';
+import type { SheetSentence } from '@/widgets/capture/ui/ask-sentence';
 
+import { PickBadge } from '@/widgets/capture/ui/pick-badge';
 type Params = { bookId?: string };
 
 /**
- * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서** 막힌 문장을 짚어 묻는다.
+ * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서 모르는 낱말을** 골라 묻는다.
  *
- * 짚은 문장은 시트에서 물을지 그냥 담을지만 고르고, 고르는 순간 그 문장이 사는
- * 곳으로 간다 — 물어서 답이 왔으면 문장 화면, 답을 못 받았으면 기다리는 문장,
- * 그냥 담았으면 그 책의 '마음에 들었던 문장'. 한동안은 담은 뒤 사진으로 돌아와
- * 다음 문장을 짚게 했는데, 방금 담은 것이 어디 갔는지 보이지 않았다.
+ * 낱말을 누르거나 끌어서 고르면 아래에 배지가 떠서 고른 것이 쌓인다. 배지를 누르면
+ * 고른 낱말이 든 문장들이 시트로 올라오고, 거기서 한 번에 물을지 그냥 담을지 고른다.
+ * 고르는 순간 그 문장들이 사는 곳으로 간다 — 답이 온 문장이 하나면 그 문장 화면,
+ * 여럿이면 그 책의 '담은 표현', 답을 못 받았으면 기다리는 문장, 그냥 담았으면 그
+ * 책의 '마음에 들었던 문장'.
  *
- * 글자를 읽는 일은 기기가 하고(Apple Vision / ML Kit), 줄을 문장으로 잇는 일은
- * 서버가 한다 — 앱에서 정규식으로 자르면 답을 내는 모델과 다르게 자른다(ADR-0002).
- * 인식기가 좌표를 함께 주면 사진 위에서 짚고, 아니면 읽어낸 글을 조판해 보여준다.
+ * 글자를 읽는 일은 기기가 하고(Apple Vision), 문장 경계는 `shared/ocr/selection`이
+ * 마침표로 찾는다. 틀리면 시트에서 독자가 문장을 고친다.
  *
  * 사진은 기기 밖으로 나가지 않는다. 서버로 가는 것은 읽어낸 글자뿐이다.
  */
@@ -50,14 +53,16 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [shot, setShot] = useState<Shot | null>(null);
   const [words, setWords] = useState<OcrWord[]>([]);
-  /** 첫 낱말만 짚어둔 상태 — 끝을 누르면 범위가 정해진다 */
-  const [anchor, setAnchor] = useState<number | null>(null);
-  const [range, setRange] = useState<Selection | null>(null);
   const [reading, setReading] = useState(false);
 
-  /** 지금 짚은 문장 — 인식이 틀렸으면 시트에서 고친 글이 여기 들어간다 */
-  const [picked, setPicked] = useState<string | undefined>();
-  /** 손대기 전까지는 지난번에 적은 쪽을 따른다 */
+  const picks = usePicks(words);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  /**
+   * 시트에서 고친 문장 — 문장의 낱말 범위(`from-to`)로 붙든다. 고르기가 바뀌어 그
+   * 범위가 사라지면 고친 글도 함께 버려진다(아래 `sheet`가 범위로만 찾는다).
+   */
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  /** 미리 채우지 않는다 — 독자가 직접 적는다 */
   const [pageEdit, setPageEdit] = useState<string>();
 
   const createAsk = useCreateAsk();
@@ -92,6 +97,27 @@ export default function ScanScreen() {
   const busy = createAsk.isPending || keepSentence.isPending;
 
   const shoot = async () => {
+  /** 시트에 세울 문장들 — 고친 글이 있으면 그것, 표현이 아직 그 글에 있는지까지 */
+  const sheet: SheetSentence[] = useMemo(
+    () =>
+      picks.groups.map((group) => {
+        const key = `${group.from}-${group.to}`;
+        const text = edits[key] ?? group.text;
+        return {
+          key,
+          text,
+          picks: group.picks.map((pick) => ({
+            surface: pick.surface,
+            from: pick.from,
+            to: pick.to,
+            missing: !pickStillIn(text, pick.surface),
+          })),
+        };
+      }),
+    [picks.groups, edits],
+  );
+  const pickCount = sheet.reduce((sum, s) => sum + s.picks.length, 0);
+
     if (!camera.current || reading) return;
     setReading(true);
     try {
@@ -131,54 +157,46 @@ export default function ScanScreen() {
   const retake = () => {
     setShot(null);
     setWords([]);
-    closeSheet();
+    picks.clear();
+    setEdits({});
+    setSheetOpen(false);
   };
 
-  const closeSheet = () => {
-    setPicked(undefined);
-    setAnchor(null);
-    setRange(null);
-  };
-
-  /**
-   * 첫 낱말 → 끝 낱말 순으로 한 번씩. 범위가 정해진 뒤에 또 누르면 처음부터
-   * 다시 고른다 — 고쳐 고르려고 취소 버튼을 따로 찾게 만들지 않는다.
-   */
-  const tapWord = (index: number) => {
-    if (range) {
-      setRange(null);
-      setAnchor(index);
-      setPicked(undefined);
-      return;
-    }
-    if (anchor === null) {
-      setAnchor(index);
-      return;
-    }
-    const next = selectWords(words, anchor, index);
-    if (!next) return;
-    setRange(next);
-    setAnchor(null);
-    setPicked(next.text);
+  /** 칩에서 표현을 빼면 사진 위의 고르기도 풀린다. 다 빠지면 시트도 닫힌다. */
+  const removePick = (from: number, to: number) => {
+    picks.unpick(from, to);
+    if (pickCount <= 1) setSheetOpen(false);
   };
 
   const ask = async () => {
-    if (!book || !picked?.trim() || !page || busy) return;
+    if (!book || !sheet.length || !page || busy) return;
     try {
-      const view = await createAsk.mutateAsync({
+      const views = await createAsk.mutateAsync({
         bookId: book.id,
-        text: picked.trim(),
         page,
       });
+        sentences: sheet.map((sentence) => ({
+          text: sentence.text.trim(),
+          picks: sentence.picks.map((pick) => pick.surface),
+        })),
       recordPage();
       /**
-       * 답이 왔으면 그 문장 화면에서 뜻을 편 채로 연다. 못 받았으면(질문 소진·
+       * 답이 하나 왔으면 그 문장 화면에서 뜻을 편 채로, 여럿이면 그 책의 '담은
+       * 표현'으로 — 방금 담긴 것들이 거기 모여 있다. 하나도 못 받았으면(질문 소진·
        * 연결 실패) 문장은 담겼고 답을 기다리는 줄에 선다 — 그 목록으로 간다.
        */
-      if (view.ask.status === 'answered' && view.sentence) {
+      const answered = views.filter(
+        (view) => view.ask.status === 'answered' && view.sentence,
+      );
+      if (answered.length === 1 && views.length === 1) {
         router.replace({
           pathname: '/sentence/[id]',
-          params: { id: view.sentence._id, reveal: '1' },
+          params: { id: answered[0].sentence!._id, reveal: '1' },
+        });
+      } else if (answered.length) {
+        router.replace({
+          pathname: '/book/[id]',
+          params: { id: book.id, tab: 'items' },
         });
       } else {
         router.replace('/pending');
@@ -188,15 +206,17 @@ export default function ScanScreen() {
     }
   };
 
-  /** 뜻은 몰라도 되고 그냥 좋았던 문장 — 질문 횟수를 쓰지 않는다 */
+  /** 뜻은 몰라도 되고 그냥 좋았던 문장들 — 질문 횟수를 쓰지 않는다 */
   const keepOnly = async () => {
-    if (!book || !picked?.trim() || !page || busy) return;
+    if (!book || !sheet.length || !page || busy) return;
     try {
-      await keepSentence.mutateAsync({
-        bookId: book.id,
-        text: picked.trim(),
-        page,
-      });
+      for (const sentence of sheet) {
+        await keepSentence.mutateAsync({
+          bookId: book.id,
+          text: sentence.text.trim(),
+          page,
+        });
+      }
       recordPage();
       router.replace({
         pathname: '/book/[id]',
@@ -276,7 +296,7 @@ export default function ScanScreen() {
     );
   }
 
-  /* ── 찍은 뒤: 쪽 위에서 문장 짚기 ─────────────────────────── */
+  /* ── 찍은 뒤: 쪽 위에서 모르는 낱말 고르기 ─────────────────── */
   return (
     /* 자판이 올라오면 시트가 스스로 화면 위까지 자란다(`AskSheet`) */
     <View style={styles.screen}>
@@ -296,16 +316,37 @@ export default function ScanScreen() {
         <PhotoPicker
           shot={shot}
           words={words}
-          selection={range}
-          anchor={anchor}
-          onTapWord={tapWord}
+          selected={picks.selected}
+          groups={picks.groups}
+          onChange={picks.change}
+          onToggle={picks.toggle}
         />
       </View>
 
-      {picked ? (
+      {/* 고른 것이 생기면 배지가 뜨고, 고르기 전에는 무엇을 하는 화면인지 한 줄이 말한다 */}
+      <View style={[styles.below, { paddingBottom: insets.bottom + 12 }]}>
+        {!picks.groups.length ? (
+          <AppText style={styles.guide}>
+            모르는 낱말을 누르세요 · 끌면 여러 낱말을 한 번에
+          </AppText>
+        ) : null}
+        {picks.groups.length && !sheetOpen ? (
+          <PickBadge
+            picks={pickCount}
+            sentences={picks.groups.length}
+            limit={picks.limit}
+            onPress={() => setSheetOpen(true)}
+          />
+        ) : null}
+      </View>
+
+      {sheetOpen && sheet.length ? (
         <AskSheet
-          sentence={picked}
-          onChangeSentence={setPicked}
+          sentences={sheet}
+          onChangeText={(key, next) =>
+            setEdits((prev) => ({ ...prev, [key]: next }))
+          }
+          onRemovePick={removePick}
           page={pageText}
           onChangePage={setPageEdit}
           maxPage={book?.pages || undefined}
@@ -314,7 +355,7 @@ export default function ScanScreen() {
           keeping={keepSentence.isPending}
           onAsk={ask}
           onKeepOnly={keepOnly}
-          onClose={closeSheet}
+          onClose={() => setSheetOpen(false)}
         />
       ) : null}
     </View>
@@ -367,6 +408,18 @@ const styles = StyleSheet.create({
 
   /** 뷰파인더는 잉크 위에 둔다 — 종이를 비추는 동안은 화면이 물러나야 한다 */
   viewfinder: {
+  /** 사진 아래 한 줄 — 안내 글이나 배지가 선다. 배지가 드나들어도 사진이 흔들리지 않게 높이를 둔다. */
+  below: {
+    minHeight: 64,
+    paddingHorizontal: gutter,
+    justifyContent: 'flex-end',
+  },
+  guide: {
+    ...type.label2,
+    color: color.text.meta,
+    textAlign: 'center',
+    paddingBottom: 14,
+  },
     flex: 1,
     margin: 16,
     borderRadius: 20,

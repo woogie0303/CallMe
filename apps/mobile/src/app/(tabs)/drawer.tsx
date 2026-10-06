@@ -18,12 +18,9 @@ import { DrawerList } from '@/widgets/drawer/ui/drawer-list';
 export default function DrawerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { feed, waiting: waitingRows, unpicked: unpickedRows } =
-    useSentenceFeed();
+  const { feed, waiting: waitingRows } = useSentenceFeed();
   /** 답을 기다리는 문장 — 목록엔 없고, 할 일이라 서랍 위에서 말을 건다 */
   const waiting = waitingRows.length;
-  /** 답은 왔는데 표현을 안 고른 문장 — 이것도 할 일이라 같은 자리에서 말을 건다 */
-  const unpicked = unpickedRows.length;
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -86,21 +83,6 @@ export default function DrawerScreen() {
             <Icon name="clock" size={15} color={color.primary} />
             <AppText style={styles.waitingText}>
               문장 {waiting}개가 답을 기다리고 있어요
-            </AppText>
-            <Icon name="chevronRight" size={14} color={color.primary} />
-          </Tap>
-        ) : null}
-
-        {unpicked > 0 && !query ? (
-          <Tap
-            style={styles.waiting}
-            onPress={() => router.push('/unpicked')}
-            accessibilityRole="button"
-            accessibilityLabel={`표현을 고를 문장 ${unpicked}개 보기`}
-          >
-            <Icon name="tag" size={15} color={color.primary} />
-            <AppText style={styles.waitingText}>
-              문장 {unpicked}개의 답이 와 있어요 · 표현 고르기
             </AppText>
             <Icon name="chevronRight" size={14} color={color.primary} />
           </Tap>

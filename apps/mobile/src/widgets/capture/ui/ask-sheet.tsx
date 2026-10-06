@@ -5,7 +5,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
   useWindowDimensions,
   type KeyboardEvent,
@@ -21,8 +20,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { color, family, gutter, type } from '@/shared/config';
+import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, PageIcon, PageInput } from '@/shared/ui';
+import { AskSentence, type SheetSentence } from './ask-sentence';
 
 /** 이만큼 넘게 끌어내리면 닫는다 — 원래 높이에 대한 비율 */
 const DISMISS_RATIO = 0.35;
@@ -62,16 +62,16 @@ function useKeyboardHeight() {
 }
 
 /**
- * 짚은 문장 하나가 올라오는 시트. 여기서는 **고르기만** 한다 — 물을지, 그냥
- * 마음에 든 문장으로 둘지. 고르는 순간 그 문장이 사는 곳으로 옮기는 일은 부르는
- * 쪽(`app/scan.tsx`)이 한다.
+ * 고른 표현이 든 문장들이 올라오는 시트. 사진 아래 배지를 누르면 열린다. 여기서는
+ * **물을지, 그냥 마음에 든 문장으로 둘지**만 고른다 — 고른 뒤 그 문장들이 사는 곳으로
+ * 옮기는 일은 부르는 쪽(`app/scan.tsx`)이 한다.
  *
- * - **문장은 처음부터 입력칸이다.** 글자 인식은 틀린다 — 낱말 하나가 빠지거나 줄
- *   끝 하이픈이 남는다. 한동안 '고치기' 버튼을 눌러야 칸으로 바뀌었는데, 틀린
- *   글자를 보면 손은 버튼이 아니라 그 글자로 간다.
- * - **쪽수는 꼭, 그 책 안에서.** 나중에 이 문장을 다시 찾을 때 붙잡을 곳이
- *   쪽수뿐이고 진도도 그만큼 옮겨진다. 책에 없는 쪽이면 버튼이 눌리지 않고 이유를
- *   말한다(서버도 한 번 더 막는다).
+ * - **문장마다 카드 하나**(`AskSentence`). 누르면 바로 고치는 칸이 되고, 아래에
+ *   고른 표현이 칩으로 선다.
+ * - **여러 문장을 한 번에 묻고, 이번 달 질문은 한 번만 쓴다.** 그래서 버튼 위에
+ *   '질문 1번'을 미리 말한다.
+ * - **쪽수는 하나.** 사진 한 장이 한 쪽이다. 꼭, 그 책 안에서 — 나중에 이 문장을
+ *   다시 찾을 때 붙잡을 곳이 쪽수뿐이고 진도도 그만큼 옮겨진다.
  * - **손잡이로 높이를 바꾼다.** 끌어올리면 화면 위까지 자라고, 원래 높이의
  *   35% 넘게 끌어내리면 닫혀서 찍은 쪽이 다시 보인다. 닫기 버튼(✕)은 그래서
  *   따로 두지 않는다.
@@ -79,8 +79,9 @@ function useKeyboardHeight() {
  *   고치는 글과 쪽수다. 자판이 내려가면 원래 크기로 돌아온다.
  */
 export function AskSheet({
-  sentence,
-  onChangeSentence,
+  sentences,
+  onChangeText,
+  onRemovePick,
   page,
   onChangePage,
   maxPage,
@@ -91,8 +92,9 @@ export function AskSheet({
   onKeepOnly,
   onClose,
 }: {
-  sentence: string;
-  onChangeSentence: (next: string) => void;
+  sentences: SheetSentence[];
+  onChangeText: (key: string, next: string) => void;
+  onRemovePick: (from: number, to: number) => void;
   /** 숫자만 */
   page: string;
   onChangePage: (next: string) => void;
@@ -109,11 +111,23 @@ export function AskSheet({
   const { height: screen } = useWindowDimensions();
   const keyboard = useKeyboardHeight();
   const raised = keyboard > 0;
-  const [focused, setFocused] = useState(false);
 
   const typed = Number(page);
   const tooFar = Boolean(maxPage && typed > maxPage);
-  const ready = typed > 0 && !tooFar && sentence.trim().length > 0;
+  const ready =
+    typed > 0 &&
+    !tooFar &&
+    sentences.length > 0 &&
+    sentences.every((sentence) => sentence.text.trim());
+  /** 물으려면 문장마다 표현이 있고, 고친 문장에서 사라진 표현이 없어야 한다 */
+  const askable =
+    ready &&
+    sentences.every(
+      (sentence) =>
+        sentence.picks.length > 0 &&
+        sentence.picks.every((pick) => !pick.missing),
+    );
+  const many = sentences.length > 1;
 
   /**
    * 높이. 끌기 전에는 내용이 정한 높이(`natural`)를 쓰고, 손잡이를 잡는 순간부터
@@ -222,16 +236,15 @@ export function AskSheet({
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        <TextInput
-          value={sentence}
-          onChangeText={onChangeSentence}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          multiline
-          scrollEnabled={false}
-          accessibilityLabel="고른 문장, 눌러서 고치기"
-          style={[styles.sentence, focused ? styles.sentenceFocused : null]}
-        />
+        {sentences.map((sentence, i) => (
+          <AskSentence
+            key={sentence.key}
+            sentence={sentence}
+            index={i}
+            onChangeText={(next) => onChangeText(sentence.key, next)}
+            onRemovePick={onRemovePick}
+          />
+        ))}
 
         <View style={styles.pageRow}>
           <PageIcon size={17} color={color.text.meta} />
@@ -255,16 +268,31 @@ export function AskSheet({
       </ScrollView>
 
       <View style={styles.actions}>
+        <AppText style={styles.quota}>
+          {quotaLeft > 0
+            ? `${many ? `${sentences.length}문장을 한 번에 물어도 ` : ''}질문 1번을 써요 · 이번 달 ${quotaLeft}번 남음`
+            : '이번 달 질문을 다 썼어요. 문장은 담기고 다음 달 1일에 저절로 물어볼 수 있어요.'}
+        </AppText>
         {/* 질문을 다 썼으면 묻는 대신 담아두고, 다음 달에 저절로 풀린다(ADR-0003) */}
         <ActionButton
-          label={quotaLeft > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
+          label={
+            quotaLeft > 0
+              ? many
+                ? `${sentences.length}문장 한 번에 물어보기`
+                : '이 문장 물어보기'
+              : many
+                ? `${sentences.length}문장 담아두기`
+                : '문장만 담아두기'
+          }
           variant={quotaLeft > 0 ? 'primary' : 'ink'}
           loading={asking}
-          disabled={keeping || !ready}
+          disabled={keeping || !askable}
           onPress={onAsk}
         />
         <ActionButton
-          label="그냥 마음에 든 문장이에요"
+          label={
+            many ? '그냥 마음에 든 문장들이에요' : '그냥 마음에 든 문장이에요'
+          }
           variant="subtle"
           loading={keeping}
           disabled={asking || !ready}
@@ -304,24 +332,6 @@ const styles = StyleSheet.create({
   scrollGrow: { flex: 1 },
   body: { paddingHorizontal: gutter, paddingBottom: 6, gap: 12 },
 
-  /**
-   * 책의 글이라 고치는 중에도 세리프다. 가만히 있을 땐 글처럼 보이고, 누르면
-   * 테두리가 서서 지금 고치고 있다는 것만 알린다.
-   */
-  sentence: {
-    fontFamily: family.serif,
-    fontSize: 18,
-    lineHeight: 29,
-    color: color.text.primary,
-    padding: 10,
-    marginHorizontal: -10,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-    textAlignVertical: 'top',
-  },
-  sentenceFocused: { borderColor: color.border.strong },
-
   pageRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pageLabel: { flex: 1, ...type.label2, color: color.text.secondary },
   pageBox: {
@@ -336,4 +346,10 @@ const styles = StyleSheet.create({
   hint: { ...type.caption1, color: color.status.cautionary, marginTop: -4 },
 
   actions: { paddingHorizontal: gutter, paddingTop: 4, gap: 8 },
+  quota: {
+    ...type.caption1,
+    color: color.text.meta,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
 });

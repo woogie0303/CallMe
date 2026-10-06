@@ -8,7 +8,6 @@ import type {
   ApiItemDetail,
   ApiSentence,
   ItemStatus,
-  SaveItemResult,
 } from '@/shared/api/types';
 import { savedLabel } from '@/shared/lib/date';
 import { sampleItems } from '../lib/sample';
@@ -105,20 +104,6 @@ export function useItem(id?: string) {
     queryKey: [...itemsKey, 'detail', id],
     enabled: Boolean(id),
     queryFn: () => api<ApiItemDetail>(`/items/${id}`),
-  });
-}
-
-/** 담기 — 이미 있는 표현이면 서버가 재회로 돌려준다 */
-export function useSaveItem() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: {
-      term: string;
-      meaning: string;
-      sentenceId: string;
-      surface?: string;
-    }) => api<SaveItemResult>('/items', { method: 'POST', body }),
-    onSuccess: () => client.invalidateQueries({ queryKey: itemsKey }),
   });
 }
 

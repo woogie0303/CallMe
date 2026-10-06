@@ -30,39 +30,51 @@ export function useAsk(id?: string) {
 }
 
 /**
- * 묻는 두 가지 길.
+ * 묻는 두 가지 길. 어느 쪽이든 **독자가 고른 표현**(문장에 적힌 꼴 그대로)을 함께
+ * 보낸다 — 무엇을 모르는지는 독자가 정하고, 서버는 답이 오면 그것들을 바로 담는다.
  *
- * - `{ bookId, text }` — 방금 옮겨 적은 문장. 서버가 문장을 먼저 만들고 묻는다.
- * - `{ sentenceId }` — **이미 담아둔 문장**을 나중에 묻는다(ADR-0004). 이쪽으로
+ * - `{ bookId, page, sentences }` — 방금 옮겨 적은 문장들. 한 쪽에서 여러 문장을
+ *   한 번에 묻고, 이번 달 질문은 한 번만 쓴다.
+ * - `{ sentenceId, picks }` — **이미 담아둔 문장**을 나중에 묻는다(ADR-0004). 이쪽으로
  *   보내야 같은 글이 두 줄이 되지 않는다. 책과 쪽수는 그 문장이 이미 안다.
  */
 export type AskInput =
-  { bookId: string; text: string; page?: number } | { sentenceId: string };
+  | {
+      bookId: string;
+      page?: number;
+      sentences: { text: string; picks: string[] }[];
+    }
+  | { sentenceId: string; picks: string[] };
 
 /**
- * 문장을 통째로 묻는다. 답을 못 받아도 실패가 아니다 — 문장은 저장되고
- * 질문은 pending으로 남는다. 그래서 오류를 띄우는 대신 상태를 보여준다.
+ * 묻는다. 답을 못 받아도 실패가 아니다 — 문장은 저장되고 질문은 pending으로
+ * 남는다. 그래서 오류를 띄우는 대신 상태를 보여준다. 문장 순서대로 질문이 온다.
  */
 export function useCreateAsk() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: AskInput) =>
-      api<ApiAskView>('/asks', { method: 'POST', body }),
+      api<ApiAskView[]>('/asks', { method: 'POST', body }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['sentences'] });
-      /** 담기면 밑줄이 생길 수 있어서 항목 목록도 다시 받는다 */
+      /** 답이 오면 고른 표현이 담겨서 밑줄이 생긴다 */
       client.invalidateQueries({ queryKey: ['items'] });
+      client.invalidateQueries({ queryKey: quotaKey });
     },
   });
 }
 
+/** 기다리던 질문을 다시 묻는다 — 같은 묶음에서 기다리던 것도 함께 풀린다 */
 export function useResolveAsk() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
       api<ApiAskView>(`/asks/${id}/resolve`, { method: 'POST' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: asksKey }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: asksKey });
+      client.invalidateQueries({ queryKey: ['items'] });
+    },
   });
 }
 
