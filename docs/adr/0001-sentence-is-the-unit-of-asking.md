@@ -26,3 +26,23 @@ of the thing that did not work.
   _Pending Ask_ term in `CONTEXT.md`.
 - Asking about a bare word is not offered during capture, because a reader always has a
   sentence in front of them.
+
+## Amendment (2026-10): the reader picks, the sentence still travels
+
+The sentence remains the unit sent to the model, but **the reader now chooses the
+expressions** instead of the model proposing candidates. On the photo (or on typed text) the
+reader taps or drags over the words they do not know; the app widens each pick to its sentence
+boundary and sends `{ sentence, picks }`. The model returns the translation and, for each
+pick, the canonical form (`term`) and its meaning in that sentence. The server then saves the
+picks as lexical items immediately.
+
+Why: model-proposed candidates guessed what the reader did not know. When the guess missed,
+the reader saved nothing and the sentence was left with no expression attached — a state the
+drawer had no good place for. The reader knows where they stalled.
+
+What did not change: disambiguation still falls out of the model seeing the whole line, and
+**the model must still produce `term`**. The reader picks the surface form (`brushed it off`);
+re-encounter depends on every surface mapping to one canonical `term` (`brush it off`).
+
+Several sentences from one page go in a single call and count as one ask against the monthly
+quota (`batchId`), capped at 5 sentences and 8 picks per sentence.

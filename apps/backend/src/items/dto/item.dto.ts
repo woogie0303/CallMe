@@ -9,10 +9,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import {
-  STATUSES,
-  type ItemStatus,
-} from '../lexical-item.schema';
+import { STATUSES, type ItemStatus } from '../lexical-item.schema';
 
 export class ConfusedWithDto {
   @IsMongoId()

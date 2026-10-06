@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-
 export const STATUSES = ['헷갈려요', '외웠어요'] as const;
 export type ItemStatus = (typeof STATUSES)[number];
 

@@ -18,5 +18,7 @@ import { LexicalItem, LexicalItemSchema } from './lexical-item.schema';
   ],
   controllers: [ItemsController],
   providers: [ItemsService],
+  /** 질문이 답을 받으면 독자가 고른 표현을 바로 담는다(`AsksService`) */
+  exports: [ItemsService],
 })
 export class ItemsModule {}

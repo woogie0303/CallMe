@@ -9,39 +9,39 @@ export const PENDING_REASONS = ['질문 소진', '연결 실패'] as const;
 export type PendingReason = (typeof PENDING_REASONS)[number];
 
 /**
- * 모델이 이 문장에서 골라준, 외워둘 만한 표현. **추천일 뿐이다** —
- * 독자가 고르는 순간에야 어휘 항목이 되고, 그때 재회가 일어난다.
+ * 독자가 이 문장에서 **직접 고른** 표현. 묻기 전에는 문장에 적힌 꼴(`surface`)뿐이고,
+ * 답이 오면 모델이 사전에 실릴 꼴(`term`)과 그 문장에서의 뜻을 채운다. 그 순간
+ * 서버가 어휘 항목으로 담는다 — 고른 것은 독자이니 한 번 더 고르게 하지 않는다.
+ *
+ * `term`이 따로 있어야 재회가 된다. 'brushed it off'와 'brushes it off'는 둘 다
+ * 'brush it off'로 담겨야 같은 표현으로 만난다((readerId, term) 유일 인덱스).
  */
 @Schema({ _id: false })
-export class Candidate {
+export class AskPick {
+  /** 문장에 적힌 꼴 그대로 — 독자가 짚은 것 */
   @Prop({ required: true })
-  term!: string;
+  surface!: string;
 
-  /** 이 문장에 있던 꼴 — 담을 때 만남에 함께 적힌다 */
   @Prop()
-  surface?: string;
+  term?: string;
 
-  @Prop({ required: true })
-  meaning!: string;
+  @Prop()
+  meaning?: string;
 
-  /** 이미 서랍에 있는 표현이면 그 항목 — 담는 순간 재회가 된다 */
+  /** 담긴 어휘 항목 */
   @Prop({ type: Types.ObjectId, ref: 'LexicalItem' })
-  existingItemId?: Types.ObjectId;
-
-  /**
-   * 그 항목을 마지막으로 만난 자리. '3월에 Klara에서 담으셨어요' 한 줄을
-   * 화면이 쓰려면 이만큼이 필요하고, 이 줄이 붙은 카드가 이 앱이 있는 이유다.
-   * 화면이 항목마다 다시 물어보게 두지 않는다.
-   */
-  @Prop({ type: Object })
-  existing?: { met: number; lastSavedAt?: Date; lastBookTitle?: string };
+  itemId?: Types.ObjectId;
 }
 
-export const CandidateSchema = SchemaFactory.createForClass(Candidate);
+export const AskPickSchema = SchemaFactory.createForClass(AskPick);
 
 /**
- * 질문 하나 — 언제나 **문장 통째로** 묻는다. 낱말만 떼어 물으면 그 문장에서의
- * 뜻을 고를 수 없기 때문이다(ADR-0001).
+ * 질문 하나 — 문장 하나와 그 문장에서 고른 표현들. 낱말만 떼어 묻지 않는다 —
+ * 그 문장에서의 뜻을 고를 수 없기 때문이다(ADR-0001).
+ *
+ * 한 쪽에서 여러 문장을 한 번에 물으면 질문이 문장마다 하나씩 생기고 같은
+ * `batchId`를 나눠 갖는다. 모델은 묶음째 한 번 부르고, 이번 달 몫도 묶음 하나를
+ * 한 번으로 센다.
  *
  * 답을 못 받아도 기록은 남는다. 문장은 이미 저장돼 있고 이 질문은 pending으로
  * 기다린다 — 담는 일이 실패하는 앱이면 읽다 말고 손이 멈춘다(ADR-0003).
@@ -55,14 +55,18 @@ export class Ask {
   @Prop({ type: Types.ObjectId, ref: 'Sentence', required: true, index: true })
   sentenceId!: Types.ObjectId;
 
+  /** 한 번에 물은 묶음. 예전 질문에는 없다 — 그건 혼자서 한 묶음이다. */
+  @Prop({ type: Types.ObjectId, index: true })
+  batchId?: Types.ObjectId;
+
   @Prop({ type: String, enum: ASK_STATUSES, default: 'pending', index: true })
   status!: AskStatus;
 
   @Prop()
   translation?: string;
 
-  @Prop({ type: [CandidateSchema], default: [] })
-  candidates!: Candidate[];
+  @Prop({ type: [AskPickSchema], default: [] })
+  picks!: AskPick[];
 
   @Prop({ type: String, enum: PENDING_REASONS })
   pendingReason?: PendingReason;

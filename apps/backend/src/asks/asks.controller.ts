@@ -18,7 +18,8 @@ import { Throttle } from '@nestjs/throttler';
 import { RATE_LIMIT } from '../common/rate-limit';
 
 /**
- * 묻는 단위는 언제나 문장 하나다(ADR-0001).
+ * 묻는 단위는 문장과 그 안에서 고른 표현이다(ADR-0001). 한 번에 여러 문장을
+ * 물으면 문장마다 질문이 하나씩 생긴다.
  *
  * quota가 :id보다 먼저 선언돼 있어야 한다 — 나중에 두면 /asks/quota가
  * 질문 id로 잡힌다.
