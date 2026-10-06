@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -19,12 +20,17 @@ type Variant = 'primary' | 'ink' | 'subtle';
  * 않는다. 그렇게 하면 '아직 안 됨'이 '이것도 누를 수 있는 다른 선택'처럼
  * 보여서, 화면에 진짜 버튼이 둘 있는 것이 된다.
  *
+ * `iconOnly`는 그림 하나만 보인다 — 옆의 큰 버튼이 말을 하고 이 버튼은 짧게 서야 할
+ * 때. 글자(`label`)는 스크린리더가 읽는다. 폭은 부르는 쪽이 정한다.
+ *
  * `loading`은 누름까지 함께 막는다. 글자만 '저장하는 중…'으로 바꿔두면
  * 두 번 눌리고, 그때마다 서버에 두 번 쓴다.
  */
 export function ActionButton({
   label,
   aside,
+  icon,
+  iconOnly,
   variant = 'primary',
   disabled,
   loading,
@@ -34,6 +40,9 @@ export function ActionButton({
   label: string;
   /** 라벨 뒤에 붙는 곁말 — "4개" 같은 수 */
   aside?: string;
+  /** 라벨 앞의 그림. `iconOnly`면 그림만 보인다 */
+  icon?: ReactNode;
+  iconOnly?: boolean;
   variant?: Variant;
   /** 지금은 누를 수 없다 — 왜인지는 라벨이나 곁의 글이 말한다 */
   disabled?: boolean;
@@ -57,9 +66,13 @@ export function ActionButton({
       <View style={styles.inner}>
         {loading ? (
           <ActivityIndicator size="small" color={v.label.color} />
-        ) : null}
-        <AppText style={[styles.label, v.label]}>{label}</AppText>
-        {aside ? (
+        ) : (
+          icon
+        )}
+        {iconOnly && (icon || loading) ? null : (
+          <AppText style={[styles.label, v.label]}>{label}</AppText>
+        )}
+        {aside && !iconOnly ? (
           <AppText style={[styles.aside, v.aside]}>{aside}</AppText>
         ) : null}
       </View>

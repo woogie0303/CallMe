@@ -210,10 +210,6 @@ export default function AskScreen() {
           <AppText style={styles.needPage}>
             이 책은 {book?.pages}쪽까지예요.
           </AppText>
-        ) : sentence.trim() && !page ? (
-          <AppText style={styles.needPage}>
-            몇 쪽인지 적어야 담을 수 있어요.
-          </AppText>
         ) : null}
 
         {words.length ? (

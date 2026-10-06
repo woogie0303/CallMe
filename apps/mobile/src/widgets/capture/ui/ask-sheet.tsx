@@ -21,7 +21,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { color, gutter, type } from '@/shared/config';
-import { ActionButton, AppText, PageIcon, PageInput } from '@/shared/ui';
+import {
+  ActionButton,
+  AppText,
+  HeartIcon,
+  PageIcon,
+  PageInput,
+} from '@/shared/ui';
 import { AskSentence, type SheetSentence } from './ask-sentence';
 
 /** 이만큼 넘게 끌어내리면 닫는다 — 원래 높이에 대한 비율 */
@@ -245,7 +251,13 @@ export function AskSheet({
             onRemovePick={onRemovePick}
           />
         ))}
+      </ScrollView>
 
+      {/*
+        쪽수는 글 목록 밖에 고정한다. 문장이 길어 목록이 길어지면 맨 아래의 쪽수 칸이
+        화면 밖으로 밀려나고, 누르면 자판에 가려져 무엇을 적는지 보이지 않았다.
+      */}
+      <View style={styles.pageArea}>
         <View style={styles.pageRow}>
           <PageIcon size={17} color={color.text.meta} />
           <AppText style={styles.pageLabel}>몇 쪽이에요?</AppText>
@@ -260,44 +272,52 @@ export function AskSheet({
         {/* 버튼이 흐려진 이유는 버튼이 아니라 여기가 말한다 */}
         {tooFar ? (
           <AppText style={styles.hint}>이 책은 {maxPage}쪽까지예요.</AppText>
-        ) : !page ? (
-          <AppText style={styles.hint}>
-            몇 쪽인지 적어야 담을 수 있어요.
-          </AppText>
         ) : null}
-      </ScrollView>
+      </View>
 
       <View style={styles.actions}>
-        <AppText style={styles.quota}>
-          {quotaLeft > 0
-            ? `${many ? `${sentences.length}문장을 한 번에 물어도 ` : ''}질문 1번을 써요 · 이번 달 ${quotaLeft}번 남음`
-            : '이번 달 질문을 다 썼어요. 문장은 담기고 다음 달 1일에 저절로 물어볼 수 있어요.'}
-        </AppText>
-        {/* 질문을 다 썼으면 묻는 대신 담아두고, 다음 달에 저절로 풀린다(ADR-0003) */}
-        <ActionButton
-          label={
-            quotaLeft > 0
-              ? many
-                ? `${sentences.length}문장 한 번에 물어보기`
-                : '이 문장 물어보기'
-              : many
-                ? `${sentences.length}문장 담아두기`
-                : '문장만 담아두기'
-          }
-          variant={quotaLeft > 0 ? 'primary' : 'ink'}
-          loading={asking}
-          disabled={keeping || !askable}
-          onPress={onAsk}
-        />
-        <ActionButton
-          label={
-            many ? '그냥 마음에 든 문장들이에요' : '그냥 마음에 든 문장이에요'
-          }
-          variant="subtle"
-          loading={keeping}
-          disabled={asking || !ready}
-          onPress={onKeepOnly}
-        />
+        {/* 남아 있을 때는 말이 없다. 다 썼을 때만 버튼이 왜 '담아두기'인지 말한다 */}
+        {quotaLeft === 0 && (
+          <AppText style={styles.quota}>
+            이번 달 질문을 다 썼어요. 문장은 담기고 다음 달 1일에 저절로 물어볼
+            수 있어요.
+          </AppText>
+        )}
+        {/*
+          한 줄에 둘 — 넓은 쪽이 물어보기, 좁은 쪽(하트)이 '그냥 마음에 든 문장'. 위아래로
+          쌓으면 둘이 같은 무게의 선택처럼 보였고, 시트가 그만큼 높아져 사진을 가렸다.
+        */}
+        <View style={styles.buttons}>
+          {/* 질문을 다 썼으면 묻는 대신 담아두고, 다음 달에 저절로 풀린다(ADR-0003) */}
+          <ActionButton
+            label={
+              quotaLeft > 0
+                ? many
+                  ? `${sentences.length}문장 물어보기`
+                  : '이 문장 물어보기'
+                : many
+                  ? `${sentences.length}문장 담아두기`
+                  : '문장만 담아두기'
+            }
+            variant={quotaLeft > 0 ? 'primary' : 'ink'}
+            loading={asking}
+            disabled={keeping || !askable}
+            onPress={onAsk}
+            style={styles.main}
+          />
+          <ActionButton
+            label={
+              many ? '그냥 마음에 든 문장들이에요' : '그냥 마음에 든 문장이에요'
+            }
+            icon={<HeartIcon size={22} color={color.primary} />}
+            iconOnly
+            variant="subtle"
+            loading={keeping}
+            disabled={asking || !ready}
+            onPress={onKeepOnly}
+            style={styles.side}
+          />
+        </View>
       </View>
     </Animated.View>
   );
@@ -332,6 +352,7 @@ const styles = StyleSheet.create({
   scrollGrow: { flex: 1 },
   body: { paddingHorizontal: gutter, paddingBottom: 6, gap: 12 },
 
+  pageArea: { paddingHorizontal: gutter, gap: 8 },
   pageRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pageLabel: { flex: 1, ...type.label2, color: color.text.secondary },
   pageBox: {
@@ -346,6 +367,11 @@ const styles = StyleSheet.create({
   hint: { ...type.caption1, color: color.status.cautionary, marginTop: -4 },
 
   actions: { paddingHorizontal: gutter, paddingTop: 4, gap: 8 },
+  buttons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  /** 넓은 쪽 — 이 시트가 하는 일은 묻는 것이다 */
+  main: { flex: 1 },
+  /** 좁은 쪽 — 하트 하나. 높이는 옆 버튼과 맞춘다 */
+  side: { width: 56, height: 52 },
   quota: {
     ...type.caption1,
     color: color.text.meta,
