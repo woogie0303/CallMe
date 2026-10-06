@@ -174,6 +174,8 @@ const styles = StyleSheet.create({
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
+    /** 긴 구는 칩 안에서 줄을 바꾼다 — 칸을 넘으면 ✕가 밀려 나간다 */
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
@@ -184,7 +186,12 @@ const styles = StyleSheet.create({
     backgroundColor: color.primaryTint,
   },
   chipMissing: { backgroundColor: color.fill.default },
-  chipText: { fontSize: 14, lineHeight: 18, color: color.primary },
+  chipText: {
+    flexShrink: 1,
+    fontSize: 14,
+    lineHeight: 18,
+    color: color.primary,
+  },
   chipTextMissing: {
     color: color.status.cautionary,
     textDecorationLine: 'line-through',
