@@ -29,8 +29,6 @@ export function SheetPanel({ children }: { children: ReactNode }) {
       exiting={SlideOutDown.duration(160)}
       style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
     >
-      {/* 닫기 표시 대신 여기가 '내릴 수 있다'고 말한다 */}
-      <View style={styles.grip} />
       <View style={styles.options}>{children}</View>
     </Animated.View>
   );
@@ -102,13 +100,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingTop: 14,
     gap: 12,
-  },
-  grip: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: color.fill.bold,
   },
   options: { paddingHorizontal: gutter, gap: 10 },
 });
