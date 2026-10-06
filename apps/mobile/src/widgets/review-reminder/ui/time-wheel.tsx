@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 import { color, type } from '@/shared/config';
-import { AppText } from '@/shared/ui';
+import { AppText, Tap } from '@/shared/ui';
 import type { ReminderTime } from '@/shared/notifications/reminder';
 
 const ITEM = 46;
@@ -119,12 +119,15 @@ function Column({
       Math.max(0, Math.round(e.nativeEvent.contentOffset.y / ITEM)),
     );
 
-  const step = (delta: number) => {
-    const next = Math.min(items.length - 1, Math.max(0, live + delta));
+  /** 그 줄이 가운데에 오도록 굴린다 — 손으로 굴리지 않고 눌러서 고를 때도 같은 길을 탄다 */
+  const go = (next: number) => {
     ref.current?.scrollTo({ y: next * ITEM, animated: true });
     setLive(next);
     onSelect(next);
   };
+
+  const step = (delta: number) =>
+    go(Math.min(items.length - 1, Math.max(0, live + delta)));
 
   return (
     <ScrollView
@@ -155,9 +158,14 @@ function Column({
       }
     >
       {items.map((item, i) => (
-        <View key={item} style={styles.item}>
+        <Tap
+          key={item}
+          style={styles.item}
+          onPress={() => go(i)}
+          accessible={false}
+        >
           <AppText style={i === live ? styles.on : styles.off}>{item}</AppText>
-        </View>
+        </Tap>
       ))}
     </ScrollView>
   );
