@@ -1,4 +1,5 @@
 import type { ItemSummary } from '@/entities/lexical-item/api/item.api';
+import type { ReminderTime } from '@/shared/notifications/reminder';
 
 /** 앞으로 며칠치를 미리 예약해 두는가 — 앱을 열 때마다 새로 짠다 */
 export const REMINDER_DAYS = 7;
@@ -26,7 +27,7 @@ export type PlannedReminder = {
  */
 export function planReminders(
   items: ItemSummary[],
-  hour: number,
+  time: ReminderTime,
   now: Date = new Date(),
 ): PlannedReminder[] {
   const confused = items
@@ -41,7 +42,7 @@ export function planReminders(
 
   /** 오늘 그 시각이 아직 안 지났으면 오늘부터, 지났으면(1분 여유) 내일부터 */
   const first = new Date(now);
-  first.setHours(hour, 0, 0, 0);
+  first.setHours(time.hour, time.minute, 0, 0);
   if (first.getTime() <= now.getTime() + 60_000)
     first.setDate(first.getDate() + 1);
 

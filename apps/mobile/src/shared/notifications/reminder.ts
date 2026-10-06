@@ -11,12 +11,16 @@ import { Platform } from 'react-native';
  * (`app.config.js`가 `expo-notifications` 플러그인의 `aps-environment`를 일부러 뺀다.)
  */
 
-/** 고를 수 있는 시각 — 읽는 때가 사람마다 달라서 넷만 둔다 */
-export const REMINDER_HOURS = [8, 12, 20, 22] as const;
+/** 알림 시각은 독자가 분 단위로 고른다 — 읽는 때가 사람마다 달라서 */
+export type ReminderTime = { hour: number; minute: number };
 
-export type ReminderSetting = { enabled: boolean; hour: number };
+export type ReminderSetting = { enabled: boolean } & ReminderTime;
 
-export const DEFAULT_REMINDER: ReminderSetting = { enabled: false, hour: 20 };
+export const DEFAULT_REMINDER: ReminderSetting = {
+  enabled: false,
+  hour: 20,
+  minute: 0,
+};
 
 export type ScheduledReminder = {
   at: Date;
@@ -54,13 +58,23 @@ export async function readReminder(): Promise<ReminderSetting> {
     const parsed = JSON.parse(raw) as Partial<ReminderSetting>;
     return {
       enabled: parsed.enabled === true,
-      hour: (REMINDER_HOURS as readonly number[]).includes(parsed.hour ?? -1)
-        ? (parsed.hour as number)
-        : DEFAULT_REMINDER.hour,
+      hour: within(parsed.hour, 23) ?? DEFAULT_REMINDER.hour,
+      /** 시각만 적혀 있던 예전 설정은 정각으로 읽는다 */
+      minute: within(parsed.minute, 59) ?? 0,
     };
   } catch {
     return DEFAULT_REMINDER;
   }
+}
+
+/** 0~max의 정수만 받는다 — 깨진 값이 예약 시각을 망치지 않게 */
+function within(value: unknown, max: number): number | undefined {
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= max
+    ? value
+    : undefined;
 }
 
 export async function saveReminder(setting: ReminderSetting): Promise<void> {

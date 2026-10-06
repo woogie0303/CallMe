@@ -11,6 +11,7 @@ import {
   saveReminder,
   scheduleReminders,
   type ReminderSetting,
+  type ReminderTime,
 } from '@/shared/notifications/reminder';
 import { planReminders } from '../lib/plan';
 
@@ -30,7 +31,7 @@ export function useReminderSync() {
       const setting = await readReminder();
       if (!live || !setting.enabled) return;
       if (!(await hasReminderPermission())) return;
-      await scheduleReminders(planReminders(items, setting.hour));
+      await scheduleReminders(planReminders(items, setting));
     })().catch(() => {
       /* 알림이 안 잡혀도 앱이 멈출 일은 아니다 */
     });
@@ -64,7 +65,7 @@ export function useReminderSetting() {
       await saveReminder(next);
       setSetting(next);
       if (next.enabled) {
-        await scheduleReminders(planReminders(items, next.hour));
+        await scheduleReminders(planReminders(items, next));
       } else {
         await cancelReminders();
       }
@@ -94,10 +95,10 @@ export function useReminderSetting() {
     [apply, setting],
   );
 
-  const setHour = useCallback(
-    (hour: number) => apply({ ...setting, hour }),
+  const setTime = useCallback(
+    (time: ReminderTime) => apply({ ...setting, ...time }),
     [apply, setting],
   );
 
-  return { setting, ready, toggle, setHour, hasItems: items.length > 0 };
+  return { setting, ready, toggle, setTime, hasItems: items.length > 0 };
 }
