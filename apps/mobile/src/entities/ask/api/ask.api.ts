@@ -57,23 +57,6 @@ export function useCreateAsk() {
   });
 }
 
-/**
- * 찍은 쪽에서 읽어낸 줄들을 문장으로 잇는다.
- *
- * 앱에서 정규식으로 자르지 않는 이유는, 문장을 나누는 두 번째 조각을 두면
- * 답을 내는 모델과 서로 다르게 자르기 때문이다(ADR-0002). `rough`가 참이면
- * 모델이 답하지 않아 서버가 거칠게 이어 준 것이라, 문장이 어긋나 있을 수 있다.
- */
-export function useSplitLines() {
-  return useMutation({
-    mutationFn: (lines: string[]) =>
-      api<{ sentences: string[]; rough: boolean }>('/asks/split', {
-        method: 'POST',
-        body: { lines },
-      }),
-  });
-}
-
 export function useResolveAsk() {
   const client = useQueryClient();
   return useMutation({

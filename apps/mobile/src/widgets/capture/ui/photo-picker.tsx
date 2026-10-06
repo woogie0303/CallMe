@@ -2,11 +2,10 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { accent, color, ink, type } from '@/shared/config';
-import type { SentencePlacement } from '@/shared/ocr/align';
+import { accent, color, ink } from '@/shared/config';
 import { previewWords, type Selection } from '@/shared/ocr/selection';
 import type { OcrWord } from '@/shared/ocr/text-extractor';
-import { AppText, Quote, Tap } from '@/shared/ui';
+import { Tap } from '@/shared/ui';
 
 export type Shot = { uri: string; width: number; height: number };
 
@@ -24,44 +23,25 @@ export type Shot = { uri: string; width: number; height: number };
  * 짚은 범위는 문장 경계까지 저절로 넓어진다(`shared/ocr/selection`). 조각만
  * 물으면 맥락 없는 뜻풀이가 되기 때문이다 — 넓어진 만큼이 화면에 그대로 칠해져서
  * 무엇을 묻게 되는지 누르기 전에 보인다.
- *
- * 좌표가 없는 인식기에서는 예전처럼 조판해 보여준다.
  */
 export function PhotoPicker({
   shot,
   words,
-  placements,
   selection,
   anchor,
   onTapWord,
-  selected,
-  onSelectSentence,
 }: {
   shot: Shot;
   words: OcrWord[];
-  /** 좌표가 없을 때의 물러날 자리 */
-  placements: SentencePlacement[];
   /** 지금 정해진 범위 — 넓어진 뒤의 값 */
   selection: Selection | null;
   /** 첫 낱말만 짚어둔 상태 */
   anchor: number | null;
   onTapWord: (index: number) => void;
-  selected?: string;
-  onSelectSentence: (sentence: string) => void;
 }) {
   const [box, setBox] = useState<{ width: number; height: number } | null>(
     null,
   );
-
-  if (!words.length) {
-    return (
-      <TypesetPage
-        placements={placements}
-        selected={selected}
-        onSelect={onSelectSentence}
-      />
-    );
-  }
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -130,45 +110,6 @@ export function PhotoPicker({
   );
 }
 
-/**
- * 좌표가 없을 때의 물러날 자리 — 읽어낸 글을 한 문단으로 흘려 조판한다.
- * 목록처럼 쌓지 않는 이유는, 목록으로 보이는 순간 '책의 한 쪽'이라는 감각이
- * 사라지기 때문이다.
- */
-function TypesetPage({
-  placements,
-  selected,
-  onSelect,
-}: {
-  placements: SentencePlacement[];
-  selected?: string;
-  onSelect: (sentence: string) => void;
-}) {
-  return (
-    <View style={styles.paper}>
-      <Quote style={styles.flow}>
-        {placements.map((place, i) => {
-          const on = place.sentence === selected;
-          return (
-            <Quote
-              key={i}
-              onPress={() => onSelect(place.sentence)}
-              style={on ? styles.pickedText : styles.plainText}
-              accessibilityLabel={place.sentence}
-            >
-              {place.sentence}
-              {i < placements.length - 1 ? '  ' : ''}
-            </Quote>
-          );
-        })}
-      </Quote>
-      <AppText style={styles.hintText2}>
-        사진에서 읽어낸 글이에요 · 물어볼 문장을 눌러보세요
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   stage: { flex: 1, backgroundColor: ink(1), overflow: 'hidden' },
 
@@ -189,22 +130,4 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: color.primary,
   },
-
-  paper: {
-    borderRadius: 16,
-    backgroundColor: color.surface.page,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border.default,
-    paddingHorizontal: 20,
-    paddingVertical: 22,
-    gap: 16,
-  },
-  flow: { fontSize: 16, lineHeight: 28 },
-  plainText: { color: color.text.body },
-  pickedText: {
-    color: color.primary,
-    backgroundColor: accent(0.12),
-    fontWeight: '600',
-  },
-  hintText2: { ...type.caption2, color: color.text.meta },
 });

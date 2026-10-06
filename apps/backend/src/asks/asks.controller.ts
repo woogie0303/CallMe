@@ -13,7 +13,7 @@ import { CurrentReader } from '../common/current-reader.decorator';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { ObjectIdPipe } from '../common/object-id.pipe';
 import { AsksService } from './asks.service';
-import { CreateAskDto, ListAsksQuery, SplitLinesDto } from './dto/ask.dto';
+import { CreateAskDto, ListAsksQuery } from './dto/ask.dto';
 import { Throttle } from '@nestjs/throttler';
 import { RATE_LIMIT } from '../common/rate-limit';
 
@@ -38,14 +38,6 @@ export class AsksController {
   @HttpCode(200)
   adBonus(@CurrentReader() readerId: string) {
     return this.asks.grantAdBonus(readerId);
-  }
-
-  /** 찍은 쪽에서 읽어낸 줄들을 문장으로 — 아직 묻는 것이 아니라 고르기 전 단계다 */
-  @Throttle({ default: RATE_LIMIT.model })
-  @Post('split')
-  @HttpCode(200)
-  split(@Body() dto: SplitLinesDto) {
-    return this.asks.split(dto.lines);
   }
 
   @Throttle({ default: RATE_LIMIT.model })

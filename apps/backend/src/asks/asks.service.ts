@@ -14,7 +14,6 @@ import { Ask, type AskDocument, type Candidate } from './ask.schema';
 import { ModelUnavailable } from '../common/claude';
 import { assertPageInBook } from '../common/page-in-book';
 import { AnswerService, type Answer } from './anthropic/answer.service';
-import { roughSplit, SplitService } from './anthropic/split.service';
 import type { CreateAskDto, ListAsksQuery } from './dto/ask.dto';
 
 /** 이번 달에 몇 번 남았는지. 다 써도 담는 일은 실패하지 않는다. */
@@ -49,31 +48,8 @@ export class AsksService {
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
     @InjectModel(Reader.name) private readonly readers: Model<Reader>,
     private readonly answer: AnswerService,
-    private readonly splitter: SplitService,
     private readonly config: ConfigService,
   ) {}
-
-  /**
-   * 찍은 쪽에서 읽어낸 줄들을 문장으로 잇는다. 질문 횟수를 깎지 않는다 —
-   * 아직 아무것도 묻지 않았고, 여기서 세면 문장을 고르기도 전에 이번 달 몫이
-   * 줄어든다.
-   *
-   * 모델이 답하지 않아도 빈손으로 돌려보내지 않는다. 거칠게라도 이어서 준다 —
-   * 찍는 일이 실패하면 읽던 흐름이 거기서 끊긴다.
-   */
-  async split(
-    lines: string[],
-  ): Promise<{ sentences: string[]; rough: boolean }> {
-    const cleaned = lines.map((line) => line.trim()).filter(Boolean);
-    if (!cleaned.length) return { sentences: [], rough: false };
-
-    try {
-      return { sentences: await this.splitter.split(cleaned), rough: false };
-    } catch (error) {
-      if (!(error instanceof ModelUnavailable)) throw error;
-      return { sentences: roughSplit(cleaned), rough: true };
-    }
-  }
 
   /**
    * 묻기. **문장은 언제나 먼저 저장된다.**

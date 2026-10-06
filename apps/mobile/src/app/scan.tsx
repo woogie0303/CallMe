@@ -4,16 +4,11 @@ import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {
-  useAskQuota,
-  useCreateAsk,
-  useSplitLines,
-} from '@/entities/ask/api/ask.api';
+import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import { useCreateSentence } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, ink, type } from '@/shared/config';
-import { alignSentences, type SentencePlacement } from '@/shared/ocr/align';
 import { selectWords, type Selection } from '@/shared/ocr/selection';
 import {
   available,
@@ -55,11 +50,9 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [shot, setShot] = useState<Shot | null>(null);
   const [words, setWords] = useState<OcrWord[]>([]);
-  const [places, setPlaces] = useState<SentencePlacement[]>([]);
   /** 첫 낱말만 짚어둔 상태 — 끝을 누르면 범위가 정해진다 */
   const [anchor, setAnchor] = useState<number | null>(null);
   const [range, setRange] = useState<Selection | null>(null);
-  const [rough, setRough] = useState(false);
   const [reading, setReading] = useState(false);
 
   /** 지금 짚은 문장 — 인식이 틀렸으면 시트에서 고친 글이 여기 들어간다 */
@@ -67,7 +60,6 @@ export default function ScanScreen() {
   /** 손대기 전까지는 지난번에 적은 쪽을 따른다 */
   const [pageEdit, setPageEdit] = useState<string>();
 
-  const split = useSplitLines();
   const createAsk = useCreateAsk();
   const keepSentence = useCreateSentence();
   const { data: quota } = useAskQuota();
@@ -110,6 +102,15 @@ export default function ScanScreen() {
       if (!read.lines.length)
         throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
+      /**
+       * 낱말 좌표가 없으면 사진 위에서 짚을 수 없다 — 줄을 문장으로 이어 주던 서버
+       * 호출은 걷어냈다. 좌표를 주는 곳은 iOS(Apple Vision)뿐이다.
+       */
+      if (!read.words.length)
+        throw new Error(
+          '이 기기에서는 사진 위에서 문장을 고를 수 없어요. 직접 적어서 물어봐 주세요.',
+        );
+
       /** 좌표를 준 인식기가 잰 크기가 우선이다 — 좌표가 그 크기에 기대고 있다 */
       setShot({
         uri: photo.uri,
@@ -117,20 +118,6 @@ export default function ScanScreen() {
         height: read.height ?? photo.height,
       });
       setWords(read.words);
-
-      /**
-       * 낱말 좌표가 오면 서버에 문장을 나눠달라고 하지 않는다 — 짚는 사람이
-       * 어디서 막혔는지 이미 알고 있어서, 모델이 한 번 더 나눌 이유가 없다.
-       * 좌표가 없을 때만 예전처럼 줄을 보내 문장으로 이어 받는다.
-       */
-      if (!read.words.length) {
-        const result = await split.mutateAsync(read.lines.map((l) => l.text));
-        setPlaces(alignSentences(read.lines, result.sentences));
-        setRough(result.rough);
-      } else {
-        setPlaces([]);
-        setRough(false);
-      }
     } catch (error) {
       Alert.alert(
         '다시 찍어볼까요',
@@ -144,7 +131,6 @@ export default function ScanScreen() {
   const retake = () => {
     setShot(null);
     setWords([]);
-    setPlaces([]);
     closeSheet();
   };
 
@@ -310,23 +296,11 @@ export default function ScanScreen() {
         <PhotoPicker
           shot={shot}
           words={words}
-          placements={places}
           selection={range}
           anchor={anchor}
           onTapWord={tapWord}
-          selected={picked}
-          onSelectSentence={(sentence) => {
-            if (sentence === picked) return;
-            setPicked(sentence);
-          }}
         />
       </View>
-
-      {rough && !picked ? (
-        <AppText style={[styles.rough, { paddingBottom: insets.bottom + 10 }]}>
-          지금은 문장을 거칠게 나눴어요 — 짚은 다음 손으로 고칠 수 있어요.
-        </AppText>
-      ) : null}
 
       {picked ? (
         <AskSheet
@@ -427,13 +401,6 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     backgroundColor: color.text.primary,
-  },
-
-  rough: {
-    ...type.caption1,
-    color: color.status.cautionary,
-    lineHeight: 18,
-    paddingHorizontal: gutter,
   },
 
   notice: { flex: 1, paddingHorizontal: gutter, paddingTop: 40, gap: 10 },

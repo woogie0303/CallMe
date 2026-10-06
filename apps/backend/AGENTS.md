@@ -122,7 +122,6 @@ POST   /api/sentences/:id/thoughts            이 문장에 대고 내 생각 �
 DELETE /api/sentences/:id/thoughts/:thoughtId
 
 GET    /api/asks/quota            이번 달 남은 질문
-POST   /api/asks/split            찍은 쪽에서 읽어낸 줄들을 문장으로 잇는다 — 질문 횟수를 쓰지 않는다
 POST   /api/asks                  문장을 통째로 묻는다 — 문장은 먼저 저장된다
                                   sentenceId를 보내면 담아둔 문장을 그대로 쓴다(새로 만들지 않는다)
 GET    /api/asks ?status= &limit= &sentenceId=  status=pending이 '기다리는 문장', sentenceId는 문장 하나의 질문
