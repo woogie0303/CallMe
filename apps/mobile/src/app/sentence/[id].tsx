@@ -342,12 +342,20 @@ export default function SentenceScreen() {
       ) : null}
 
       <OptionSheet visible={menuOpen} onClose={() => setMenuOpen(false)}>
-        {/* 아직 안 물어본 문장에만 — 물어본 문장은 뜻과 표현이 이미 있다 */}
-        {row && !row.asked ? (
+        {/*
+          물어본 문장도 다시 물을 수 있다 — 처음에 못 고른 낱말이 있을 수 있어서. 물어본 적
+          없는 문장은 '물어보기', 물어본 문장은 '다시 골라서 물어보기'. 같은 질문 화면이
+          열리고, 이 문장 그대로라 글은 고칠 수 없다.
+        */}
+        {row ? (
           <DisclosureRow
             icon={<AskIcon size={19} color={color.text.primary} />}
-            title="이 문장 물어보기"
-            body="모르는 낱말을 고르면 이 문장에서의 뜻을 알려줘요."
+            title={row.asked ? '다시 골라서 물어보기' : '이 문장 물어보기'}
+            body={
+              row.asked
+                ? '못 고른 낱말을 더 골라서 물어요. 질문을 한 번 써요.'
+                : '모르는 낱말을 고르면 이 문장에서의 뜻을 알려줘요.'
+            }
             onPress={() => afterSheet(askNow)}
           />
         ) : null}

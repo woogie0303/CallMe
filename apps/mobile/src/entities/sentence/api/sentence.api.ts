@@ -19,9 +19,40 @@ export function useSentenceAsk(id?: string) {
   return useQuery({
     queryKey: ['asks', 'sentence', id],
     enabled: Boolean(id),
-    queryFn: () => api<ApiAskView[]>(`/asks?sentenceId=${id}&limit=1`),
-    select: (views) => views[0] ?? null,
+    queryFn: () => api<ApiAskView[]>(`/asks?sentenceId=${id}&limit=20`),
+    select: mergeAsks,
   });
+}
+
+/**
+ * 같은 문장을 여러 번 물었을 수 있다 — 담아둔 문장을 **다시 골라서** 물으면 질문이 하나 더
+ * 생긴다. 화면은 한 줄이라, 가장 최근에 답을 받은 질문을 바탕으로 하고 이전 질문에서
+ * 고른 표현을 이어 붙인다. 그렇지 않으면 다시 물을 때마다 먼저 고른 표현이 문장 화면에서
+ * 사라진다(서랍에는 남아 있는데도).
+ *
+ * 답을 받은 질문이 하나도 없으면(모두 기다리는 중) 가장 최근 것을 그대로 준다.
+ */
+function mergeAsks(views: ApiAskView[]): ApiAskView | null {
+  if (!views.length) return null;
+  const answered = views.filter((view) => view.ask.status === 'answered');
+  if (!answered.length) return views[0];
+
+  const [latest, ...older] = answered;
+  const seen = new Set(latest.ask.picks.map((p) => p.surface.toLowerCase()));
+  const extra = older
+    .flatMap((view) => view.ask.picks)
+    .filter((pick) => {
+      const key = pick.surface.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  return extra.length
+    ? {
+        ...latest,
+        ask: { ...latest.ask, picks: [...latest.ask.picks, ...extra] },
+      }
+    : latest;
 }
 
 /**
