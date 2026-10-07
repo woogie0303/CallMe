@@ -52,7 +52,8 @@ function buildYear(): ReadingYear {
   // 마지막 9일은 연속으로 채운다 — 사이드바의 "연속 9일"과 같은 사실이어야 한다.
   streak = 9;
   const flat: Array<[number, number]> = [];
-  for (let w = 51; w >= 0; w -= 1) for (let d = 6; d >= 0; d -= 1) flat.push([w, d]);
+  for (let w = 51; w >= 0; w -= 1)
+    for (let d = 6; d >= 0; d -= 1) flat.push([w, d]);
   flat.slice(0, streak).forEach(([w, d]) => {
     if (weeks[w][d] === 0) days += 1;
     weeks[w][d] = Math.max(2, weeks[w][d]);

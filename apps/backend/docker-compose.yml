@@ -1,0 +1,12 @@
+# 로컬 개발용 몽고 하나. 데이터는 이름 붙인 볼륨에 남아 컨테이너를 지워도 살아남는다.
+services:
+  mongo:
+    image: mongo:8
+    container_name: reread-mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - reread-mongo:/data/db
+
+volumes:
+  reread-mongo:

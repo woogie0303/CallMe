@@ -1,0 +1,117 @@
+/*
+ * Reread 홈페이지·방침. 앱과 같은 종이색·먹색·테라코타를 쓴다
+ * (apps/mobile/src/shared/config/tokens.ts). 앱이 라이트 하나뿐이라 여기도 라이트 하나다.
+ */
+:root {
+  --paper: #fdfbf7;
+  --alt: #f4f1ea;
+  --card: #ffffff;
+  --ink: #16130f;
+  --body: #3a352e;
+  --meta: #6f675d;
+  --line: rgba(28, 25, 21, 0.12);
+  --primary: #b3492a;
+  --primary-tint: rgba(179, 73, 42, 0.1);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--body);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+a { color: var(--primary); text-underline-offset: 3px; }
+a:hover { color: #90381d; }
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+
+/* 머리 */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0;
+}
+.wordmark {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.top nav a { font-size: 15px; color: var(--body); }
+
+/* 첫 화면 */
+.hero { padding: 36px 0 28px; text-align: center; }
+.hero img { width: 136px; height: auto; }
+h1 {
+  margin: 18px 0 14px;
+  color: var(--ink);
+  font-size: clamp(28px, 6.4vw, 40px);
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+}
+.lead { margin: 0 auto; max-width: 34em; font-size: 17px; color: var(--body); }
+
+/* 본문 구획 */
+section { padding: 30px 0; border-top: 1px solid var(--line); }
+h2 { margin: 0 0 14px; color: var(--ink); font-size: 22px; letter-spacing: -0.02em; line-height: 1.4; }
+h3 { margin: 0 0 6px; color: var(--ink); font-size: 18px; line-height: 1.45; }
+
+.steps { display: grid; gap: 12px; padding: 0; margin: 0; list-style: none; counter-reset: step; }
+.steps li {
+  counter-increment: step;
+  position: relative;
+  padding: 18px 18px 18px 60px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 28px;
+  text-align: center;
+}
+.steps h3 { font-size: 17px; }
+.steps p { margin: 0; font-size: 15px; color: var(--body); }
+
+/* 책에서 온 영어는 세리프 */
+.quote { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif; }
+
+/* 바닥 */
+footer { padding: 28px 0 44px; border-top: 1px solid var(--line); font-size: 14px; color: var(--meta); }
+footer p { margin: 4px 0; }
+footer a { color: var(--body); }
+
+/* 방침 본문 */
+.doc { padding: 8px 0 24px; }
+.doc h1 { margin: 12px 0 8px; font-size: clamp(26px, 5.4vw, 34px); text-align: left; }
+.doc h2 { margin-top: 36px; font-size: 20px; }
+.doc p, .doc li { font-size: 15.5px; }
+.doc ul { padding-left: 20px; }
+.doc li { margin: 4px 0; }
+.table-scroll { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.doc table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; line-height: 1.55; }
+.doc th, .doc td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.doc th { background: var(--alt); color: var(--ink); font-weight: 700; white-space: nowrap; }
+.doc tr:last-child td { border-bottom: 0; }
+.doc strong { color: var(--ink); }
+.updated { color: var(--meta); font-size: 14px; }

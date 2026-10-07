@@ -1,0 +1,271 @@
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { ProviderName } from '@/shared/api/types';
+import { color, gutter, type } from '@/shared/config';
+import {
+  configured,
+  SignInCancelled,
+  SignInFailed,
+} from '@/shared/session/oauth';
+import { useSession } from '@/shared/session/session';
+import { AppText, BRAND, BrandLogo, Mark, Tap } from '@/shared/ui';
+
+/**
+ * 한국 독자가 가장 많이 쓰는 순서. Apple은 크기와 자리가 다른 것과 같아야 한다 —
+ * 더 작거나 구석에 두면 심사에서 걸린다(Apple 로그인 가이드라인).
+ */
+const PROVIDERS: ProviderName[] = ['kakao', 'naver', 'google', 'apple'];
+
+/**
+ * 로그인 — 가입과 로그인을 나누지 않는다. 처음 온 계정이면 독자를 만들고
+ * 아니면 있던 독자로 이어진다. 비밀번호는 만들지 않는다.
+ *
+ * 버튼은 글자 없이 로고만 둔다. 넷을 "○○로 계속하기"로 쌓으면 화면 아래 절반이
+ * 버튼으로 차서, 위의 문장(이 앱이 무엇인지)보다 버튼이 먼저 읽힌다. 로고는
+ * 모두 알아보는 모양이라 글자가 없어도 뜻이 선다 — 스크린리더에는 이름을 준다.
+ */
+export default function SignInScreen() {
+  const insets = useSafeAreaInsets();
+  const { signIn, signInAsDeveloper, problem } = useSession();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const attempt = async (label: string, run: () => Promise<void>) => {
+    setBusy(label);
+    try {
+      await run();
+    } catch (error) {
+      /** 동의 화면을 그냥 닫은 것은 실패가 아니다 */
+      if (error instanceof SignInCancelled) return;
+
+      /** 왜 안 됐는지를 말한다 — 조용히 아무 일도 안 일어나면 고칠 수가 없다 */
+      if (error instanceof SignInFailed) {
+        Alert.alert('로그인하지 못했어요', error.message);
+        return;
+      }
+      Alert.alert(
+        '로그인하지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <View
+      style={[
+        styles.screen,
+        { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+      ]}
+    >
+      <View style={styles.head}>
+        <Mascot />
+        <Animated.View
+          entering={FadeInDown.delay(120).duration(360)}
+          style={styles.words}
+        >
+          <AppText style={styles.wordmark}>Reread</AppText>
+          <AppText style={styles.blurb}>
+            책을 읽다 막힌 문장, 여기에 두고 가세요
+          </AppText>
+        </Animated.View>
+      </View>
+
+      <View style={styles.foot}>
+        {/* 자동으로 들어가려다 막혔으면 왜인지 그대로 보여준다 — 대개 백엔드가 꺼져 있다 */}
+        {problem ? <AppText style={styles.problem}>{problem}</AppText> : null}
+
+        <View style={styles.divider} accessibilityRole="header">
+          <View style={styles.rule} />
+          <AppText style={styles.dividerText}>간편 로그인</AppText>
+          <View style={styles.rule} />
+        </View>
+
+        <View style={styles.row}>
+          {PROVIDERS.map((name) => (
+            <ProviderButton
+              key={name}
+              name={name}
+              ready={configured(name)}
+              loading={busy === name}
+              locked={busy !== null && busy !== name}
+              onPress={() => attempt(name, () => signIn(name))}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * 책을 읽는 캐릭터 — 이 앱의 얼굴이 처음 인사하는 자리. 천천히 떠올랐다 내려앉는다.
+ * 눈에 띄려는 움직임이 아니라 '살아 있다'는 정도라서 느리고 작다. '동작 줄이기'를
+ * 켰으면 가만히 있는다.
+ */
+function Mascot() {
+  const reduce = useReducedMotion();
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduce) return;
+    lift.value = withRepeat(
+      withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(lift);
+  }, [reduce, lift]);
+
+  const body = useAnimatedStyle(() => ({
+    transform: [{ translateY: -6 * lift.value }],
+  }));
+  const shadow = useAnimatedStyle(() => ({
+    transform: [{ scaleX: 1 - 0.14 * lift.value }],
+    opacity: 0.14 - 0.05 * lift.value,
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(420)}
+      style={styles.mascot}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel="책을 읽고 있는 Reread의 캐릭터"
+    >
+      <Animated.View style={body}>
+        <Mark name="reading" size={132} />
+      </Animated.View>
+      <Animated.View style={[styles.shadow, shadow]} />
+    </Animated.View>
+  );
+}
+
+/**
+ * 로고 하나짜리 동그란 버튼.
+ *
+ * 아직 쓸 수 없는 제공자(키가 없거나, Apple처럼 이 빌드에 권한이 없는 것)는
+ * 흐리게 두고 누르지 못하게 한다 — 숨기지 않는다. 사라지면 '이 앱은 Apple
+ * 로그인이 없구나'로 읽히고, 흐리면 '아직 안 됨'으로 읽힌다.
+ */
+function ProviderButton({
+  name,
+  ready,
+  loading,
+  locked,
+  onPress,
+}: {
+  name: ProviderName;
+  ready: boolean;
+  loading: boolean;
+  /** 다른 제공자로 로그인하는 중 — 두 창이 겹쳐 뜨지 않게 막는다 */
+  locked: boolean;
+  onPress: () => void;
+}) {
+  const brand = BRAND[name];
+  const off = !ready || locked || loading;
+  /** 로딩 표시는 로고와 같은 색으로 — 노란 바탕에 흰 스피너는 안 보인다 */
+  const spinner = name === 'naver' || name === 'apple' ? '#FFFFFF' : '#000000';
+
+  return (
+    <Tap
+      onPress={onPress}
+      disabled={off}
+      accessibilityRole="button"
+      accessibilityLabel={
+        ready ? `${brand.label}로 로그인` : `${brand.label}로 로그인, 준비 중`
+      }
+      accessibilityState={{ disabled: off, busy: loading }}
+      style={[
+        styles.circle,
+        { backgroundColor: brand.background },
+        brand.border ? { borderWidth: 1, borderColor: brand.border } : null,
+        !ready ? styles.unready : null,
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator color={spinner} />
+      ) : (
+        <BrandLogo name={name} />
+      )}
+    </Tap>
+  );
+}
+
+const CIRCLE = 56;
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    paddingHorizontal: gutter,
+    backgroundColor: color.surface.base,
+  },
+  /** 남는 자리의 가운데에 선다 — 위에 붙이면 아래 로그인 버튼과 사이가 휑하다 */
+  head: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 26 },
+  mascot: { alignItems: 'center' },
+  shadow: {
+    width: 76,
+    height: 9,
+    marginTop: 6,
+    borderRadius: 999,
+    backgroundColor: color.text.primary,
+  },
+  words: { alignItems: 'center', gap: 14 },
+  wordmark: {
+    ...type.title2,
+    fontSize: 32,
+    letterSpacing: -0.96,
+    color: color.text.primary,
+  },
+  blurb: {
+    ...type.label1,
+    lineHeight: 24,
+    textAlign: 'center',
+    color: color.text.secondary,
+  },
+  /** 책에서 온 영어만 세리프. 인사말이 아니라 곁들이는 인용이라 작고 옅게 */
+  line: {
+    marginTop: 6,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'center',
+    color: color.text.meta,
+  },
+
+  foot: { gap: 20 },
+  problem: { ...type.caption1, lineHeight: 18, color: color.status.cautionary },
+
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border.default,
+  },
+  dividerText: { ...type.caption1, color: color.text.secondary },
+
+  row: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
+  circle: {
+    width: CIRCLE,
+    height: CIRCLE,
+    borderRadius: CIRCLE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** 아직 쓸 수 없는 것 — 브랜드 색은 지키되 흐리게 */
+  unready: { opacity: 0.32 },
+
+  dev: { marginTop: 4 },
+});

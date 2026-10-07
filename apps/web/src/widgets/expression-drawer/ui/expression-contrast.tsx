@@ -52,7 +52,9 @@ function ContrastSide({
       }
     >
       <div className="wds-caption-2 font-semibold text-(--text-meta)">
-        {highlighted ? '지금 보는 표현' : `${on(expression.askedLabel)} 물어봤어요`}
+        {highlighted
+          ? '지금 보는 표현'
+          : `${on(expression.askedLabel)} 물어봤어요`}
       </div>
       <div
         className={

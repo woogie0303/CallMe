@@ -1,0 +1,81 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentReader } from '../common/current-reader.decorator';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
+import { ObjectIdPipe } from '../common/object-id.pipe';
+import { AsksService } from './asks.service';
+import { CreateAskDto, ListAsksQuery } from './dto/ask.dto';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT } from '../common/rate-limit';
+
+/**
+ * 묻는 단위는 문장과 그 안에서 고른 표현이다(ADR-0001). 한 번에 여러 문장을
+ * 물으면 문장마다 질문이 하나씩 생긴다.
+ *
+ * quota가 :id보다 먼저 선언돼 있어야 한다 — 나중에 두면 /asks/quota가
+ * 질문 id로 잡힌다.
+ */
+@Controller('asks')
+@UseGuards(JwtAuthGuard)
+export class AsksController {
+  constructor(private readonly asks: AsksService) {}
+
+  @Get('quota')
+  quota(@CurrentReader() readerId: string) {
+    return this.asks.quota(readerId);
+  }
+
+  /** 광고를 보고 받는 질문 — 한도를 다 쓴 독자에게만 열린다 */
+  @Post('quota/ad-bonus')
+  @HttpCode(200)
+  adBonus(@CurrentReader() readerId: string) {
+    return this.asks.grantAdBonus(readerId);
+  }
+
+  @Throttle({ default: RATE_LIMIT.model })
+  @Post()
+  create(@CurrentReader() readerId: string, @Body() dto: CreateAskDto) {
+    return this.asks.create(readerId, dto);
+  }
+
+  @Get()
+  list(@CurrentReader() readerId: string, @Query() query: ListAsksQuery) {
+    return this.asks.list(readerId, query);
+  }
+
+  @Get(':id')
+  find(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
+    return this.asks.find(readerId, id);
+  }
+
+  /** 기다리던 질문을 다시 물어본다 */
+  @Throttle({ default: RATE_LIMIT.model })
+  @Post(':id/resolve')
+  @HttpCode(200)
+  resolve(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
+    return this.asks.resolve(readerId, id);
+  }
+
+  @Delete(':id')
+  remove(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
+    return this.asks.remove(readerId, id);
+  }
+}

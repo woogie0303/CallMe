@@ -1,9 +1,9 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css');
+
+/* 웹으로 열었을 때만 쓰인다. 네이티브에서는 시스템 서체를 그대로 쓴다. */
 :root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    system-ui, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
 }

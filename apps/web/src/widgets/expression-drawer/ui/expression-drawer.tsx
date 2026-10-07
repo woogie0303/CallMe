@@ -4,24 +4,14 @@ import { useMemo, useState } from 'react';
 import { Check, GraduationCap } from 'lucide-react';
 import { bookById } from '@/entities/book/model/mock';
 import { SpineEdge } from '@/entities/book/ui/book-cover';
-import {
-  EXPRESSIONS,
-  expressionById,
-} from '@/entities/expression/model/mock';
-import type { Expression, Register } from '@/entities/expression/model/types';
+import { EXPRESSIONS, expressionById } from '@/entities/expression/model/mock';
+import type { Expression } from '@/entities/expression/model/types';
 import { cn } from '@/shared/lib/cn';
 import { on } from '@/shared/lib/label';
-import { Chip } from '@/shared/ui/chip';
 import { ExpressionContrast } from './expression-contrast';
 
 const FILTERS = ['전체', '헷갈려요', '외웠어요'] as const;
 type Filter = (typeof FILTERS)[number];
-
-const REGISTER_TONE: Record<Register, 'positive' | 'neutral'> = {
-  구어체: 'positive',
-  중립: 'neutral',
-  문어체: 'neutral',
-};
 
 export function ExpressionDrawer() {
   const [filter, setFilter] = useState<Filter>('전체');
@@ -125,9 +115,6 @@ function ExpressionDetail({ expression }: { expression: Expression }) {
     <article className="flex flex-col gap-7 self-start lg:sticky lg:top-10">
       <header className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Chip tone={REGISTER_TONE[expression.register]}>
-            {expression.register}
-          </Chip>
           <span className="wds-caption-1 text-(--text-meta)">
             {on(expression.askedLabel)} 처음 물어봤어요
           </span>

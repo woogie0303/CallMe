@@ -34,3 +34,9 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 expo-env.d.ts
+
+.claude
+.agents
+
+# 방침 페이지는 docs/privacy-policy.md에서 만든다(site/build.mjs)
+site/privacy/

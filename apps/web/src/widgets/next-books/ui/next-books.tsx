@@ -14,7 +14,10 @@ export function NextBooks() {
 
   return (
     <section className="flex flex-col gap-4">
-      <SectionHeader title="다음에 읽어볼 만한 책" aside="담아둔 표현을 기준으로" />
+      <SectionHeader
+        title="다음에 읽어볼 만한 책"
+        aside="담아둔 표현을 기준으로"
+      />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {books.map((book) => (
           <article
