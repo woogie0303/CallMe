@@ -18,7 +18,12 @@ import {
   useSentence,
 } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, type } from '@/shared/config';
-import { MAX_PICKS, runsOf, surfaceOf, tokenize } from '@/shared/ocr/selection';
+import {
+  limitMessage,
+  runsOf,
+  surfaceOf,
+  tokenize,
+} from '@/shared/ocr/selection';
 import { usePicks } from '@/shared/ocr/use-picks';
 import {
   ActionButton,
@@ -220,8 +225,8 @@ export default function AskScreen() {
                 : '모르는 낱말을 누르세요'}
             </AppText>
             <AppText style={styles.pickHint}>
-              {picks.limit && surfaces.length >= MAX_PICKS
-                ? `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요.`
+              {picks.limit
+                ? `${limitMessage(picks.limit.reason)}.`
                 : '옆으로 끌면 여러 낱말을 한 번에 골라요. 붙은 낱말은 한 표현이 돼요.'}
             </AppText>
             <WordPicker

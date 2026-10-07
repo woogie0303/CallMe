@@ -36,6 +36,8 @@ export function usePicks(words: Word[], { whole = false } = {}) {
         return false;
       }
       setSelected(next);
+      /** 다시 고를 수 있게 되었으니 막혔다는 말은 거둔다 */
+      setLimit(null);
       return true;
     },
     [words, whole],

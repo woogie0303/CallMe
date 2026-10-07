@@ -14,7 +14,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { color, shadow, type } from '@/shared/config';
-import { MAX_PICKS, MAX_SENTENCES, type Limit } from '@/shared/ocr/selection';
+import {
+  MAX_SENTENCES,
+  limitMessage,
+  type Limit,
+} from '@/shared/ocr/selection';
 import { AppText, Icon, Tap } from '@/shared/ui';
 
 /**
@@ -95,9 +99,7 @@ export function PickBadge({
           pointerEvents="none"
         >
           <AppText style={styles.noteText}>
-            {limit?.reason === 'picks'
-              ? `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요`
-              : `한 번에 ${MAX_SENTENCES}문장까지 물을 수 있어요`}
+            {limit ? limitMessage(limit.reason) : ''}
           </AppText>
         </Animated.View>
       ) : null}

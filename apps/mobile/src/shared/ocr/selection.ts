@@ -16,6 +16,8 @@ type Word = { text: string };
 export const MAX_SENTENCES = 5;
 /** 한 문장에서 고를 수 있는 표현 수 — 서버와 같은 수 */
 export const MAX_PICKS = 8;
+/** 고른 표현 하나의 길이 — 구(句)를 고르는 것이지 문단을 고르는 것이 아니다. 서버와 같은 수 */
+export const MAX_PICK_CHARS = 120;
 
 /**
  * 문장이 여기서 끝난다고 보는 글자.
@@ -156,8 +158,20 @@ export function groupBySentence(
     .filter((group) => group.picks.length);
 }
 
-/** 막힌 이유 — 문장이 너무 많거나, 한 문장에서 표현을 너무 많이 골랐다 */
-export type Limit = 'sentences' | 'picks';
+/** 막힌 이유 — 문장이 너무 많거나, 표현이 너무 많거나, 한 표현이 너무 길다 */
+export type Limit = 'sentences' | 'picks' | 'long';
+
+/** 막힌 이유를 독자에게 한국어로 */
+export function limitMessage(reason: Limit): string {
+  switch (reason) {
+    case 'sentences':
+      return `한 번에 ${MAX_SENTENCES}문장까지 물을 수 있어요`;
+    case 'picks':
+      return `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요`;
+    case 'long':
+      return `표현은 ${MAX_PICK_CHARS}자까지만 고를 수 있어요. 구만 골라 주세요`;
+  }
+}
 
 /**
  * 이 고르기가 한 번에 물을 수 있는 것을 넘는지. `whole`이면 글 전체를 한 문장으로
@@ -168,9 +182,16 @@ export function overflows(
   selected: Iterable<number>,
   { maxSentences = MAX_SENTENCES, whole = false } = {},
 ): Limit | null {
-  if (whole) {
-    return runsOf(selected).length > MAX_PICKS ? 'picks' : null;
-  }
+  const runs = runsOf(selected);
+  /** 끌다가 문단째 골라 버리는 일을 막는다 — 서버도 이 길이에서 거절한다 */
+  if (
+    runs.some(
+      (run) => surfaceOf(words, run.from, run.to).length > MAX_PICK_CHARS,
+    )
+  )
+    return 'long';
+  if (whole) return runs.length > MAX_PICKS ? 'picks' : null;
+
   const groups = groupBySentence(words, selected);
   if (groups.length > maxSentences) return 'sentences';
   if (groups.some((group) => group.picks.length > MAX_PICKS)) return 'picks';
