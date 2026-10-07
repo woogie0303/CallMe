@@ -11,7 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { color, gutter, type } from '@/shared/config';
 import { ActionButton, AppText, Tap } from '@/shared/ui';
-import { AskPreview, CapturePreview, ReunionPreview } from './previews';
+import { PickDemo } from './pick-demo';
+import { AskPreview, ReunionPreview } from './previews';
 
 type Slide = {
   title: string;
@@ -30,8 +31,8 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     title: '읽던 쪽을 찍고\n막힌 문장을 짚어요',
-    body: '사진 위에서 첫 낱말과 끝 낱말을 차례로 누르면 그 문장이 담겨요. 사진은 기기 밖으로 나가지 않아요.',
-    preview: <CapturePreview />,
+    body: '사진 위에서 모르는 낱말을 누르고, 여러 낱말로 된 표현은 손가락으로 끌어서 골라요. 사진은 기기 밖으로 나가지 않아요.',
+    preview: <PickDemo />,
   },
   {
     title: '낱말이 아니라\n문장으로 물어요',

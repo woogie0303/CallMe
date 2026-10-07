@@ -238,6 +238,11 @@ Apple 로그인 권한(`com.apple.developer.applesignin`)은 늘 들어간다 �
 (`widgets/onboarding`, 화면은 `app/onboarding.tsx`). 그림은 스크린샷이 아니라 **앱이 쓰는 조각
 그대로**(`Quote`·`Card`·`Chip`) 조립한 것이라 색·서체가 바뀌면 안내도 같이 바뀐다.
 
+첫 걸음의 그림(`ui/pick-demo.tsx`)만 움직인다 — 손가락이 낱말 하나를 **누르고**, 두 낱말을
+**끌어** 보인다. 고르는 손짓은 말로 읽는 것보다 보는 편이 빠르다. 띠의 색은 촬영 화면
+(`widgets/capture/ui/photo-picker`)과 같아야 한다. 촬영의 고르기 규칙이 바뀌면 이 그림도 고친다.
+움직임 줄이기를 켠 독자에게는 다 고른 뒤의 한 장면만 보인다.
+
 - **책이 한 권도 없고 아직 안 본 독자에게만** 뜬다(`OnboardingRedirect`, 로그인한 뒤). 이미
   책을 담아 쓰는 독자는 이 앱을 아는 사람이라 업데이트했다고 내밀면 방해가 된다.
 - **봤는지는 독자마다 적는다**(SecureStore `onboarding.seen.<독자 id>`). 기기에 하나만 적으면

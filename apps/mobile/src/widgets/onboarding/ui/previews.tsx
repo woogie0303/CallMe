@@ -1,11 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import { accent, color, type } from '@/shared/config';
+import { color, type } from '@/shared/config';
 import {
   AltPanel,
   AppText,
   Card,
-  Chip,
   Icon,
   Quote,
   emphasis,
@@ -19,30 +18,9 @@ import {
  * 책에서 온 영어는 세리프, 앱이 하는 말은 산세리프.
  */
 
-/** 1. 찍은 쪽 위에서 첫 낱말과 끝 낱말을 짚는다 */
-export function CapturePreview() {
-  return (
-    <View style={styles.stack}>
-      <View style={styles.page}>
-        <Quote style={styles.pageText}>
-          {
-            '…not so spacious or splendid as the drawing-room at Gateshead, but comfortable enough. '
-          }
-          <Quote style={styles.picked}>
-            I was puzzling to make out the subject of a picture on the wall,
-            when the door opened,
-          </Quote>
-          {' and an individual carrying a light entered…'}
-        </Quote>
-      </View>
-      <View style={styles.row}>
-        <Chip label="① 첫 낱말  I" tone="primary" />
-        <Icon name="chevronRight" size={14} color={color.text.assistive} />
-        <Chip label="② 끝 낱말  opened," tone="primary" />
-      </View>
-    </View>
-  );
-}
+/*
+ * 1번(찍은 쪽 위에서 낱말을 고른다)은 손짓을 움직여 보여야 해서 `pick-demo.tsx`에 따로 있다.
+ */
 
 /** 2. 문장째로 묻고, 뜻은 눌러야 열린다 */
 export function AskPreview() {
@@ -99,17 +77,6 @@ export function ReunionPreview() {
 
 const styles = StyleSheet.create({
   stack: { gap: 14 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-
-  /** 찍힌 쪽 — 바탕보다 어두워야 '사진 속 종이'로 읽힌다(`surface.page`) */
-  page: {
-    padding: 18,
-    borderRadius: 16,
-    backgroundColor: color.surface.page,
-  },
-  pageText: { fontSize: 15, lineHeight: 25, color: color.text.neutral },
-  /** 짚은 문장 — 촬영 화면이 고른 범위를 칠하는 것과 같은 색 */
-  picked: { backgroundColor: accent(0.22), color: color.text.primary },
 
   card: { padding: 18 },
   sentence: { fontSize: 17, lineHeight: 27 },
