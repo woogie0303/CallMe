@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   FadeInDown,
-  cancelAnimation,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -20,15 +20,7 @@ import {
   SignInFailed,
 } from '@/shared/session/oauth';
 import { useSession } from '@/shared/session/session';
-import {
-  ActionButton,
-  AppText,
-  BRAND,
-  BrandLogo,
-  Mark,
-  Quote,
-  Tap,
-} from '@/shared/ui';
+import { AppText, BRAND, BrandLogo, Mark, Tap } from '@/shared/ui';
 
 /**
  * 한국 독자가 가장 많이 쓰는 순서. Apple은 크기와 자리가 다른 것과 같아야 한다 —
@@ -86,12 +78,8 @@ export default function SignInScreen() {
         >
           <AppText style={styles.wordmark}>Reread</AppText>
           <AppText style={styles.blurb}>
-            원서를 읽다 막힌 문장을 담아두면,{'\n'}나중에 다시 만날 때
-            이어드려요.
+            책을 읽다 막힌 문장, 여기에 두고 가세요
           </AppText>
-          <Quote style={styles.line}>
-            “I could not make out whether it was a statue or a person.”
-          </Quote>
         </Animated.View>
       </View>
 
@@ -117,18 +105,6 @@ export default function SignInScreen() {
             />
           ))}
         </View>
-
-        {/* 개발용. 소셜 로그인이 실제로 도는 것을 확인하면 이 버튼을 지운다. */}
-        {__DEV__ ? (
-          <ActionButton
-            label="개발용으로 들어가기"
-            variant="ink"
-            disabled={busy !== null && busy !== 'dev'}
-            loading={busy === 'dev'}
-            onPress={() => attempt('dev', signInAsDeveloper)}
-            style={styles.dev}
-          />
-        ) : null}
       </View>
     </View>
   );
