@@ -304,8 +304,13 @@ export default function SentenceScreen() {
           />
         ) : row ? (
           <SentenceDetail
+            /**
+             * 다시 물으면 질문 모달이 이 화면으로 돌아오며 reveal에 새 값을 준다. 펼침은
+             * 처음 그릴 때만 정해지므로, 값이 바뀌면 새로 그려서 뜻을 다시 편다.
+             */
+            key={reveal ?? 'closed'}
             row={row}
-            initialReveal={reveal === '1'}
+            initialReveal={Boolean(reveal)}
             saved={saved}
             onOpenItem={(itemId) =>
               router.push({ pathname: '/item/[id]', params: { id: itemId } })

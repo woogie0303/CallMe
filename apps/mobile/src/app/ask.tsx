@@ -151,7 +151,17 @@ export default function AskScreen() {
             },
       );
       if (!fixed) recordPage();
-      if (view?.ask.status === 'answered' && view.sentence) {
+      if (view?.ask.status === 'answered' && view.sentence && fixed) {
+        /**
+         * 담아둔 문장을 다시 물었으면 그 문장 화면이 이미 이 모달 아래에 있다. 새로 쌓지
+         * 않고 그리로 돌아간다 — 쌓으면 뒤로 가기에 묻기 전의 같은 문장이 한 번 더 나온다.
+         */
+        router.dismissTo({
+          pathname: '/sentence/[id]',
+          /** 묻을 때마다 다른 값 — 그 화면이 이미 reveal을 들고 있어도 뜻이 다시 펴진다 */
+          params: { id: view.sentence._id, reveal: String(Date.now()) },
+        });
+      } else if (view?.ask.status === 'answered' && view.sentence) {
         router.replace({
           pathname: '/sentence/[id]',
           params: { id: view.sentence._id, reveal: '1' },
