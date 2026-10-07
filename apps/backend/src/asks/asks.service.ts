@@ -139,6 +139,19 @@ export class AsksService {
     });
     if (!book) throw new NotFoundException('그 책을 찾지 못했어요.');
 
+    /**
+     * 묻지 않고 담아둔 문장은 '마음에 들었던 문장'에 서 있었다. 묻는 순간 그 갈래를 떠나지
+     * 않도록 하트를 켜 둔다 — 안 그러면 나중에 표현을 모두 지울 때 '원래 마음에 든 문장이었다'는
+     * 기록이 없어서 문장이 함께 지워진다(`ItemsService.forgetOrphans`).
+     */
+    const wasKept =
+      !sentence.favorite &&
+      !(await this.asks.exists({ readerId: owner, sentenceId: sentence._id }));
+    if (wasKept) {
+      sentence.favorite = true;
+      await sentence.save();
+    }
+
     return { book, sentences: [{ sentence, picks }] };
   }
 

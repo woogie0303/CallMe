@@ -41,7 +41,13 @@ src/
 - **문장에 '좋아서 담았음'을 적지 않는다.** 어휘 항목이 딸렸는지는 만남 쪽에
   물어본다(`GET /sentences?liked=true`). 같은 사실을 두 군데 적으면 어긋난다.
   예외는 하트(`favorite`) 하나다 — 표현을 담은 문장도 마음에 든 문장으로 두고
-  싶다는 독자의 뜻이라 만남에서 셀 수 없다. `liked=true`는 이 둘을 합쳐 준다.
+  싶다는 독자의 뜻이라 만남에서 셀 수 없다. `liked=true`는 이 둘을 합쳐 준다. 물어본
+  문장은 뺀다 — 담은 표현 쪽에 선다. 그 표현을 독자가 모두 지우면 서버가 문장과 질문을 함께
+  지운다(`ItemsService.forgetOrphans`): 어느 갈래에도 안 서는 문장을 보이지 않게 남겨두지 않는다.
+  하트를 켠 문장·기다리는 질문이 있는 문장·묻지 않고 담아둔 문장은 지우지 않는다. 묻지 않고
+  담아둔 문장(마음에 들었던 문장)을 `sentenceId`로 물으면 그 순간 하트를 켜 둔다 — 안 그러면
+  '원래 마음에 든 문장이었다'는 기록이 없어 표현을 지울 때 함께 지워진다. 내 생각은 마음에
+  든 문장에서만 달 수 있어서, 하트 없이 생각이 달린 옛 문장은 지우지 않고 하트를 켠다.
 - **로그인은 카카오·네이버·구글·Apple 넷뿐이다.** 비밀번호를 맡지 않는다. 이메일이
   같다고 다른 제공자 계정을 자동으로 합치지 않는다 — 남의 계정을 넘겨받는 길이 된다.
 - **계정 삭제는 독자 문서를 맨 마지막에 지운다**(`readers/account-deletion.service.ts`).
@@ -129,6 +135,7 @@ POST   /api/sentences
 GET    /api/sentences/:id
 PATCH  /api/sentences/:id         글 · 쪽 · 메모 · 하트(favorite)
 DELETE /api/sentences/:id         그 문장의 질문·그 문장에서만 만난 표현도 함께
+DELETE /api/sentences/:id/expressions  담은 표현만 지운다 — 문장은 남는다(하트 문장을 '담은 표현'에서 지울 때)
 POST   /api/sentences/:id/thoughts            이 문장에 대고 내 생각 하나 달기 { text }
 DELETE /api/sentences/:id/thoughts/:thoughtId
 
