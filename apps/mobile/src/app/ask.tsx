@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAskQuota, useCreateAsk } from '@/entities/ask/api/ask.api';
+import { explainAskError } from '@/entities/ask/lib/explain-error';
 import { useBook, useCurrentBook } from '@/entities/book/api/book.api';
 import { useUpdateProgress } from '@/entities/reading/api/reading.api';
 import {
@@ -153,7 +154,10 @@ export default function AskScreen() {
         router.replace('/pending');
       }
     } catch (error) {
-      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
+      const failure = explainAskError(error);
+      Alert.alert(failure.title, failure.message);
+      /** 늦은 것일 뿐 문장은 담겨 있다 — 기다리는 문장으로 보낸다 */
+      if (failure.saved) router.replace('/pending');
     }
   };
 

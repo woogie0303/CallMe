@@ -27,6 +27,21 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * 서버에 닿지 못했거나 답이 너무 늦다. 브라우저·RN의 `fetch`는 이럴 때 영어 메시지
+ * ('Network request failed')를 던져서 그대로 보여주면 무슨 뜻인지 알 수 없다.
+ * `late`면 요청은 서버에 갔을 수 있다 — 서버는 하던 일을 마저 하고, 앱만 기다리기를
+ * 그만둔 것이다. 문장을 담는 일은 그 전에 끝나 있다.
+ */
+export class NetworkError extends ApiError {
+  constructor(
+    message: string,
+    readonly late: boolean,
+  ) {
+    super(0, message);
+  }
+}
+
 /** 로그인이 끊겼다는 신호. 세션이 이걸 받아 로그인 화면으로 되돌린다. */
 export class Unauthenticated extends ApiError {
   constructor() {
@@ -39,6 +54,11 @@ type Options = {
   body?: unknown;
   /** 로그인 전에 부르는 길 — 토큰을 붙이지 않는다 */
   anonymous?: boolean;
+  /**
+   * 이만큼 기다려도 답이 없으면 그만 기다린다(밀리초). 정하지 않으면 끝없이 기다리는데,
+   * 모델을 부르는 길에서는 그것이 몇 분씩 도는 로딩 화면이 된다.
+   */
+  timeoutMs?: number;
 };
 
 let refreshing: Promise<string | null> | null = null;
@@ -85,12 +105,30 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
       headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    return fetch(`${baseUrl()}${path}`, {
-      method: options.method ?? 'GET',
-      headers,
-      body:
-        options.body === undefined ? undefined : JSON.stringify(options.body),
-    });
+    const controller = new AbortController();
+    const timer = options.timeoutMs
+      ? setTimeout(() => controller.abort(), options.timeoutMs)
+      : undefined;
+
+    try {
+      return await fetch(`${baseUrl()}${path}`, {
+        method: options.method ?? 'GET',
+        headers,
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
+        signal: controller.signal,
+      });
+    } catch {
+      if (controller.signal.aborted) {
+        throw new NetworkError('답이 너무 늦어지고 있어요.', true);
+      }
+      throw new NetworkError(
+        '서버에 닿지 못했어요. 인터넷 연결을 확인해 주세요.',
+        false,
+      );
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   };
 
   const stored = options.anonymous ? null : await readTokens();

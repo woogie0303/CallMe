@@ -9,6 +9,7 @@ import {
   useClaimAdBonus,
   useResolveAsk,
 } from '@/entities/ask/api/ask.api';
+import { explainAskError } from '@/entities/ask/lib/explain-error';
 import { toBook } from '@/entities/book/api/book.api';
 import { useDeleteSentence } from '@/entities/sentence/api/sentence.api';
 import { showRewarded } from '@/shared/ads/ads';
@@ -68,7 +69,8 @@ export default function PendingScreen() {
           : '잠시 뒤에 다시 눌러주세요. 문장은 그대로 기다려요.',
       );
     } catch (error) {
-      Alert.alert('묻지 못했어요', error instanceof Error ? error.message : '');
+      const failure = explainAskError(error);
+      Alert.alert(failure.title, failure.message);
     }
   }
 

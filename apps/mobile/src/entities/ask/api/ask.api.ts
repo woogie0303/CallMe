@@ -53,8 +53,12 @@ export type AskInput =
 export function useCreateAsk() {
   const client = useQueryClient();
   return useMutation({
+    /**
+     * 모델이 답하는 데 몇 초가 걸린다. 서버는 45초에 포기하고 '연결 실패'로 기다리게 하니,
+     * 앱은 그보다 조금 더 기다리고(75초) 그만둔다 — 그 뒤에도 문장은 담겨 있다.
+     */
     mutationFn: (body: AskInput) =>
-      api<ApiAskView[]>('/asks', { method: 'POST', body }),
+      api<ApiAskView[]>('/asks', { method: 'POST', body, timeoutMs: 75_000 }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['sentences'] });
@@ -70,7 +74,10 @@ export function useResolveAsk() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api<ApiAskView>(`/asks/${id}/resolve`, { method: 'POST' }),
+      api<ApiAskView>(`/asks/${id}/resolve`, {
+        method: 'POST',
+        timeoutMs: 75_000,
+      }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['items'] });
