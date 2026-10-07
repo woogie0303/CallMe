@@ -7,7 +7,7 @@ import Vision
  * 찍은 쪽에서 글자를 읽되, 그 글자가 사진의 **어디에** 있는지를 함께 돌려준다.
  *
  * 전에 쓰던 `expo-text-extractor`도 같은 Apple Vision을 쓰지만 줄의 글자만 넘기고
- * 위치는 버렸다. 사진 위에서 낱말을 짚으려면 그 위치가 필요해서 이 모듈을 둔다.
+ * 위치는 버렸다. 사진 위에서 단어를 짚으려면 그 위치가 필요해서 이 모듈을 둔다.
  *
  * 좌표는 **화면에 보이는 방향(EXIF를 적용한 뒤)의 픽셀**, 원점은 왼쪽 위다.
  * 함께 돌려주는 `width`/`height`도 같은 좌표계다.
@@ -101,7 +101,7 @@ private func readPage(at url: URL, languages: [String]?) throws -> [String: Any]
   request.recognitionLevel = .accurate
   request.usesLanguageCorrection = true
   /**
-   * 기본은 영어 하나다 — 한국어까지 열어두면 영어 낱말을 한글로 잘못 읽는 일이 생긴다.
+   * 기본은 영어 하나다 — 한국어까지 열어두면 영어 단어를 한글로 잘못 읽는 일이 생긴다.
    * 한국어 책을 찍을 때만 부르는 쪽이 `["ko-KR", "en-US"]`를 넘긴다. 이 기기의 Vision이
    * 모르는 언어는 걸러서, 지원하지 않는 값 하나 때문에 읽기가 통째로 실패하지 않게 한다.
    */
@@ -146,7 +146,7 @@ private func readPage(at url: URL, languages: [String]?) throws -> [String: Any]
   /**
    * 읽는 순서로 줄 세운다. 기울어진 채로 y만 비교하면, 오른쪽이 처진 긴 줄의
    * 끝이 다음 줄보다 아래로 내려가 순서가 뒤집힌다 — 그러면 문장 경계를 찾을 때
-   * 엉뚱한 줄의 낱말이 끼어든다. 그래서 쪽의 기울기만큼 되돌려 놓고 비교한다.
+   * 엉뚱한 줄의 단어가 끼어든다. 그래서 쪽의 기울기만큼 되돌려 놓고 비교한다.
    */
   func upright(_ p: CGPoint) -> CGPoint {
     let c = cos(-tilt)
@@ -171,7 +171,7 @@ private func readPage(at url: URL, languages: [String]?) throws -> [String: Any]
     lines.append(["text": string, "frame": lineQuad.frame])
 
     /**
-     * 낱말은 공백으로 자른다 — 문장부호를 떼지 않는다. 마침표가 붙어 있어야
+     * 단어는 공백으로 자른다 — 문장부호를 떼지 않는다. 마침표가 붙어 있어야
      * 짚은 범위를 문장 끝까지 넓힐 수 있다(`shared/ocr/selection.ts`).
      */
     let total = CGFloat(max(string.count, 1))
@@ -183,8 +183,8 @@ private func readPage(at url: URL, languages: [String]?) throws -> [String: Any]
       let range = start..<end
 
       /**
-       * 글자 수 비율로 줄을 잘라 짐작한 칸. Vision이 낱말 칸을 못 주거나,
-       * 낱말마다 줄 전체 칸을 돌려주는 경우가 있어서(정확도 우선 모드의 알려진
+       * 글자 수 비율로 줄을 잘라 짐작한 칸. Vision이 단어 칸을 못 주거나,
+       * 단어마다 줄 전체 칸을 돌려주는 경우가 있어서(정확도 우선 모드의 알려진
        * 버릇) 물러날 자리로 둔다. 줄의 네 꼭짓점을 따라 자르므로 기울기도 따라간다.
        */
       let a = CGFloat(string.distance(from: string.startIndex, to: start)) / total

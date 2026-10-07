@@ -21,8 +21,8 @@ import { accent, color, ink, type } from '@/shared/config';
 import { AppText, Quote } from '@/shared/ui';
 
 /**
- * 안내 첫 쪽의 그림 — 찍은 쪽 위에서 모르는 낱말을 고르는 두 가지 손짓을 손가락이
- * 직접 해 보인다. **누르면** 낱말 하나가 표현 하나, **끌면** 지나간 만큼이 표현 하나.
+ * 안내 첫 쪽의 그림 — 찍은 쪽 위에서 모르는 단어를 고르는 두 가지 손짓을 손가락이
+ * 직접 해 보인다. **누르면** 단어 하나가 표현 하나, **끌면** 지나간 만큼이 표현 하나.
  * 고른 표현이 든 문장은 옅게 칠해진다 — 묻는 것은 그 문장째다.
  *
  * 띠의 색은 촬영 화면(`widgets/capture/ui/photo-picker`)과 같다. 안내에서 본 띠를
@@ -39,7 +39,7 @@ const AFTER = 'Then the door opened.';
 const WORDS = [BEFORE, SENTENCE, AFTER].flatMap((part) => part.split(' '));
 const SENTENCE_FROM = BEFORE.split(' ').length;
 const SENTENCE_TO = SENTENCE_FROM + SENTENCE.split(' ').length - 1;
-/** 누르는 낱말 — puzzling */
+/** 누르는 단어 — puzzling */
 const TAP = SENTENCE_FROM + 2;
 /** 끄는 범위 — make out */
 const DRAG_FROM = SENTENCE_FROM + 4;
@@ -67,7 +67,7 @@ const FINGER = 30;
 
 type Box = { x: number; y: number; width: number; height: number };
 
-/** 그림이 쓰는 자리들 — 낱말 칸을 다 잰 뒤 한 번 만든다 */
+/** 그림이 쓰는 자리들 — 단어 칸을 다 잰 뒤 한 번 만든다 */
 type Geometry = {
   tap: Box;
   /** 끄는 범위 — 줄마다 하나의 띠(`fill`은 그 줄에서 칠할 길이) */
@@ -136,7 +136,7 @@ export function PickDemo() {
           t={t}
           from={T.atTap}
           swatch={styles.pickSwatch}
-          label="누르면 낱말 하나가 표현 하나"
+          label="누르면 단어 하나가 표현 하나"
         />
         <LegendRow
           t={t}
@@ -268,7 +268,7 @@ function Finger({ t, geo }: { t: SharedValue<number>; geo: Geometry }) {
       x = dragStart.x;
       y = dragStart.y;
     } else if (ms < T.dragEnd) {
-      /** 끄는 길은 낱말을 따라간다 — 줄이 바뀌면 다음 줄 첫 낱말로 */
+      /** 끄는 길은 단어를 따라간다 — 줄이 바뀌면 다음 줄 첫 단어로 */
       const p = interpolate(ms, [T.dragDown, T.dragEnd], [0, total], 'clamp');
       let k = 0;
       while (k < drag.length - 1 && p > spans[k].before + drag[k].fill) k += 1;
@@ -336,13 +336,13 @@ function LegendRow({
   );
 }
 
-/** 낱말 칸을 다 쟀으면 그림의 자리들을 만든다. 하나라도 덜 쟀으면 아직이다. */
+/** 단어 칸을 다 쟀으면 그림의 자리들을 만든다. 하나라도 덜 쟀으면 아직이다. */
 function geometryOf(boxes: (Box | undefined)[]): Geometry | null {
   if (boxes.some((box) => !box)) return null;
   const all = boxes as Box[];
   const sameLine = (a: Box, b: Box) => Math.abs(a.y - b.y) < a.height / 2;
 
-  /** 낱말들을 줄마다 하나의 띠로 — 낱말마다 따로 칠하면 붙은 띠의 테두리가 겹친다 */
+  /** 단어들을 줄마다 하나의 띠로 — 단어마다 따로 칠하면 붙은 띠의 테두리가 겹친다 */
   const linesOf = (from: number, to: number) => {
     const lines: Box[] = [];
     for (const box of all.slice(from, to + 1)) {
@@ -367,12 +367,12 @@ function geometryOf(boxes: (Box | undefined)[]): Geometry | null {
     tap,
     drag,
     sentence,
-    /** 누를 낱말의 오른쪽 아래에서 들어온다 */
+    /** 누를 단어의 오른쪽 아래에서 들어온다 */
     start: { x: tap.x + tap.width + 40, y: tap.y + tap.height + 46 },
   };
 }
 
-/** 끄는 길에서 이 낱말 앞까지 지나온 길이와, 끄는 길 전체 */
+/** 끄는 길에서 이 단어 앞까지 지나온 길이와, 끄는 길 전체 */
 function dragSpan(geo: Geometry, index: number) {
   const before = geo.drag
     .slice(0, index)

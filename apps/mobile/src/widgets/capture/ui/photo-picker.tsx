@@ -15,24 +15,24 @@ import type { OcrFrame, OcrWord } from '@/shared/ocr/text-extractor';
 
 export type Shot = { uri: string; width: number; height: number };
 
-/** 낱말 칸보다 조금 넓게 잡는다 — 손가락은 글자보다 굵다(사진 픽셀이 아니라 화면 pt) */
+/** 단어 칸보다 조금 넓게 잡는다 — 손가락은 글자보다 굵다(사진 픽셀이 아니라 화면 pt) */
 const SLOP = 4;
 /** 띠는 글자보다 살짝 넓게 — 글자에 딱 붙으면 획이 잘려 보인다(사진이 아니라 화면 pt) */
 const BAND_PAD = 2;
 
 /**
- * 찍은 쪽에서 **모르는 낱말을 고르는** 자리.
+ * 찍은 쪽에서 **모르는 단어를 고르는** 자리.
  *
  * **사진을 버리지 않는다.** 예전에는 글자만 읽어내고 사진을 지운 뒤 다시 조판해
  * 보여줬는데, 그러면 방금 내가 본 쪽과 화면에 뜬 글이 서로 다른 것이 되어
  * '이 줄'을 짚는 감각이 사라진다.
  *
- * 누르면 낱말 하나가 따로 한 표현, 끌면 지나간 만큼이 한 표현(`useWordPaint`). 한 표현은
- * 줄마다 **하나의 띠**로 칠해진다(`bandsOf`) — 낱말 칸을 따로 칠하면 붙은 낱말도 낱알로
+ * 누르면 단어 하나가 따로 한 표현, 끌면 지나간 만큼이 한 표현(`useWordPaint`). 한 표현은
+ * 줄마다 **하나의 띠**로 칠해진다(`bandsOf`) — 단어 칸을 따로 칠하면 붙은 단어도 낱알로
  * 보인다. 고른 표현이 든 문장은 옅은 띠로 칠해져서 무엇을 묻게 되는지 시트를 열기 전에
  * 보인다 — 문장 경계는 `shared/ocr/selection`이 정한다.
  *
- * 한동안은 문장의 처음과 끝 낱말을 짚어 문장을 골랐다. 그러면 무엇을 모르는지는
+ * 한동안은 문장의 처음과 끝 단어를 짚어 문장을 골랐다. 그러면 무엇을 모르는지는
  * 모델이 짐작해야 했고, 짐작이 빗나간 문장은 아무것도 담기지 않은 채 남았다.
  */
 export function PhotoPicker({
@@ -48,13 +48,13 @@ export function PhotoPicker({
   words: OcrWord[];
   /** 고른 표현들 — 한 범위가 한 표현 */
   ranges: Range[];
-  /** 어느 낱말이 골라져 있는가(스크린리더의 상태) */
+  /** 어느 단어가 골라져 있는가(스크린리더의 상태) */
   selected: ReadonlySet<number>;
-  /** 고른 낱말이 든 문장들 — 옅게 칠한다 */
+  /** 고른 단어가 든 문장들 — 옅게 칠한다 */
   groups: SentenceGroup[];
   /** 끄는 동안 통째로 바꾼다. 받았으면 true */
   onChange: (next: Range[]) => boolean;
-  /** 스크린리더가 낱말 하나를 눌렀을 때 */
+  /** 스크린리더가 단어 하나를 눌렀을 때 */
   onToggle: (index: number) => void;
 }) {
   const [box, setBox] = useState<{ width: number; height: number } | null>(
@@ -81,7 +81,7 @@ export function PhotoPicker({
       })()
     : null;
 
-  /** 화면의 한 점이 어느 낱말 위인지 — 기울어진 칸은 거꾸로 돌려서 잰다 */
+  /** 화면의 한 점이 어느 단어 위인지 — 기울어진 칸은 거꾸로 돌려서 잰다 */
   const hit = ({ x, y }: { x: number; y: number }) => {
     if (!fit) return null;
     for (let i = 0; i < words.length; i += 1) {
@@ -140,7 +140,7 @@ export function PhotoPicker({
             )
           : null}
 
-        {/* 아직 안 고른 낱말은 눌리는 자리라는 것만 옅게 알린다. 고른 문장 안은 띠가 대신한다 */}
+        {/* 아직 안 고른 단어는 눌리는 자리라는 것만 옅게 알린다. 고른 문장 안은 띠가 대신한다 */}
         {fit
           ? words.map((word, i) => {
               const on = selected.has(i);
@@ -152,7 +152,7 @@ export function PhotoPicker({
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={word.text}
                   accessibilityHint={
-                    on ? '눌러서 빼기' : '모르는 낱말로 고르기'
+                    on ? '눌러서 빼기' : '모르는 단어로 고르기'
                   }
                   onAccessibilityTap={() => onToggle(i)}
                   style={[
@@ -176,7 +176,7 @@ export function PhotoPicker({
   );
 }
 
-/** 점이 낱말 칸 안에 있는지. 칸은 중심을 축으로 `angle`만큼 돌아 있다. */
+/** 점이 단어 칸 안에 있는지. 칸은 중심을 축으로 `angle`만큼 돌아 있다. */
 function inside(
   frame: OcrFrame,
   x: number,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   stage: { flex: 1, backgroundColor: ink(1), overflow: 'hidden' },
 
   /**
-   * 낱말 한 칸. 안 고른 것은 눌리는 자리라는 것만 옅게 알린다 — 다만 종이색
+   * 단어 한 칸. 안 고른 것은 눌리는 자리라는 것만 옅게 알린다 — 다만 종이색
    * 위에서 보일 만큼은. 한때 8%였는데 사진 위에서 거의 안 보여서, 인식기가
    * 못 읽은 줄과 읽었는데 안 보이는 줄을 구분할 수 없었다.
    */

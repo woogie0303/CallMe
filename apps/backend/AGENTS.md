@@ -1,6 +1,6 @@
 # Reread — 백엔드
 
-NestJS 11 / MongoDB(Mongoose). 도메인 낱말은 루트 `CONTEXT.md`가 정한 것을 그대로
+NestJS 11 / MongoDB(Mongoose). 도메인 단어는 루트 `CONTEXT.md`가 정한 것을 그대로
 쓴다 — Reader·Book·Sentence·Lexical Item·Encounter·Re-encounter. 코드에서 Word나
 단어장 같은 말을 새로 만들지 않는다.
 
@@ -188,13 +188,6 @@ DELETE /api/items/:id
   만들 때 `message`를 단다.
 - **서버에는 오류 수집 서비스가 없다.** 앱은 Measure를 쓰지만(`apps/mobile/AGENTS.md`) Measure는 모바일
   전용이라 서버의 오류는 Render 로그로만 본다. 모델 오류는 `unavailable()`이 로그에 남긴다.
-
-## 개발용 문
-
-`POST /api/dev/login`은 소셜 로그인 앱이 등록되기 전까지만 여는 임시 문이다.
-`ALLOW_DEV_LOGIN=true`일 때만 열리고 `NODE_ENV=production`이면 거부하며, 열려
-있는 동안 부팅 로그가 매번 그 사실을 말한다. 검증이 끝나면
-`src/auth/dev-login.controller.ts`와 환경 변수를 함께 지운다.
 
 ## 아직 없는 것
 

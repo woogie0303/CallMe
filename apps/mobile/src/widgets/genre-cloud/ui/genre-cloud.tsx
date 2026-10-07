@@ -5,19 +5,19 @@ import type { GenreShare } from '@/entities/reading/model/types';
 import { color, type } from '@/shared/config';
 import { AppText, Tap } from '@/shared/ui';
 
-/** 낱말 크기가 오갈 수 있는 범위 — 이 안에서 읽은 쪽수 비율로 정해진다 */
+/** 단어 크기가 오갈 수 있는 범위 — 이 안에서 읽은 쪽수 비율로 정해진다 */
 const MIN_SIZE = 15;
 const MAX_SIZE = 34;
 
 /**
  * 장르를 구름처럼 흩어 보인다 — 홈의 이번 주 그래프를 누르면 오는 화면.
  *
- * 막대 그래프 대신 낱말 크기로 비교하는 이유는, 이번 주 그래프가 이미 '얼마나'를
+ * 막대 그래프 대신 단어 크기로 비교하는 이유는, 이번 주 그래프가 이미 '얼마나'를
  * 막대로 말하고 있어서다. 여기는 '무엇을'을 말하는 자리라 다른 그림이어야
  * 같은 화면으로 보이지 않는다 — 장르 이름 자체가 크고 작은 것으로 취향을
  * 드러낸다.
  *
- * 낱말 순서를 읽은 양 그대로 두면 큰 것부터 작은 것까지 층이 지어 피라미드처럼
+ * 단어 순서를 읽은 양 그대로 두면 큰 것부터 작은 것까지 층이 지어 피라미드처럼
  * 보인다. 가장 크고 작은 것을 번갈아 배치해서(`interleave`) 줄마다 크기가
  * 섞이게 한다 — 구름은 층이 지지 않는다.
  *
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   word: { color: color.primary },
-  /** 눌러서 편 낱말은 밑줄로 표시한다 — 서랍 카드의 밑줄과 같은 말이다 */
+  /** 눌러서 편 단어는 밑줄로 표시한다 — 서랍 카드의 밑줄과 같은 말이다 */
   wordOpen: {
     textDecorationLine: 'underline',
     textDecorationColor: color.primaryLine,

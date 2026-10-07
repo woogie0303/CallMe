@@ -16,7 +16,7 @@ import type {
   ReaderView,
   SignInResult,
 } from '@/shared/api/types';
-import { devSignIn, prepareSocialSignIn, signInWith } from './oauth';
+import { prepareSocialSignIn, signInWith } from './oauth';
 
 type Status = 'loading' | 'in' | 'out';
 
@@ -26,23 +26,10 @@ type Session = {
   /** 들어오지 못한 이유 — 로그인 화면이 그대로 보여준다 */
   problem: string | null;
   signIn: (provider: ProviderName) => Promise<void>;
-  signInAsDeveloper: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
 const SessionContext = createContext<Session | null>(null);
-
-/**
- * 개발 빌드에서는 로그인 화면을 건너뛴다.
- *
- * 소셜 로그인 앱이 등록되기 전까지 로그인은 확인할 것이 없는 단계인데, 화면을
- * 켤 때마다 버튼을 한 번 더 누르게 하면 그 단계가 매번 길을 막는다. 실제 로그인을
- * 시험할 때만 EXPO_PUBLIC_DEV_AUTOLOGIN=false로 꺼두면 된다.
- *
- * 배포 빌드에서는 __DEV__가 거짓이라 절대 돌지 않는다.
- */
-const AUTO_DEV_LOGIN =
-  __DEV__ && process.env.EXPO_PUBLIC_DEV_AUTOLOGIN !== 'false';
 
 /**
  * 로그인한 사람 하나. 화면은 이걸 통해서만 '지금 누구인지'를 안다.
@@ -100,23 +87,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (AUTO_DEV_LOGIN) {
-        try {
-          const result = await devSignIn();
-          if (!alive) return;
-          await enter(result);
-          return;
-        } catch (error) {
-          /** 열지 못했으면 왜인지 남긴다 — 백엔드가 꺼져 있는 것이 대개의 이유다 */
-          if (!alive) return;
-          setProblem(
-            error instanceof Error
-              ? `개발용으로 들어가지 못했어요: ${error.message}`
-              : '개발용으로 들어가지 못했어요.',
-          );
-        }
-      }
-
       if (alive) setStatus('out');
     })();
 
@@ -131,7 +101,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       reader,
       problem,
       signIn: async (provider) => enter(await signInWith(provider)),
-      signInAsDeveloper: async () => enter(await devSignIn()),
       signOut: async () => {
         /** 남의 계정으로 알림이 울리지 않게 — 예약과 설정을 먼저 지운다 */
         await clearReminder();

@@ -19,7 +19,7 @@ export type BookSearchResult = {
 /**
  * 구글 북스의 BISAC 계열 분류(`volumeInfo.categories`, 예: 'Fiction / Literary',
  * 'Juvenile Fiction / Fantasy & Magic')를 우리 장르 목록으로 접는다. 구글은 한
- * 책에 여러 줄을 주기도 하는데, 뒤로 갈수록 세분류라 **첫 줄의 첫 낱말**이 가장
+ * 책에 여러 줄을 주기도 하는데, 뒤로 갈수록 세분류라 **첫 줄의 첫 단어**이 가장
  * 굵은 갈래다.
  *
  * 표에 없는 분류는 매핑하지 않고 그대로 비워 등록 화면에서 고르게 한다 — 억지로

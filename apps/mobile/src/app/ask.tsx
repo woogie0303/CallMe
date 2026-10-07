@@ -45,12 +45,12 @@ type Params = {
 };
 
 /**
- * 03 질문 — 막힌 문장을 적고, **그 안에서 모르는 낱말을 골라** 묻는다.
+ * 03 질문 — 막힌 문장을 적고, **그 안에서 모르는 단어를 골라** 묻는다.
  *
- * 적은 글은 아래에 낱말로 다시 펼쳐지고, 거기서 사진 위에서처럼 누르거나 끌어서
+ * 적은 글은 아래에 단어로 다시 펼쳐지고, 거기서 사진 위에서처럼 누르거나 끌어서
  * 고른다. 무엇을 모르는지는 독자가 정한다 — 모델이 짐작해 골라 주던 때는 짐작이
  * 빗나간 문장이 아무것도 담기지 않은 채 남았다. 글을 고치면 고른 것은 풀린다
- * (낱말 자리가 달라져서).
+ * (단어 자리가 달라져서).
  *
  * 질문이 떨어졌거나 신호가 없으면 답만 미뤄질 뿐, 담는 일은 실패하지 않는다.
  * 읽던 흐름이 끊기는 것이 이 앱이 막으려는 바로 그 일이기 때문이다.
@@ -82,7 +82,7 @@ export default function AskScreen() {
   /** 고른 표현이 든 문장 수 — 담아둔 문장은 늘 한 문장이다 */
   const sentenceCount = fixed ? (surfaces.length ? 1 : 0) : picks.groups.length;
   const clearPicks = picks.clear;
-  /** 글을 고치면 낱말 자리가 바뀐다 — 고른 것을 풀어야 엉뚱한 낱말이 칠해지지 않는다 */
+  /** 글을 고치면 단어 자리가 바뀐다 — 고른 것을 풀어야 엉뚱한 단어가 칠해지지 않는다 */
   useEffect(() => clearPicks(), [sentence, clearPicks]);
 
   const { data: quota } = useAskQuota();
@@ -242,7 +242,7 @@ export default function AskScreen() {
             <AppText style={styles.pickTitle}>
               {surfaces.length
                 ? `고른 표현 ${surfaces.length}개 · 문장 ${sentenceCount}개`
-                : '모르는 낱말을 누르세요'}
+                : '모르는 단어를 누르세요'}
             </AppText>
             <AppText style={styles.pickHint}>
               {picks.limit && `${limitMessage(picks.limit.reason)}.`}

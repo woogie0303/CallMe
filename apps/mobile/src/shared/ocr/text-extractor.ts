@@ -11,7 +11,7 @@
  * ## 좌표에 대하여
  *
  * 찍은 사진 **위에서** 문장을 짚으려면 글자가 사진의 어디에 있는지 알아야 한다.
- * 앱 안의 `modules/page-reader`가 Apple Vision으로 읽고 줄·낱말의 좌표를 함께 준다.
+ * 앱 안의 `modules/page-reader`가 Apple Vision으로 읽고 줄·단어의 좌표를 함께 준다.
  *
  * 화면은 `readLines`가 돌려주는 모양만 안다. `located`가 참이면 사진 위에 얹고,
  * 아니면(글자를 하나도 못 읽었을 때) 글자만 다시 조판해 보여준다.
@@ -40,7 +40,7 @@ export type OcrLine = {
 };
 
 /**
- * 낱말 하나. 사진 위에서 **처음 낱말과 끝 낱말을 짚어** 물어볼 범위를 정하려면
+ * 단어 하나. 사진 위에서 **처음 단어와 끝 단어를 짚어** 물어볼 범위를 정하려면
  * 줄이 아니라 이 단위가 필요하다 — 한 줄에 여러 문장이 걸치기도 하고, 한 문장이
  * 여러 줄에 걸치기도 해서 줄로는 범위를 못 짚는다.
  *
@@ -56,7 +56,7 @@ export type OcrWord = {
 export type OcrResult = {
   lines: OcrLine[];
   /**
-   * 낱말 단위 좌표. 주는 인식기에서만 온다 — 이게 있으면 사진 위에서 짚고,
+   * 단어 단위 좌표. 주는 인식기에서만 온다 — 이게 있으면 사진 위에서 짚고,
    * 없으면 읽어낸 글을 조판해 보여주는 쪽으로 물러난다.
    */
   words: OcrWord[];
@@ -91,9 +91,9 @@ const pageReader = requireOptionalNativeModule<PageReader>('PageReader');
 export const available: boolean = Boolean(pageReader);
 
 /**
- * 사진에서 줄과 낱말을 읽어낸다.
+ * 사진에서 줄과 단어를 읽어낸다.
  *
- * 낱말을 하나라도 읽으면 `located: true`다. 하나도 못 읽었으면 `false` — 화면은
+ * 단어를 하나라도 읽으면 `located: true`다. 하나도 못 읽었으면 `false` — 화면은
  * 조판으로 물러난다.
  */
 export async function readLines(
@@ -115,7 +115,7 @@ export async function readLines(
 /**
  * 이 책을 읽을 때 열어둘 인식 언어. 책 제목이나 저자에 한글이 있으면 한국어 책으로 보고
  * 한국어를 함께 연다 — 책 검색이 한글이 있으면 카카오(국내 책), 아니면 Open Library(원서)로
- * 가르는 것과 같은 기준이다. 그 밖에는 영어만 읽어서, 영어 낱말을 한글로 잘못 읽는 일을 막는다.
+ * 가르는 것과 같은 기준이다. 그 밖에는 영어만 읽어서, 영어 단어를 한글로 잘못 읽는 일을 막는다.
  */
 export function languagesFor(
   book?: { title: string; author?: string } | null,

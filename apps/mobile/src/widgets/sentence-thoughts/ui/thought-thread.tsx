@@ -1,6 +1,12 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import type { ApiThought } from '@/shared/api/types';
 import { color, type } from '@/shared/config';
@@ -96,6 +102,8 @@ export function ThoughtInput({
     try {
       await onSend(text.trim());
       setText('');
+      /** 남기고 나면 키보드를 내려 방금 단 생각이 보이게 한다 */
+      Keyboard.dismiss();
     } catch {
       /** 실패하면 쓴 글을 그대로 둔다 — 다시 보내면 된다. 알리는 일은 부르는 쪽이 한다. */
     }

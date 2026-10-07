@@ -249,18 +249,6 @@ async function browserSignIn(
 }
 
 /**
- * 개발용 문. 서버의 ALLOW_DEV_LOGIN이 켜져 있을 때만 열린다.
- * 소셜 로그인이 실제로 도는 것을 확인하면 이 함수와 로그인 화면의 버튼을 지운다.
- */
-export function devSignIn(nickname = '개발용 독자'): Promise<SignInResult> {
-  return api<SignInResult>('/dev/login', {
-    method: 'POST',
-    anonymous: true,
-    body: { nickname },
-  });
-}
-
-/**
  * 웹(Expo Web)에서 동의 화면이 팝업으로 뜰 때, 로그인이 끝난 뒤 그 창이
  * 스스로 닫히게 한다. 네이티브에서는 아무 일도 하지 않는다 — 모듈 최상단에서
  * 한 번만 부르면 된다(Expo 문서 권장).
