@@ -16,7 +16,6 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://callme-d60c.onrender.com/api",
-        "EXPO_PUBLIC_APPLE_SIGN_IN": "true",
         "EXPO_PUBLIC_DEV_AUTOLOGIN": "false",
         "EXPO_PUBLIC_ADMOB_IOS_APP_ID": "ca-app-pub-5226607999291115~6059698731",
         "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID": "ca-app-pub-5226607999291115/6798065336",

@@ -61,33 +61,21 @@ const apple: AppleSdk | null = (() => {
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Apple 로그인은 **유료 개발자 계정**에서만 켤 수 있는 권한이 필요하다. 무료
- * 개인 팀으로 지은 빌드에 그 권한을 넣으면 빌드가 실패하므로, 켜도 되는
- * 빌드에서만 `true`로 둔다. `app.config.js`가 같은 값을 보고 권한을 넣는다 —
- * 둘이 어긋나면 버튼은 눌리는데 시스템 창이 뜨지 않는다.
- */
-const APPLE_SIGN_IN = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
-
-/** Apple만 네이티브 모듈이라 실제로 쓸 수 있는지 한 번은 확인해 둬야 한다 */
-let appleReady: boolean | null = null;
-
-/**
- * 키도 있고 모듈도 들어 있어야 쓸 수 있다. 카카오·네이버·구글은 이제 앱이
+ * 쓸 수 있는지는 네이티브 모듈이 들어 있는지뿐이다. 카카오·네이버·구글은 이제 앱이
  * 아무것도 들고 있지 않는다 — 안 됨을 알 방법이 없으니(서버가 설정됐는지는
- * 물어봐야 안다) 눌러 보게 두고, 안 되면 실패로 알린다. Apple만 네이티브
- * 모듈 유무 + 권한 스위치를 그대로 확인한다.
+ * 물어봐야 안다) 눌러 보게 두고, 안 되면 실패로 알린다. Apple만 Expo Go처럼
+ * 모듈이 없는 곳에서 흐리게 남는다.
  */
 export function configured(provider: ProviderName): boolean {
   if (provider !== 'apple') return true;
-  if (appleReady === null) appleReady = Boolean(apple) && APPLE_SIGN_IN;
-  return appleReady;
+  return Boolean(apple);
 }
 
 /** Apple SDK는 쓰기 전에 한 번 깨워 둘 것이 없다 — 이름만 예전 화면과 맞춘다 */
 export function prepareSocialSignIn(): void {
   if (__DEV__ && !configured('apple')) {
     console.log(
-      '[oauth] Apple 로그인은 이 빌드에서 못 써요 — 개발 빌드(expo run:ios)와 EXPO_PUBLIC_APPLE_SIGN_IN=true가 필요해요.',
+      '[oauth] Apple 로그인은 이 빌드에서 못 써요 — 개발 빌드(expo run:ios)가 필요해요 — Expo Go에는 모듈이 없어요.',
     );
   }
 }

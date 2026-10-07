@@ -48,7 +48,7 @@ pnpm 워크스페이스 + Turborepo.
 질문, 문장에 다는 생각, 읽기 기록까지 있다(`apps/backend/AGENTS.md`). 리텔링 API는
 앱에서 걷어냈지만 서버에는 아직 남아 있다. 로그인은
 카카오·네이버·구글·Apple 넷뿐이고 비밀번호는 맡지 않는다. Apple은 유료 개발자
-계정에서만 켜지는 권한이 있어서 스위치로 켠다(`apps/mobile/AGENTS.md`).
+계정에서만 프로비저닝되는 권한이 필요해서 빌드는 늘 유료 계정으로 서명한다(`apps/mobile/AGENTS.md`).
 
 카카오·네이버·구글은 이제 네이티브 SDK가 아니라 브라우저 동의 화면 + 서버
 콜백으로 로그인한다(`apps/backend/src/auth/oauth-session.service.ts`) — 예전
