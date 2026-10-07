@@ -196,6 +196,31 @@ Apple 로그인 권한(`com.apple.developer.applesignin`)은 늘 들어간다 �
   `EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID`, `EXPO_PUBLIC_ADMOB_REWARDED_ID`). 개인정보처리방침에
   광고 SDK가 쓰는 정보를 적고, App Store Connect의 개인정보 항목에도 맞춰 답한다.
 
+## 오래 걸리는 묻기와 오류 수집
+
+- **요청에는 제한 시간이 있다.** 모델을 부르는 길(`POST /asks`, `/asks/:id/resolve`)은 75초만
+  기다린다(`api(..., { timeoutMs })`). 서버는 모델을 45초에 포기하고 '연결 실패'로 기다리게
+  하니 앱이 그보다 조금 더 기다린다. 한때 둘 다 제한이 없어서 로딩이 몇 분씩 돌았다.
+- **늦은 것은 실패가 아니다.** 서버는 문장을 먼저 저장한 뒤 모델을 부르므로, 앱이 기다리기를
+  그만둬도(또는 앱을 꺼도) 문장은 기다리는 문장에 서 있고 서버는 하던 일을 마저 한다.
+  `explainAskError`가 그 경우를 '답이 늦어지고 있어요'로 말하고 기다리는 문장으로 보낸다.
+- **`fetch`의 영어 오류('Network request failed')는 앱에 그대로 보이지 않는다.** `api()`가
+  `NetworkError`로 바꿔 한국어로 말한다. 서버의 검증 메시지도 한국어다
+  (`apps/backend/src/common/validation.ts`).
+- **오류 수집은 Sentry**(`shared/monitoring/sentry.ts`). 출시 빌드에서 `EXPO_PUBLIC_SENTRY_DSN`이
+  있을 때만 켜진다. 잡아서 처리한 오류(묻기 실패 등)도 `reportError`로 남긴다 — 화면이 경고
+  창만 띄우고 넘어가면 원인이 어디에도 남지 않는다. **독자의 글은 보내지 않는다**(
+  `sendDefaultPii` 끔). 줄 번호를 읽으려면 EAS 시크릿 `SENTRY_AUTH_TOKEN`·`SENTRY_ORG`·
+  `SENTRY_PROJECT`가 있어야 하고(`app.config.js`가 있을 때만 플러그인을 붙인다), 네이티브 모듈이라
+  넣은 뒤에는 개발 빌드를 다시 지어야 한다. **개인정보 처리방침에 오류 수집(기기·오류 정보)을
+  적어 둘 것.**
+
+## 로그인 화면
+
+책을 읽는 캐릭터(`Mark name="reading"`)가 가운데에서 인사하고 천천히 떠오른다(동작 줄이기를
+켜면 가만히 있는다). 아래에 간편 로그인 버튼 넷. 책에서 온 영어 한 줄은 곁들이는 인용이라
+작고 옅게 둔다.
+
 ## 첫 실행 안내
 
 처음 온 독자에게 세 걸음(찍어서 짚기 · 문장째로 묻기 · 다시 만나면 이어주기)을 한 번 보여준다

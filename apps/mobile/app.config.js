@@ -96,6 +96,23 @@ module.exports = ({ config }) => {
        * 서버 푸시를 붙이는 날 이 줄을 지우고 플러그인을 켠다.
        */
       createRunOncePlugin((c) => c, 'expo-notifications'),
+      /**
+       * Sentry. 출시 빌드에서 JS 오류의 줄 번호를 읽을 수 있게 소스맵을 올린다. 올리려면
+       * `SENTRY_AUTH_TOKEN`(EAS 시크릿)이 필요해서, 토큰이 없으면 플러그인을 붙이지 않는다 —
+       * 붙인 채 토큰이 없으면 빌드 단계에서 업로드가 실패한다. 이 경우에도 오류는 수집되지만
+       * 줄 번호가 압축된 채로 보인다.
+       */
+      ...(process.env.SENTRY_AUTH_TOKEN
+        ? [
+            [
+              '@sentry/react-native/expo',
+              {
+                organization: process.env.SENTRY_ORG,
+                project: process.env.SENTRY_PROJECT,
+              },
+            ],
+          ]
+        : []),
       [
         'react-native-google-mobile-ads',
         {

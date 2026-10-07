@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
+import { reportError } from '@/shared/monitoring/sentry';
 import type { ApiAsk, ApiAskView, ApiQuota } from '@/shared/api/types';
 
 export const asksKey = ['asks'] as const;
@@ -59,6 +60,7 @@ export function useCreateAsk() {
      */
     mutationFn: (body: AskInput) =>
       api<ApiAskView[]>('/asks', { method: 'POST', body, timeoutMs: 75_000 }),
+    onError: (error) => reportError(error, 'ask.create'),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['sentences'] });
@@ -78,6 +80,7 @@ export function useResolveAsk() {
         method: 'POST',
         timeoutMs: 75_000,
       }),
+    onError: (error) => reportError(error, 'ask.resolve'),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: asksKey });
       client.invalidateQueries({ queryKey: ['items'] });

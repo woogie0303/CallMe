@@ -1,11 +1,12 @@
-import { ValidationPipe } from '@nestjs/common';
+import './instrument';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { trustProxyHops } from './common/rate-limit';
-
 import { validationException } from './common/validation';
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -29,12 +30,12 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
       /** 영어 기본 메시지가 앱에 그대로 보이지 않게 한다 — 원문은 로그에 남긴다 */
       exceptionFactory: (errors) =>
         validationException(errors, (original) =>
           new Logger('Validation').warn(original),
         ),
+    }),
   );
 
   app.enableCors({
