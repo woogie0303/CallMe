@@ -9,6 +9,7 @@ import {
   AltPanel,
   AppText,
   Card,
+  Checkbox,
   Icon,
   Quote,
   Tap,
@@ -24,6 +25,7 @@ export function ItemDetail({
   twinTerm,
   onOpenItem,
   onOpenSentence,
+  selection,
 }: {
   detail: ApiItemDetail;
   /** 헷갈리는 짝의 표제형. 짝이 있을 때만 따로 받아온다. */
@@ -31,6 +33,15 @@ export function ItemDetail({
   onOpenItem?: (id: string) => void;
   /** 만난 문장을 누르면 서랍에서 누른 것과 같은 문장 화면으로 간다 */
   onOpenSentence?: (sentenceId: string) => void;
+  /**
+   * 지울 문장을 고르는 중이면 있다. 줄 앞에 체크 칸이 서고, 줄을 누르면 문장 화면으로
+   * 가는 대신 체크가 바뀐다.
+   */
+  selection?: {
+    selected: ReadonlySet<string>;
+    onToggle: (sentenceId: string) => void;
+    onToggleAll: () => void;
+  };
 }) {
   const { item } = detail;
   /** 문장을 못 찾은 만남은 그릴 것이 없다 */
@@ -70,36 +81,72 @@ export function ItemDetail({
       </Card>
 
       <View style={styles.section}>
-        <AppText style={styles.sectionTitle}>만난 문장</AppText>
-        {encounters.map((encounter) => (
-          <Tap
-            key={encounter.sentenceId}
-            style={styles.card}
-            onPress={() => onOpenSentence?.(encounter.sentenceId)}
-            accessibilityRole="button"
-            accessibilityLabel={encounter.sentence.text}
-            accessibilityHint="눌러서 이 문장 보기"
-          >
-            <CoverThumb book={toBook(encounter.book)} style={styles.thumb} />
-            <View style={styles.cardBody}>
-              <Quote style={styles.sentence}>{encounter.sentence.text}</Quote>
-              <AppText style={styles.source}>
-                {[
-                  encounter.book.title,
-                  encounter.sentence.page
-                    ? `p.${encounter.sentence.page}`
-                    : null,
-                  savedLabel(encounter.savedAt),
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
+        <View style={styles.sectionHead}>
+          <AppText style={styles.sectionTitle}>만난 문장</AppText>
+          {selection ? (
+            <Tap
+              hitSlop={10}
+              onPress={selection.onToggleAll}
+              accessibilityRole="button"
+            >
+              <AppText style={styles.all}>
+                {selection.selected.size === encounters.length
+                  ? '선택 해제'
+                  : '전체 선택'}
               </AppText>
-              {encounter.sentence.note ? (
-                <AppText style={styles.note}>{encounter.sentence.note}</AppText>
+            </Tap>
+          ) : null}
+        </View>
+        {encounters.map((encounter) => {
+          const checked = selection?.selected.has(encounter.sentenceId);
+          return (
+            <Tap
+              key={encounter.sentenceId}
+              style={[styles.card, checked ? styles.cardChecked : null]}
+              onPress={() =>
+                selection
+                  ? selection.onToggle(encounter.sentenceId)
+                  : onOpenSentence?.(encounter.sentenceId)
+              }
+              accessibilityRole={selection ? 'checkbox' : 'button'}
+              accessibilityState={
+                selection ? { checked: Boolean(checked) } : undefined
+              }
+              accessibilityLabel={encounter.sentence.text}
+              accessibilityHint={
+                selection
+                  ? '눌러서 지울 문장으로 고르기'
+                  : '눌러서 이 문장 보기'
+              }
+            >
+              {selection ? (
+                <View style={styles.check}>
+                  <Checkbox checked={Boolean(checked)} />
+                </View>
               ) : null}
-            </View>
-          </Tap>
-        ))}
+              <CoverThumb book={toBook(encounter.book)} style={styles.thumb} />
+              <View style={styles.cardBody}>
+                <Quote style={styles.sentence}>{encounter.sentence.text}</Quote>
+                <AppText style={styles.source}>
+                  {[
+                    encounter.book.title,
+                    encounter.sentence.page
+                      ? `p.${encounter.sentence.page}`
+                      : null,
+                    savedLabel(encounter.savedAt),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </AppText>
+                {encounter.sentence.note ? (
+                  <AppText style={styles.note}>
+                    {encounter.sentence.note}
+                  </AppText>
+                ) : null}
+              </View>
+            </Tap>
+          );
+        })}
       </View>
 
       {twinTerm && item.confusedWith ? (
@@ -158,6 +205,15 @@ const styles = StyleSheet.create({
   },
 
   section: { gap: 10 },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  all: { ...type.label2, fontWeight: '600', color: color.primary },
+  /** 고른 줄은 잉크색 테두리 대신 포인트색 테두리 — 지금 고른 것만 파랗다는 규칙 */
+  cardChecked: { borderColor: color.primary, borderWidth: 1.5 },
+  check: { justifyContent: 'center', paddingLeft: 14 },
   sectionTitle: { ...type.body2, fontWeight: '700', color: color.text.primary },
   card: {
     flexDirection: 'row',

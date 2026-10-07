@@ -1,6 +1,10 @@
 import { Type } from 'class-transformer';
 import { ToBoolean } from '../../common/to-boolean';
 import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsArray,
   IsBoolean,
   IsIn,
   IsMongoId,
@@ -66,6 +70,16 @@ export class AddEncounterDto {
   @IsOptional()
   @IsString()
   surface?: string;
+}
+
+/** 이 표현을 몇 문장에서 한꺼번에 뺀다 — 서버가 한 번에 정리해야 도중에 끊기지 않는다 */
+export class RemoveEncountersDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(200)
+  @ArrayUnique()
+  @IsMongoId({ each: true })
+  sentenceIds!: string[];
 }
 
 export class ListItemsQuery {

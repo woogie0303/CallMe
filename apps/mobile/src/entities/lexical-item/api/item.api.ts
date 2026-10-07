@@ -117,6 +117,34 @@ export function useUpdateItem(id: string) {
 }
 
 /**
+ * 이 표현을 고른 문장들에서 한꺼번에 뺀다. 만난 문장을 전부 고르면 표현이 서랍에서
+ * 사라지고(`removed: 'item'`), 표현이 빠져 담은 표현이 하나도 안 남은 문장은 서버가 함께
+ * 정리한다(`sentencesRemoved`). 문장·질문 목록과 밑줄이 바뀌므로 셋 다 다시 받는다.
+ */
+export function useRemoveEncounters() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { itemId: string; sentenceIds: string[] }) =>
+      api<{ removed: 'encounter' | 'item'; sentencesRemoved: number }>(
+        `/items/${input.itemId}/encounters/remove`,
+        { method: 'POST', body: { sentenceIds: input.sentenceIds } },
+      ),
+    onSuccess: (result, input) => {
+      /** 사라진 표현의 상세를 다시 받으면 404가 뜬다 — 받아둔 것부터 치운다 */
+      if (result.removed === 'item') {
+        client.removeQueries({
+          queryKey: [...itemsKey, 'detail', input.itemId],
+          exact: true,
+        });
+      }
+      client.invalidateQueries({ queryKey: itemsKey });
+      client.invalidateQueries({ queryKey: ['sentences'] });
+      client.invalidateQueries({ queryKey: ['asks'] });
+    },
+  });
+}
+
+/**
  * 오늘 다시 볼 표현 하나. 아직 헷갈린다고 둔 것 중에서 처음과 마지막 사이가
  * 가장 벌어진 항목을 고른다 — 오래 잊고 지내다 또 걸린 표현일수록 오늘 다시
  * 꺼낼 이유가 크다.

@@ -5,6 +5,7 @@ export { BRAND, BrandLogo } from './brand-logo';
 export { Card, AltPanel } from './card';
 export { CountBadge } from './count-badge';
 export { DisclosureRow } from './disclosure-row';
+export { Checkbox } from './checkbox';
 export { Chip, TermChip } from './chip';
 export {
   AskIcon,

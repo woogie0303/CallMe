@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -15,6 +16,7 @@ import { ObjectIdPipe } from '../common/object-id.pipe';
 import {
   AddEncounterDto,
   ListItemsQuery,
+  RemoveEncountersDto,
   SaveItemDto,
   UpdateItemDto,
 } from './dto/item.dto';
@@ -60,6 +62,17 @@ export class ItemsController {
     @Body() dto: AddEncounterDto,
   ) {
     return this.items.addEncounter(readerId, id, dto);
+  }
+
+  /** 이 표현을 고른 문장들에서 한꺼번에 뺀다 — 전부 빼면 표현이 사라진다 */
+  @Post(':id/encounters/remove')
+  @HttpCode(200)
+  removeEncounters(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+    @Body() dto: RemoveEncountersDto,
+  ) {
+    return this.items.removeEncounters(readerId, id, dto.sentenceIds);
   }
 
   @Delete(':id/encounters/:sentenceId')

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Ask, AskSchema } from '../asks/ask.schema';
 import { AuthModule } from '../auth/auth.module';
 import { Book, BookSchema } from '../books/book.schema';
 import { Sentence, SentenceSchema } from '../sentences/sentence.schema';
@@ -13,6 +14,7 @@ import { LexicalItem, LexicalItemSchema } from './lexical-item.schema';
       { name: LexicalItem.name, schema: LexicalItemSchema },
       { name: Sentence.name, schema: SentenceSchema },
       { name: Book.name, schema: BookSchema },
+      { name: Ask.name, schema: AskSchema },
     ]),
     AuthModule,
   ],

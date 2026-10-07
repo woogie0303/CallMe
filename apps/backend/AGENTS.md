@@ -156,6 +156,7 @@ GET    /api/items ?status= &reencountered= &bookId=
 GET    /api/items/:id             만난 문장과 그 책까지 이어서
 PATCH  /api/items/:id             뜻 · 상태 · 헷갈리는 짝
 POST   /api/items/:id/encounters
+POST   /api/items/:id/encounters/remove   { sentenceIds } 고른 문장들에서 한꺼번에 뺀다 — 전부 빼면 표현도 사라진다
 DELETE /api/items/:id/encounters/:sentenceId
 DELETE /api/items/:id
 ```

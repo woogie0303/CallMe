@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Ask } from '../asks/ask.schema';
 import { Book, type BookDocument } from '../books/book.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
 import { LexicalItem, type LexicalItemDocument } from './lexical-item.schema';
@@ -55,6 +56,7 @@ export class ItemsService {
     @InjectModel(LexicalItem.name) private readonly items: Model<LexicalItem>,
     @InjectModel(Sentence.name) private readonly sentences: Model<Sentence>,
     @InjectModel(Book.name) private readonly books: Model<Book>,
+    @InjectModel(Ask.name) private readonly asks: Model<Ask>,
   ) {}
 
   /**
@@ -278,31 +280,108 @@ export class ItemsService {
     id: string,
     sentenceId: string,
   ): Promise<{ removed: 'encounter' | 'item' }> {
-    const item = await this.find(readerId, id);
-    const target = new Types.ObjectId(sentenceId);
+    return this.removeEncounters(readerId, id, [sentenceId]);
+  }
 
-    if (
-      !item.encounters.some((encounter) => encounter.sentenceId.equals(target))
-    ) {
+  /**
+   * 이 표현을 고른 문장들에서 한꺼번에 뺀다. 한 문서를 한 번에 고쳐서, 여러 번에 나눠
+   * 부르다 도중에 끊기는 일이 없다. 만남이 하나도 안 남으면 표현도 함께 사라진다.
+   *
+   * 표현이 빠져서 담은 표현이 하나도 안 남은 문장은 서랍 어디에도 설 곳이 없어서 문장도
+   * 함께 정리한다(`forgetOrphans`).
+   */
+  async removeEncounters(
+    readerId: string,
+    id: string,
+    sentenceIds: string[],
+  ): Promise<{ removed: 'encounter' | 'item'; sentencesRemoved: number }> {
+    const item = await this.find(readerId, id);
+    const targets = new Set(sentenceIds);
+    const hit = item.encounters.filter((encounter) =>
+      targets.has(encounter.sentenceId.toString()),
+    );
+    if (!hit.length) {
       throw new NotFoundException('그 문장에서 담은 기록이 없어요.');
     }
 
-    if (item.encounters.length === 1) {
+    const gone = hit.map((encounter) => encounter.sentenceId);
+    const remaining = item.encounters.filter(
+      (encounter) => !targets.has(encounter.sentenceId.toString()),
+    );
+
+    let removed: 'encounter' | 'item';
+    if (!remaining.length) {
       await this.items.deleteOne({ _id: item._id });
-      return { removed: 'item' };
+      removed = 'item';
+    } else {
+      item.encounters = remaining;
+      await item.save();
+      removed = 'encounter';
     }
 
-    item.encounters = item.encounters.filter(
-      (encounter) => !encounter.sentenceId.equals(target),
-    );
-    await item.save();
-    return { removed: 'encounter' };
+    return {
+      removed,
+      sentencesRemoved: await this.forgetOrphans(readerId, gone),
+    };
   }
 
   async remove(readerId: string, id: string): Promise<{ ok: true }> {
     const item = await this.find(readerId, id);
+    const gone = item.encounters.map((encounter) => encounter.sentenceId);
     await this.items.deleteOne({ _id: item._id });
+    await this.forgetOrphans(readerId, gone);
     return { ok: true };
+  }
+
+  /**
+   * 담은 표현이 하나도 안 남은 문장을 정리한다. 물어서 표현을 담은 문장은 '담은 표현'
+   * 쪽에만 서고(마음에 든 문장에는 하트를 켠 것만 든다), 그 표현을 독자가 모두 지우면
+   * 어느 갈래에도 안 선다 — 보이지 않는 채로 남겨두는 대신 문장과 질문을 함께 지운다.
+   *
+   * 지우지 않는 경우: 하트를 켠 문장(마음에 든 문장에 선다 — 묻지 않고 담아둔 문장은 묻는
+   * 순간 하트가 켜진다), 답을 기다리는 질문이 있는 문장(기다리는 문장에 선다). 내 생각은
+   * 마음에 든 문장에서만 달 수 있어서, 생각이 달린 문장은 늘 마음에 든 문장이었다 — 하트가
+   * 켜지기 전에 물은 옛 문장이면 여기서 하트를 켜 두고 지우지 않는다.
+   */
+  private async forgetOrphans(
+    readerId: string,
+    sentenceIds: Types.ObjectId[],
+  ): Promise<number> {
+    const owner = new Types.ObjectId(readerId);
+    let removed = 0;
+
+    for (const sentenceId of sentenceIds) {
+      const stillClaimed = await this.items.exists({
+        readerId: owner,
+        'encounters.sentenceId': sentenceId,
+      });
+      if (stillClaimed) continue;
+
+      const sentence = await this.sentences.findOne({
+        _id: sentenceId,
+        readerId: owner,
+      });
+      if (!sentence || sentence.favorite) continue;
+
+      const asked = await this.asks.find({ readerId: owner, sentenceId });
+      /** 묻지 않고 담아둔 문장은 원래 마음에 든 문장이다 — 건드리지 않는다 */
+      if (!asked.length) continue;
+      if (asked.some((ask) => ask.status === 'pending')) continue;
+
+      if (sentence.thoughts.length) {
+        await this.sentences.updateOne(
+          { _id: sentence._id },
+          { favorite: true },
+        );
+        continue;
+      }
+
+      await this.asks.deleteMany({ readerId: owner, sentenceId });
+      await this.sentences.deleteOne({ _id: sentence._id });
+      removed += 1;
+    }
+
+    return removed;
   }
 }
 
