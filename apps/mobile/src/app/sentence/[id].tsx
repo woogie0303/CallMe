@@ -17,6 +17,7 @@ import { useItems } from '@/entities/lexical-item/api/item.api';
 import { useReader } from '@/entities/reader/api/reader.api';
 import {
   useAddThought,
+  useClearExpressions,
   useDeleteSentence,
   useFavoriteSentence,
   useRemoveThought,
@@ -24,6 +25,7 @@ import {
   useSentenceAsk,
 } from '@/entities/sentence/api/sentence.api';
 import {
+  clearMessage,
   deleteImpact,
   deleteMessage,
 } from '@/entities/sentence/lib/delete-impact';
@@ -39,6 +41,7 @@ import {
   ScreenHeader,
   Tap,
   TrashIcon,
+  showToast,
 } from '@/shared/ui';
 import { SentenceDetail } from '@/widgets/sentence-detail/ui/sentence-detail';
 import {
@@ -65,7 +68,10 @@ import {
  * 끝으로 내린다 — 자판이 화면 절반을 덮으면 방금 쓰던 자리가 가려진다.
  */
 export default function SentenceScreen() {
-  /** reveal — 방금 물어서 온 길이면 뜻을 편 채로 연다. 그걸 보러 온 것이니까. */
+  /**
+   * reveal — 방금 물어서 온 길이면 뜻을 편 채로 연다. 그걸 보러 온 것이니까. 값이
+   * 있기만 하면 펴고, 값 자체는 다시 물을 때마다 바뀐다(질문 모달이 돌아올 때).
+   */
   const { id, reveal, from } = useLocalSearchParams<{
     id: string;
     reveal?: string;
@@ -92,6 +98,7 @@ export default function SentenceScreen() {
   const { data: items = [] } = useItems();
 
   const remove = useDeleteSentence();
+  const clear = useClearExpressions();
   const favorite = useFavoriteSentence();
   const addThought = useAddThought(id);
   const removeThought = useRemoveThought(id);
@@ -140,13 +147,12 @@ export default function SentenceScreen() {
     : undefined;
 
   /**
-   * 묻지 않고 담기만 한 문장은 그 자체로 마음에 든 문장이다(서랍과 책의 갈래가
-   * 그렇게 가른다) — 하트가 처음부터 차 있고, 끌 수 없다. 끌 수 있게 두면 꺼도 그
-   * 갈래에 그대로 남아서 누른 것이 아무 일도 안 한 것처럼 보인다.
-   * 물어본 문장은 표현을 아직 안 골랐어도 여기 들지 않는다 — 몰라서 물은 문장이다.
-   * 그런 문장도 하트를 켜면 '마음에 들었던 문장'에 선다.
+   * 담은 표현이 없는 문장은 서랍에 사는 자리가 '마음에 들었던 문장'뿐이다 — 하트가 처음부터
+   * 차 있고, 끌 수 없다. 끌 수 있게 두면 꺼도 그 갈래에 그대로 남아서(또는 어느 갈래에도
+   * 안 서서) 누른 것이 아무 일도 안 한 것처럼 보이거나 문장이 보이지 않게 된다. 그래서
+   * 이런 문장에서 '빼기'는 곧 지우기다. 답을 기다리는 문장은 아직 표현이 없을 뿐이라 뺀다.
    */
-  const always = Boolean(row && !row.asked && !row.claimed);
+  const always = Boolean(row && !row.pending && !row.claimed);
   /** 누르는 즉시 바뀐 것처럼 보인다 — 서버가 돌아올 때까지 기다리면 두 번 누르게 된다 */
   const hearted =
     always ||
@@ -173,6 +179,13 @@ export default function SentenceScreen() {
     favorite.mutate(
       { id, favorite: next },
       {
+        onSuccess: () => {
+          showToast(
+            next ? '마음에 든 문장에 추가했어요' : '마음에 든 문장에서 뺐어요',
+          );
+          /** '마음에 들었던 문장'에서 열었는데 뺐으면 이 문장은 이제 그 목록에 없다 */
+          if (!next && threadMode) router.back();
+        },
         onError: (error) =>
           Alert.alert(
             '바꾸지 못했어요',
@@ -222,6 +235,7 @@ export default function SentenceScreen() {
     if (!id) return;
     try {
       await remove.mutateAsync(id);
+      showToast('문장을 삭제했어요');
       router.back();
     } catch (error) {
       Alert.alert(
@@ -229,6 +243,37 @@ export default function SentenceScreen() {
         error instanceof Error ? error.message : '',
       );
     }
+  };
+
+  /**
+   * 하트를 켠 문장을 '담은 표현' 쪽에서 지울 때는 문장을 남기고 표현만 지운다 — 같은
+   * 문장이 '마음에 들었던 문장'에도 서 있어서, 둘 다 지우면 거기서 지운 적 없는 것까지
+   * 사라진다.
+   */
+  const clearNow = async () => {
+    if (!id) return;
+    try {
+      await clear.mutateAsync(id);
+      showToast('담은 표현을 지웠어요');
+      router.back();
+    } catch (error) {
+      Alert.alert(
+        '지우지 못했어요',
+        error instanceof Error ? error.message : '',
+      );
+    }
+  };
+
+  const confirmClear = () => {
+    if (!id || clear.isPending) return;
+    Alert.alert(
+      '담은 표현을 지울까요?',
+      clearMessage(deleteImpact(id, items)),
+      [
+        { text: '그대로 둘게요', style: 'cancel' },
+        { text: '지우기', style: 'destructive', onPress: clearNow },
+      ],
+    );
   };
 
   const confirmDelete = () => {
@@ -374,7 +419,7 @@ export default function SentenceScreen() {
           <DisclosureRow
             icon={<HeartIcon size={19} filled color={color.primary} />}
             title="마음에 든 문장에서 빼기"
-            body="표현을 담지 않은 문장이라, 빼면 지워져요."
+            body="담은 표현이 없는 문장이라, 빼면 지워져요."
             onPress={() => afterSheet(confirmUnlikeAndDelete)}
           />
         ) : (
@@ -397,12 +442,26 @@ export default function SentenceScreen() {
               }
               onPress={() => afterSheet(toggleHeart)}
             />
-            <DisclosureRow
-              icon={<TrashIcon size={19} color={color.text.primary} />}
-              title="문장 삭제하기"
-              body="이 문장에서만 만난 표현도 함께 지워져요."
-              onPress={() => afterSheet(confirmDelete)}
-            />
+            {/*
+              '마음에 들었던 문장'에서 열었으면 지우는 일은 거기서 빼는 것으로 끝이다 — 담은
+              표현까지 지우지 않는다. 그 밖에서 열었으면(담은 표현 쪽): 하트를 켠 문장은
+              표현만 지우고 문장을 남기고, 아니면 문장째 지운다.
+            */}
+            {threadMode ? null : hearted ? (
+              <DisclosureRow
+                icon={<TrashIcon size={19} color={color.text.primary} />}
+                title="담은 표현에서 지우기"
+                body="마음에 든 문장에는 그대로 남아요."
+                onPress={() => afterSheet(confirmClear)}
+              />
+            ) : (
+              <DisclosureRow
+                icon={<TrashIcon size={19} color={color.text.primary} />}
+                title="문장 삭제하기"
+                body="이 문장에서만 만난 표현도 함께 지워져요."
+                onPress={() => afterSheet(confirmDelete)}
+              />
+            )}
           </>
         )}
       </OptionSheet>

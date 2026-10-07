@@ -70,6 +70,15 @@ export class SentencesController {
     return this.sentences.removeThought(readerId, id, thoughtId);
   }
 
+  /** 담은 표현만 지운다 — 문장은 남는다 */
+  @Delete(':id/expressions')
+  clearExpressions(
+    @CurrentReader() readerId: string,
+    @Param('id', ObjectIdPipe) id: string,
+  ) {
+    return this.sentences.clearExpressions(readerId, id);
+  }
+
   @Delete(':id')
   remove(
     @CurrentReader() readerId: string,

@@ -88,6 +88,24 @@ export function useDeleteSentence() {
 }
 
 /**
+ * 이 문장에서 담은 표현만 지운다 — 문장은 남는다. 하트를 켠 문장을 '담은 표현' 쪽에서
+ * 지울 때 마음에 든 문장은 그대로 두는 길이다. 이 문장 말고는 만난 적 없는 표현은 함께
+ * 사라진다.
+ */
+export function useClearExpressions() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ ok: true }>(`/sentences/${id}/expressions`, { method: 'DELETE' }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['sentences'] });
+      client.invalidateQueries({ queryKey: ['items'] });
+      client.invalidateQueries({ queryKey: ['asks'] });
+    },
+  });
+}
+
+/**
  * 이 문장에 생각 하나를 단다 / 지운다. 문장 화면이 쓰는 한 문장 캐시만 낡는다 —
  * 목록은 생각을 그리지 않는다.
  */

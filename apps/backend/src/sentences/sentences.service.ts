@@ -49,8 +49,9 @@ export class SentencesService {
    * 만남 쪽에서 물어보는 이유는, 표현을 나중에 담거나 지우면 같은 문장이
    * 이쪽에서 저쪽으로 옮겨가기 때문이다 — 문장에 적어두면 그때마다 어긋난다.
    *
-   * 물어본 문장도 뺀다. 몰라서 물어놓고 아직 아무것도 안 고른 문장은 '좋아서
-   * 담아둔 줄'이 아니라 답을 기다리는 줄이다.
+   * 물어본 문장도 뺀다. 몰라서 물어놓은 문장은 '좋아서 담아둔 줄'이 아니다 — 답을
+   * 기다리는 줄이거나, 담은 표현 쪽에 서는 줄이다. 그 표현을 독자가 모두 지우면 문장은
+   * 어디에도 서지 않고 그냥 사라진다(`ItemsService.forgetOrphans`).
    *
    * 다만 하트(`favorite`)를 켠 문장은 표현이 딸려 있어도 들어온다 — 독자가
    * 직접 마음에 든다고 한 줄이다.
@@ -139,6 +140,17 @@ export class SentencesService {
   }
 
   /**
+   * 이 문장에서 담은 표현만 지운다. 문장은 남는다 — 하트를 켠 문장이 '담은 표현' 쪽에서
+   * 지워질 때, 마음에 든 문장은 그대로 두려는 길이다. 이 문장 말고는 만난 적이 없는
+   * 표현은 서랍에서 함께 사라진다.
+   */
+  async clearExpressions(readerId: string, id: string): Promise<{ ok: true }> {
+    const sentence = await this.find(readerId, id);
+    await this.forgetEncounters(new Types.ObjectId(readerId), sentence._id);
+    return { ok: true };
+  }
+
+  /**
    * 문장이 사라지면 그 문장을 가리키던 만남도, 만남이 다 없어진 항목도, 그 문장에
    * 대고 물은 질문도 함께 간다. 질문을 남겨두면 글 없는 질문이 '기다리는 문장'에
    * 빈 줄로 선다.
@@ -147,14 +159,22 @@ export class SentencesService {
     const sentence = await this.find(readerId, id);
     const owner = new Types.ObjectId(readerId);
 
-    await this.items.updateMany(
-      { readerId: owner, 'encounters.sentenceId': sentence._id },
-      { $pull: { encounters: { sentenceId: sentence._id } } },
-    );
-    await this.items.deleteMany({ readerId: owner, encounters: { $size: 0 } });
+    await this.forgetEncounters(owner, sentence._id);
     await this.asks.deleteMany({ readerId: owner, sentenceId: sentence._id });
     await this.sentences.deleteOne({ _id: sentence._id });
 
     return { ok: true };
+  }
+
+  /** 그 문장을 가리키던 만남을 모든 항목에서 빼고, 만남이 다 없어진 항목은 지운다 */
+  private async forgetEncounters(
+    owner: Types.ObjectId,
+    sentenceId: Types.ObjectId,
+  ) {
+    await this.items.updateMany(
+      { readerId: owner, 'encounters.sentenceId': sentenceId },
+      { $pull: { encounters: { sentenceId } } },
+    );
+    await this.items.deleteMany({ readerId: owner, encounters: { $size: 0 } });
   }
 }

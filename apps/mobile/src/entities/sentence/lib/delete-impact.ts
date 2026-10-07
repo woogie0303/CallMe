@@ -58,7 +58,26 @@ function name(terms: string[]): string {
  * 갈리는데(‘make out’은 '아웃'이라 받침이 있고 ‘Klara’는 없다) 그걸 코드로
  * 맞추면 반은 틀린다. 줄표로 끊어 이름을 나열하면 조사가 아예 필요 없다.
  */
-export function deleteMessage({ removed, kept }: DeleteImpact): string {
+export function deleteMessage(impact: DeleteImpact): string {
+  return [
+    ...impactLines(impact, '담아둔 문장 하나를 지워요.'),
+    '되돌릴 수 없어요.',
+  ].join('\n\n');
+}
+
+/**
+ * 문장은 두고 담은 표현만 지울 때의 확인 문구 — 하트를 켠 문장을 '담은 표현' 쪽에서
+ * 지운다. 어떤 표현이 사라지는지는 문장 삭제와 같고, 문장이 남는다는 말이 붙는다.
+ */
+export function clearMessage(impact: DeleteImpact): string {
+  return [
+    ...impactLines(impact, '이 문장에서 담은 표현을 지워요.'),
+    "문장은 '마음에 들었던 문장'에 그대로 남아요.",
+    '되돌릴 수 없어요.',
+  ].join('\n\n');
+}
+
+function impactLines({ removed, kept }: DeleteImpact, empty: string): string[] {
   const lines: string[] = [];
 
   if (removed.length) {
@@ -71,8 +90,6 @@ export function deleteMessage({ removed, kept }: DeleteImpact): string {
       `이 문장만 빠져요 — ${name(kept)}\n다른 문장에서도 만나서 표현은 서랍에 남아요.`,
     );
   }
-  if (!lines.length) lines.push('담아둔 문장 하나를 지워요.');
-
-  lines.push('되돌릴 수 없어요.');
-  return lines.join('\n\n');
+  if (!lines.length) lines.push(empty);
+  return lines;
 }
