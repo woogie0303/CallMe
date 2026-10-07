@@ -30,6 +30,7 @@ import {
   ActionButton,
   AppText,
   AskingOverlay,
+  HeartIcon,
   ScreenHeader,
 } from '@/shared/ui';
 import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
@@ -244,21 +245,26 @@ export default function AskScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
+        {/* 질문 시트(`AskSheet`)와 같은 모양 — 넓은 쪽이 묻기, 좁은 쪽(하트)이 그냥 담기 */}
         <ActionButton
           label={left > 0 ? '이 문장 물어보기' : '문장만 담아두기'}
           variant={left > 0 ? 'primary' : 'ink'}
           disabled={!askable || keepSentence.isPending}
           loading={createAsk.isPending}
           onPress={ask}
+          style={styles.main}
         />
         {/* 뜻은 몰라도 되고 그냥 좋았던 문장 — 이건 서랍이 아니라 책에 남는다. 이미 담은 문장에는 없다. */}
         {fixed ? null : (
           <ActionButton
             label="그냥 마음에 든 문장이에요"
+            icon={<HeartIcon size={22} color={color.primary} />}
+            iconOnly
             variant="subtle"
             disabled={!ready || createAsk.isPending}
             loading={keepSentence.isPending}
             onPress={keepOnly}
+            style={styles.side}
           />
         )}
       </View>
@@ -284,5 +290,13 @@ const styles = StyleSheet.create({
   pick: { gap: 8 },
   pickTitle: { ...type.label1, fontWeight: '700', color: color.text.primary },
   pickHint: { ...type.caption1, color: color.text.meta, marginBottom: 4 },
-  footer: { paddingHorizontal: gutter, paddingTop: 12, gap: 10 },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: gutter,
+    paddingTop: 12,
+    gap: 8,
+  },
+  main: { flex: 1 },
+  side: { width: 56, height: 52 },
 });
