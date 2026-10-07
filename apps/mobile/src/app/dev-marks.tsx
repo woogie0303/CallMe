@@ -11,7 +11,7 @@ import {
 } from '@/shared/ui';
 
 /**
- * 개발용 — 9개 캐릭터를 한 화면에서 다 본다.
+ * 개발용 — 캐릭터를 한 화면에서 다 본다.
  *
  * 실제 화면 어딘가에 박아두지 않는다. 실제 자리(빈 서랍, 막힌 검색, 기다리는
  * 문장…)는 그 순간이 와야 보이고, 그걸 하나씩 재현하는 것보다 여기서 한 번에
@@ -27,6 +27,7 @@ const LABELS: Record<MarkName, string> = {
   'not-found': '찾을 수 없음',
   'ocr-failed': '글자를 못 읽음',
   reunion: '다시 만남',
+  reading: '책을 읽는 중 — 로그인 화면',
 };
 
 export default function DevMarksScreen() {
@@ -37,7 +38,7 @@ export default function DevMarksScreen() {
       <ScreenHeader
         leading="back"
         onLeadingPress={() => router.back()}
-        title="캐릭터 9개"
+        title="캐릭터"
       />
       <ScrollView
         contentContainerStyle={styles.grid}

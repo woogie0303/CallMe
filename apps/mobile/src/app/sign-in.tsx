@@ -1,5 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeInDown,
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProviderName } from '@/shared/api/types';
@@ -15,6 +25,7 @@ import {
   AppText,
   BRAND,
   BrandLogo,
+  Mark,
   Quote,
   Tap,
 } from '@/shared/ui';
@@ -64,17 +75,24 @@ export default function SignInScreen() {
     <View
       style={[
         styles.screen,
-        { paddingTop: insets.top + 64, paddingBottom: insets.bottom + 24 },
+        { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
       ]}
     >
       <View style={styles.head}>
-        <AppText style={styles.wordmark}>Reread</AppText>
-        <Quote style={styles.line}>
-          “I could not make out whether it was a statue or a person.”
-        </Quote>
-        <AppText style={styles.blurb}>
-          원서를 읽다 막힌 문장을 담아두면,{'\n'}나중에 다시 만날 때 이어드려요.
-        </AppText>
+        <Mascot />
+        <Animated.View
+          entering={FadeInDown.delay(120).duration(360)}
+          style={styles.words}
+        >
+          <AppText style={styles.wordmark}>Reread</AppText>
+          <AppText style={styles.blurb}>
+            원서를 읽다 막힌 문장을 담아두면,{'\n'}나중에 다시 만날 때
+            이어드려요.
+          </AppText>
+          <Quote style={styles.line}>
+            “I could not make out whether it was a statue or a person.”
+          </Quote>
+        </Animated.View>
       </View>
 
       <View style={styles.foot}>
@@ -113,6 +131,49 @@ export default function SignInScreen() {
         ) : null}
       </View>
     </View>
+  );
+}
+
+/**
+ * 책을 읽는 캐릭터 — 이 앱의 얼굴이 처음 인사하는 자리. 천천히 떠올랐다 내려앉는다.
+ * 눈에 띄려는 움직임이 아니라 '살아 있다'는 정도라서 느리고 작다. '동작 줄이기'를
+ * 켰으면 가만히 있는다.
+ */
+function Mascot() {
+  const reduce = useReducedMotion();
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduce) return;
+    lift.value = withRepeat(
+      withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(lift);
+  }, [reduce, lift]);
+
+  const body = useAnimatedStyle(() => ({
+    transform: [{ translateY: -6 * lift.value }],
+  }));
+  const shadow = useAnimatedStyle(() => ({
+    transform: [{ scaleX: 1 - 0.14 * lift.value }],
+    opacity: 0.14 - 0.05 * lift.value,
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(420)}
+      style={styles.mascot}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel="책을 읽고 있는 Reread의 캐릭터"
+    >
+      <Animated.View style={body}>
+        <Mark name="reading" size={132} />
+      </Animated.View>
+      <Animated.View style={[styles.shadow, shadow]} />
+    </Animated.View>
   );
 }
 
@@ -172,20 +233,41 @@ const CIRCLE = 56;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    justifyContent: 'space-between',
     paddingHorizontal: gutter,
     backgroundColor: color.surface.base,
   },
-  head: { gap: 18 },
+  /** 남는 자리의 가운데에 선다 — 위에 붙이면 아래 로그인 버튼과 사이가 휑하다 */
+  head: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 26 },
+  mascot: { alignItems: 'center' },
+  shadow: {
+    width: 76,
+    height: 9,
+    marginTop: 6,
+    borderRadius: 999,
+    backgroundColor: color.text.primary,
+  },
+  words: { alignItems: 'center', gap: 14 },
   wordmark: {
     ...type.title2,
-    fontSize: 26,
-    letterSpacing: -0.78,
+    fontSize: 32,
+    letterSpacing: -0.96,
     color: color.text.primary,
   },
-  /** 책에서 온 영어만 세리프 */
-  line: { fontSize: 22, lineHeight: 33, color: color.text.primary },
-  blurb: { ...type.label1, lineHeight: 23, color: color.text.secondary },
+  blurb: {
+    ...type.label1,
+    lineHeight: 24,
+    textAlign: 'center',
+    color: color.text.secondary,
+  },
+  /** 책에서 온 영어만 세리프. 인사말이 아니라 곁들이는 인용이라 작고 옅게 */
+  line: {
+    marginTop: 6,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'center',
+    color: color.text.meta,
+  },
 
   foot: { gap: 20 },
   problem: { ...type.caption1, lineHeight: 18, color: color.status.cautionary },

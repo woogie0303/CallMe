@@ -26,6 +26,8 @@ const SOURCES = {
   'not-found': require('../../../assets/images/marks/not-found.png'),
   /** 사진에서 글자를 읽어내지 못했다 */
   'ocr-failed': require('../../../assets/images/marks/ocr-failed.png'),
+  /** 책을 읽는 중 — 이 앱의 얼굴. 로그인 화면에서 처음 인사한다 */
+  reading: require('../../../assets/images/marks/reading.png'),
   /** 표현을 다시 만났다 — 이 앱에서 몇 안 되는 반가운 순간 */
   reunion: require('../../../assets/images/marks/reunion.png'),
 } as const;
