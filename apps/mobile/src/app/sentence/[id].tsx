@@ -335,6 +335,7 @@ export default function SentenceScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         onContentSizeChange={() => {
           if (!stickToEnd.current) return;
           stickToEnd.current = false;
