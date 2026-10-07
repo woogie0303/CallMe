@@ -29,3 +29,4 @@ export { SectionHeader } from './section-header';
 export { SectionSwitch, type SectionOption } from './section-switch';
 export { OptionSheet, SheetBackdrop, SheetPanel } from './sheet';
 export { AppText, Quote, emphasis } from './text';
+export { ToastHost, showToast } from './toast';

@@ -12,6 +12,7 @@ import { configureNotifications } from '@/shared/notifications/reminder';
 import { QueryProvider } from '@/shared/query/provider';
 import { initMonitoring } from '@/shared/monitoring/measure';
 import { SessionProvider, useSession } from '@/shared/session/session';
+import { ToastHost } from '@/shared/ui';
 import { OnboardingRedirect } from '@/widgets/onboarding/model/onboarding-redirect';
 
 initMonitoring();
@@ -30,6 +31,8 @@ export default function RootLayout() {
         <SessionProvider>
           <StatusBar style="dark" />
           <Gate />
+          {/* 뒤로 가며 한 일을 알린다 — 화면이 사라져도 남아야 해서 네비게이션 바깥에 둔다 */}
+          <ToastHost />
         </SessionProvider>
       </QueryProvider>
     </GestureHandlerRootView>
