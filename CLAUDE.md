@@ -12,6 +12,9 @@ CallMe — 코드베이스 안내. 제품 이름은 **Reread**다.
 `apps/web`(Next.js 16, App Router), `apps/backend`(NestJS 11), `apps/mobile`(Expo 57).
 pnpm 워크스페이스 + Turborepo.
 
+`site/`는 reread.cloud의 홈페이지와 개인정보 처리방침(정적 페이지, GitHub Pages)이다 —
+방침의 원본은 `docs/privacy-policy.md`다(`site/README.md`).
+
 웹은 FSD를 따른다 — `app / widgets / entities / shared`, 각 슬라이스는
 `ui / model / lib` 세그먼트로 나뉜다. 의존 방향은 언제나 아래로만 흐른다.
 

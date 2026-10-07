@@ -1,0 +1,46 @@
+# reread.cloud 홈페이지·개인정보 처리방침을 GitHub Pages로 올린다.
+# 설정 → Pages → Source를 'GitHub Actions'로 두고, 커스텀 도메인에 reread.cloud를 적는다(site/README.md).
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - docs/privacy-policy.md
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # 방침 페이지는 docs/privacy-policy.md에서 만든다 — 생성물은 저장소에 두지 않는다
+      - run: node site/build.mjs
+      # 만드는 스크립트는 공개 주소에 올리지 않는다
+      - run: |
+          mkdir _site
+          cp -r site/. _site/
+          rm _site/build.mjs _site/README.md
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
