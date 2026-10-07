@@ -100,6 +100,9 @@ shared/       토큰 · 타입 램프 · 아이콘 · API 클라이언트 · 조
   `shared/ocr/selection.ts`가 마침표로 찾고, 틀리면 독자가 시트에서 고친다 — 호출 하나를
   아끼는 쪽이 낫다.
 - **이 앱은 iOS만 낸다.** 안드로이드 설정·코드는 걷어냈다(`app.json`의 android, AdMob
+- **인식 언어는 책이 정한다.** 기본은 영어 하나다 — 한국어까지 열면 영어 낱말을 한글로 잘못 읽는다.
+  책 제목이나 저자에 한글이 있으면(`languagesFor`) `ko-KR`을 함께 연다. 책 검색이 한글 여부로 카카오와
+  Open Library를 가르는 것과 같은 기준이다. Swift 쪽을 고친 뒤에는 개발 빌드를 다시 지어야 한다.
   안드로이드 ID, 알림 채널, `expo-text-extractor`). 안드로이드를 내는 날에는 OCR이
   제일 큰 일이다 — `modules/page-reader`와 같은 모양으로 ML Kit(`TextRecognition`의
   `Text.TextBlock.lines[].elements[].boundingBox`) 쪽을 채워야 사진으로 짚는다.

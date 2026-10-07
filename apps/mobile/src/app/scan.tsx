@@ -13,6 +13,7 @@ import { color, gutter, ink, type } from '@/shared/config';
 import { pickStillIn } from '@/shared/ocr/selection';
 import {
   available,
+  languagesFor,
   readLines,
   type OcrWord,
 } from '@/shared/ocr/text-extractor';
@@ -126,7 +127,7 @@ export default function ScanScreen() {
       const photo = await camera.current.takePictureAsync({ quality: 0.8 });
       if (!photo?.uri) throw new Error('사진을 찍지 못했어요.');
 
-      const read = await readLines(photo.uri);
+      const read = await readLines(photo.uri, languagesFor(book));
       if (!read.lines.length)
         throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 

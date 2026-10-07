@@ -77,7 +77,9 @@ type PageReading = {
   words: OcrWord[];
 };
 
-type PageReader = { read: (uri: string) => Promise<PageReading> };
+type PageReader = {
+  read: (uri: string, languages?: string[]) => Promise<PageReading>;
+};
 
 /**
  * 앱 안의 `modules/page-reader`(Apple Vision). Expo Go와, 이 모듈이 들어가기
@@ -94,10 +96,13 @@ export const available: boolean = Boolean(pageReader);
  * 낱말을 하나라도 읽으면 `located: true`다. 하나도 못 읽었으면 `false` — 화면은
  * 조판으로 물러난다.
  */
-export async function readLines(uri: string): Promise<OcrResult> {
+export async function readLines(
+  uri: string,
+  languages?: string[],
+): Promise<OcrResult> {
   if (!pageReader)
     throw new Error('이 빌드에는 글자 인식기가 들어 있지 않아요.');
-  const page = await pageReader.read(uri);
+  const page = await pageReader.read(uri, languages);
   return {
     lines: page.lines,
     words: page.words,
@@ -105,4 +110,18 @@ export async function readLines(uri: string): Promise<OcrResult> {
     width: page.width,
     height: page.height,
   };
+}
+
+/**
+ * 이 책을 읽을 때 열어둘 인식 언어. 책 제목이나 저자에 한글이 있으면 한국어 책으로 보고
+ * 한국어를 함께 연다 — 책 검색이 한글이 있으면 카카오(국내 책), 아니면 Open Library(원서)로
+ * 가르는 것과 같은 기준이다. 그 밖에는 영어만 읽어서, 영어 낱말을 한글로 잘못 읽는 일을 막는다.
+ */
+export function languagesFor(
+  book?: { title: string; author?: string } | null,
+): string[] | undefined {
+  const hangul = /[가-힣]/;
+  return book && (hangul.test(book.title) || hangul.test(book.author ?? ''))
+    ? ['ko-KR', 'en-US']
+    : undefined;
 }

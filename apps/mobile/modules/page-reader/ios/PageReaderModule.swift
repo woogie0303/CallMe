@@ -23,11 +23,11 @@ public class PageReaderModule: Module {
   public func definition() -> ModuleDefinition {
     Name("PageReader")
 
-    AsyncFunction("read") { (url: URL, promise: Promise) in
+    AsyncFunction("read") { (url: URL, languages: [String]?, promise: Promise) in
       // 한 장 읽는 데 1초 가까이 걸린다 — 메인 스레드에서 하면 화면이 멈춘다
       DispatchQueue.global(qos: .userInitiated).async {
         do {
-          promise.resolve(try readPage(at: url))
+          promise.resolve(try readPage(at: url, languages: languages))
         } catch {
           promise.reject("ERR_PAGE_READER", error.localizedDescription)
         }
@@ -87,7 +87,7 @@ private func lerp(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
   CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t)
 }
 
-private func readPage(at url: URL) throws -> [String: Any] {
+private func readPage(at url: URL, languages: [String]?) throws -> [String: Any] {
   let data = try Data(contentsOf: url)
   guard let image = UIImage(data: data), let cgImage = image.cgImage else {
     throw PageReaderError(errorDescription: "사진을 열지 못했어요.")
@@ -100,8 +100,14 @@ private func readPage(at url: URL) throws -> [String: Any] {
   let request = VNRecognizeTextRequest()
   request.recognitionLevel = .accurate
   request.usesLanguageCorrection = true
-  /** 원서를 읽는 앱이다 — 한국어까지 열어두면 영어 낱말을 한글로 잘못 읽는 일이 생긴다 */
-  request.recognitionLanguages = ["en-US"]
+  /**
+   * 기본은 영어 하나다 — 한국어까지 열어두면 영어 낱말을 한글로 잘못 읽는 일이 생긴다.
+   * 한국어 책을 찍을 때만 부르는 쪽이 `["ko-KR", "en-US"]`를 넘긴다. 이 기기의 Vision이
+   * 모르는 언어는 걸러서, 지원하지 않는 값 하나 때문에 읽기가 통째로 실패하지 않게 한다.
+   */
+  let supported = (try? request.supportedRecognitionLanguages()) ?? []
+  let wanted = (languages ?? []).filter { supported.contains($0) }
+  request.recognitionLanguages = wanted.isEmpty ? ["en-US"] : wanted
 
   /**
    * 방향을 넘겨야 Vision이 똑바로 선 사진으로 읽고, 좌표도 그 기준으로 준다.
