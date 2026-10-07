@@ -2,7 +2,7 @@ Pod::Spec.new do |s|
   s.name           = 'PageReader'
   s.version        = '1.0.0'
   s.summary        = '찍은 쪽에서 글자와 그 위치를 함께 읽는다'
-  s.description    = 'Apple Vision으로 줄과 낱말을 읽고, 사진 안의 좌표를 함께 돌려준다.'
+  s.description    = 'Apple Vision으로 줄과 단어를 읽고, 사진 안의 좌표를 함께 돌려준다.'
   s.license        = 'UNLICENSED'
   s.author         = 'Reread'
   s.homepage       = 'https://github.com/woogie0303'

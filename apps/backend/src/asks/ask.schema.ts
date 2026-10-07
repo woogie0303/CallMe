@@ -41,7 +41,7 @@ export class AskPick {
 export const AskPickSchema = SchemaFactory.createForClass(AskPick);
 
 /**
- * 질문 하나 — 문장 하나와 그 문장에서 고른 표현들. 낱말만 떼어 묻지 않는다 —
+ * 질문 하나 — 문장 하나와 그 문장에서 고른 표현들. 단어만 떼어 묻지 않는다 —
  * 그 문장에서의 뜻을 고를 수 없기 때문이다(ADR-0001).
  *
  * 한 쪽에서 여러 문장을 한 번에 물으면 질문이 문장마다 하나씩 생기고 같은

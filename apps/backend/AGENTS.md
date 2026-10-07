@@ -1,6 +1,6 @@
 # Reread — 백엔드
 
-NestJS 11 / MongoDB(Mongoose). 도메인 낱말은 루트 `CONTEXT.md`가 정한 것을 그대로
+NestJS 11 / MongoDB(Mongoose). 도메인 단어는 루트 `CONTEXT.md`가 정한 것을 그대로
 쓴다 — Reader·Book·Sentence·Lexical Item·Encounter·Re-encounter. 코드에서 Word나
 단어장 같은 말을 새로 만들지 않는다.
 

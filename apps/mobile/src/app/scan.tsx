@@ -34,10 +34,10 @@ import { PickBadge } from '@/widgets/capture/ui/pick-badge';
 type Params = { bookId?: string };
 
 /**
- * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서 모르는 낱말을** 골라 묻는다.
+ * 촬영 — 읽던 쪽을 찍고, **그 쪽 위에서 모르는 단어를** 골라 묻는다.
  *
- * 낱말을 누르거나 끌어서 고르면 아래에 배지가 떠서 고른 것이 쌓인다. 배지를 누르면
- * 고른 낱말이 든 문장들이 시트로 올라오고, 거기서 한 번에 물을지 그냥 담을지 고른다.
+ * 단어를 누르거나 끌어서 고르면 아래에 배지가 떠서 고른 것이 쌓인다. 배지를 누르면
+ * 고른 단어가 든 문장들이 시트로 올라오고, 거기서 한 번에 물을지 그냥 담을지 고른다.
  * 고르는 순간 그 문장들이 사는 곳으로 간다 — 답이 온 문장이 하나면 그 문장 화면,
  * 여럿이면 그 책의 '담은 표현', 답을 못 받았으면 기다리는 문장, 그냥 담았으면 그
  * 책의 '마음에 들었던 문장'.
@@ -61,7 +61,7 @@ export default function ScanScreen() {
   const picks = usePicks(words);
   const [sheetOpen, setSheetOpen] = useState(false);
   /**
-   * 시트에서 고친 문장 — 문장의 낱말 범위(`from-to`)로 붙든다. 고르기가 바뀌어 그
+   * 시트에서 고친 문장 — 문장의 단어 범위(`from-to`)로 붙든다. 고르기가 바뀌어 그
    * 범위가 사라지면 고친 글도 함께 버려진다(아래 `sheet`가 범위로만 찾는다).
    */
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -132,7 +132,7 @@ export default function ScanScreen() {
         throw new Error('글자를 읽지 못했어요. 더 가까이서 찍어보세요.');
 
       /**
-       * 낱말 좌표가 없으면 사진 위에서 짚을 수 없다 — 줄을 문장으로 이어 주던 서버
+       * 단어 좌표가 없으면 사진 위에서 짚을 수 없다 — 줄을 문장으로 이어 주던 서버
        * 호출은 걷어냈다. 좌표를 주는 곳은 iOS(Apple Vision)뿐이다.
        */
       if (!read.words.length)
@@ -302,7 +302,7 @@ export default function ScanScreen() {
     );
   }
 
-  /* ── 찍은 뒤: 쪽 위에서 모르는 낱말 고르기 ─────────────────── */
+  /* ── 찍은 뒤: 쪽 위에서 모르는 단어 고르기 ─────────────────── */
   return (
     /* 자판이 올라오면 시트가 스스로 화면 위까지 자란다(`AskSheet`) */
     <View style={styles.screen}>
@@ -334,7 +334,7 @@ export default function ScanScreen() {
       <View style={styles.below}>
         {!picks.groups.length ? (
           <AppText style={styles.guide}>
-            모르는 낱말을 누르세요 · 끌면 여러 낱말을 한 번에
+            모르는 단어를 누르세요 · 끌면 여러 단어를 한 번에
           </AppText>
         ) : null}
         {picks.groups.length && !sheetOpen ? (

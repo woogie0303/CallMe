@@ -1,8 +1,8 @@
 /**
- * 낱말을 골라 물을 문장을 만드는 규칙. 사진 위의 낱말(`OcrWord`)에도, 손으로 적은
- * 글을 쪼갠 낱말(`tokenize`)에도 똑같이 쓴다 — 둘 다 `{ text }`의 줄일 뿐이다.
+ * 단어를 골라 물을 문장을 만드는 규칙. 사진 위의 단어(`OcrWord`)에도, 손으로 적은
+ * 글을 쪼갠 단어(`tokenize`)에도 똑같이 쓴다 — 둘 다 `{ text }`의 줄일 뿐이다.
  *
- * 독자는 **모르는 낱말만** 누른다. 문장은 여기서 만든다 — 고른 낱말의 앞뒤를
+ * 독자는 **모르는 단어만** 누른다. 문장은 여기서 만든다 — 고른 단어의 앞뒤를
  * 문장 경계까지 넓혀서. 조각(`make out whether`)만 보내면 맥락 없는 뜻풀이가 되어
  * ADR-0001이 막으려던 그 상태로 돌아간다.
  *
@@ -29,7 +29,7 @@ export const MAX_PICK_CHARS = 120;
 const ENDS = /[.!?…]["'”’»)\]]*$/;
 
 /**
- * 마침표로 끝나도 문장이 끝난 게 아닌 낱말. 칭호와 흔한 줄임말, 이름 머리글자
+ * 마침표로 끝나도 문장이 끝난 게 아닌 단어. 칭호와 흔한 줄임말, 이름 머리글자
  * (`J.`)다. 여기서 끊으면 'Mr.'에서 문장이 잘려 엉뚱한 반쪽을 묻게 된다.
  * `etc.`는 일부러 넣지 않았다 — 문장 끝에 오는 일이 더 많다.
  */
@@ -58,7 +58,7 @@ function ends(word: Word): boolean {
   return ENDS.test(word.text);
 }
 
-/** 고른 표현 하나 — 한 손짓으로 고른 낱말들의 범위 */
+/** 고른 표현 하나 — 한 손짓으로 고른 단어들의 범위 */
 export type Pick = { from: number; to: number; surface: string };
 
 /** 물을 문장 하나와, 그 안에서 고른 표현들 */
@@ -69,7 +69,7 @@ export type SentenceGroup = {
   picks: Pick[];
 };
 
-/** 손으로 적은 글을 낱말로 쪼갠다. 사진의 낱말과 같은 모양이 된다. */
+/** 손으로 적은 글을 단어로 쪼갠다. 사진의 단어와 같은 모양이 된다. */
 export function tokenize(text: string): Word[] {
   return text
     .split(/\s+/)
@@ -77,7 +77,7 @@ export function tokenize(text: string): Word[] {
     .map((piece) => ({ text: piece }));
 }
 
-/** 그 낱말이 든 문장의 범위 */
+/** 그 단어가 든 문장의 범위 */
 export function sentenceAround(
   words: Word[],
   from: number,
@@ -91,8 +91,8 @@ export function sentenceAround(
 }
 
 /**
- * 고른 낱말이 문장에 실릴 꼴. 낱말에 붙은 문장부호는 뗀다 — 'off,'를 고른 것은
- * 'off'를 고른 것이다. 낱말 가운데의 부호(`don't`, `well-known`)는 둔다.
+ * 고른 단어가 문장에 실릴 꼴. 단어에 붙은 문장부호는 뗀다 — 'off,'를 고른 것은
+ * 'off'를 고른 것이다. 단어 가운데의 부호(`don't`, `well-known`)는 둔다.
  */
 export function surfaceOf(words: Word[], from: number, to: number): string {
   return words
@@ -102,12 +102,12 @@ export function surfaceOf(words: Word[], from: number, to: number): string {
     .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
 }
 
-/** 낱말 번호의 범위 — 양 끝을 포함한다 */
+/** 단어 번호의 범위 — 양 끝을 포함한다 */
 export type Range = { from: number; to: number };
 
 /**
  * 고른 표현들을 앞에서부터 가지런히 한다. **겹치는 것만** 합친다 — 이웃해 있다고 합치지
- * 않는다. 한 표현은 손짓이 정한다: 누르면 낱말 하나, 끌면 지나간 만큼. 그래서
+ * 않는다. 한 표현은 손짓이 정한다: 누르면 단어 하나, 끌면 지나간 만큼. 그래서
  * `mesmerized.`와 `For once,`를 따로 눌렀으면 바로 옆이어도 두 표현이다.
  */
 export function rangesOf(ranges: Iterable<Range>): Range[] {
@@ -121,7 +121,7 @@ export function rangesOf(ranges: Iterable<Range>): Range[] {
   return merged;
 }
 
-/** 고른 표현에 든 낱말 번호들 */
+/** 고른 표현에 든 단어 번호들 */
 export function indicesOf(ranges: Iterable<Range>): Set<number> {
   const set = new Set<number>();
   for (const { from, to } of ranges)
@@ -130,8 +130,8 @@ export function indicesOf(ranges: Iterable<Range>): Set<number> {
 }
 
 /**
- * 낱말 하나를 눌렀을 때. 이미 고른 표현 안의 낱말이면 **그 표현 전체**를 푼다 — 구를
- * 낱말 하나씩 풀게 하면 가운데가 빠져 두 토막이 된다. 아니면 그 낱말 하나가 새 표현이다.
+ * 단어 하나를 눌렀을 때. 이미 고른 표현 안의 단어면 **그 표현 전체**를 푼다 — 구를
+ * 단어 하나씩 풀게 하면 가운데가 빠져 두 토막이 된다. 아니면 그 단어 하나가 새 표현이다.
  */
 export function toggleRange(ranges: Range[], index: number): Range[] {
   const hit = ranges.some((r) => index >= r.from && index <= r.to);

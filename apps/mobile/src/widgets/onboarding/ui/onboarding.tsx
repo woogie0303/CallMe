@@ -31,11 +31,11 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     title: '읽던 쪽을 찍고\n막힌 문장을 짚어요',
-    body: '사진 위에서 모르는 낱말을 누르고, 여러 낱말로 된 표현은 손가락으로 끌어서 골라요. 사진은 기기 밖으로 나가지 않아요.',
+    body: '사진 위에서 모르는 단어를 누르고, 여러 단어로 된 표현은 손가락으로 끌어서 골라요. 사진은 기기 밖으로 나가지 않아요.',
     preview: <PickDemo />,
   },
   {
-    title: '낱말이 아니라\n문장으로 물어요',
+    title: '단어가 아니라\n문장으로 물어요',
     body: '그 문장 안에서의 뜻만 알려드려요. 뜻은 눌러야 열리니, 먼저 스스로 읽어 볼 수 있어요.',
     preview: <AskPreview />,
   },
@@ -105,7 +105,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             </View>
             <View style={styles.copy}>
               <AppText style={styles.title}>{slide.title}</AppText>
-              {/* 한글은 낱말 단위로 줄을 바꾼다 — 기본값은 '담겨/요'처럼 낱말 가운데서 끊는다 */}
+              {/* 한글은 단어 단위로 줄을 바꾼다 — 기본값은 '담겨/요'처럼 단어 가운데서 끊는다 */}
               <AppText style={styles.body} lineBreakStrategyIOS="hangul-word">
                 {slide.body}
               </AppText>

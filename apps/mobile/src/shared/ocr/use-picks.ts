@@ -16,7 +16,7 @@ type Word = { text: string };
 /**
  * 고른 표현들. 사진 위에서든 손으로 적은 글 위에서든 같은 상태를 쓴다.
  *
- * 고른 것은 **낱말 번호의 범위 목록** 하나뿐이다. 한 범위가 한 표현이다 — 누르면 낱말
+ * 고른 것은 **단어 번호의 범위 목록** 하나뿐이다. 한 범위가 한 표현이다 — 누르면 단어
  * 하나짜리 범위, 끌면 지나간 만큼의 범위. 이웃해 있다고 합치지 않는다. 문장은 거기서
  * 매번 계산한다(`groupBySentence`) — 따로 들고 있으면 표현 하나를 빼는 순간 문장 목록과
  * 어긋난다.
@@ -32,7 +32,7 @@ export function usePicks(words: Word[], { whole = false } = {}) {
     null,
   );
 
-  /** 어느 낱말이 골라져 있는가 — 칠하는 쪽이 본다 */
+  /** 어느 단어가 골라져 있는가 — 칠하는 쪽이 본다 */
   const selected = useMemo(() => indicesOf(ranges), [ranges]);
   const groups = useMemo(() => groupBySentence(words, ranges), [words, ranges]);
 
@@ -53,7 +53,7 @@ export function usePicks(words: Word[], { whole = false } = {}) {
     [words, whole],
   );
 
-  /** 낱말 하나를 눌렀을 때 — 스크린리더의 누르기도 이 길이다 */
+  /** 단어 하나를 눌렀을 때 — 스크린리더의 누르기도 이 길이다 */
   const toggle = useCallback(
     (index: number) => change(toggleRange(ranges, index)),
     [ranges, change],

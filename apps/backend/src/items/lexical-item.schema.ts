@@ -41,7 +41,7 @@ export class ConfusedWith {
 export const ConfusedWithSchema = SchemaFactory.createForClass(ConfusedWith);
 
 /**
- * 어휘 항목 — 몰라서 담아둔 말 한 덩어리. 낱말일 수도, 구동사나 연어일 수도 있다.
+ * 어휘 항목 — 몰라서 담아둔 말 한 덩어리. 단어일 수도, 구동사나 연어일 수도 있다.
  *
  * (readerId, term)에 유일 인덱스가 걸려 있고, **그 인덱스가 곧 재회의 근거다.**
  * 같은 표현을 또 담으면 새 문서를 만들지 않고 encounters에 문장을 하나 더
