@@ -5,7 +5,12 @@ export const ASK_STATUSES = ['answered', 'pending'] as const;
 export type AskStatus = (typeof ASK_STATUSES)[number];
 
 /** 답을 못 받은 이유. 독자에게 그대로 보여줄 말이라 한국어로 둔다. */
-export const PENDING_REASONS = ['질문 소진', '연결 실패'] as const;
+export const PENDING_REASONS = [
+  '질문 소진',
+  '연결 실패',
+  /** 묻는 도중에 앱이 꺼지거나 서버가 멈춰 답이 오지 않은 채 남았다 */
+  '중간에 끊김',
+] as const;
 export type PendingReason = (typeof PENDING_REASONS)[number];
 
 /**

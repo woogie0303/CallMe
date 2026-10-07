@@ -38,6 +38,12 @@ export type AskView = {
   book: BookDocument | null;
 };
 
+/**
+ * 이만큼 지나도 답도 이유도 없는 질문은 묻는 도중에 끊긴 것이다. 모델은 45초에 포기하고
+ * 다시 한 번 시도하므로(`common/claude.ts`) 정상이라면 100초 안에 '대기'든 '답'이든 정해진다.
+ */
+export const INTERRUPTED_AFTER_MS = 3 * 60_000;
+
 /** 물을 문장 하나 — 질문과 그 질문이 붙은 문장 */
 type Entry = { ask: AskDocument; sentence: SentenceDocument };
 
@@ -168,7 +174,27 @@ export class AsksService {
     return { ask: answered, sentence, book };
   }
 
+  /**
+   * 묻는 도중에 앱이 꺼지거나 서버가 다시 떠서 끊긴 질문에 이유를 붙인다.
+   *
+   * 문장은 질문보다 먼저 저장되므로 잃는 것은 없다 — 다만 질문이 상태도 이유도 없이
+   * 'pending'으로만 남아서, 질문을 다 썼을 때와 달리 왜 기다리는지 말해 줄 수 없었다.
+   * 목록을 열 때마다 한 번 훑는다. 아직 도는 질문(3분 안)은 건드리지 않는다.
+   */
+  async settleInterrupted(readerId: string, now = new Date()): Promise<void> {
+    await this.asks.updateMany(
+      {
+        readerId: new Types.ObjectId(readerId),
+        status: 'pending',
+        pendingReason: { $exists: false },
+        createdAt: { $lt: new Date(now.getTime() - INTERRUPTED_AFTER_MS) },
+      },
+      { pendingReason: '중간에 끊김' },
+    );
+  }
+
   async list(readerId: string, query: ListAsksQuery): Promise<AskView[]> {
+    await this.settleInterrupted(readerId);
     const filter: Record<string, unknown> = {
       readerId: new Types.ObjectId(readerId),
     };
@@ -190,6 +216,7 @@ export class AsksService {
   }
 
   async find(readerId: string, id: string): Promise<AskView> {
+    await this.settleInterrupted(readerId);
     const ask = await this.asks.findOne({
       _id: id,
       readerId: new Types.ObjectId(readerId),

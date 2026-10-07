@@ -127,7 +127,7 @@ export type ApiAsk = {
   status: 'answered' | 'pending';
   translation?: string;
   picks: ApiPick[];
-  pendingReason?: '질문 소진' | '연결 실패';
+  pendingReason?: '질문 소진' | '연결 실패' | '중간에 끊김';
   answeredAt?: string;
   createdAt: string;
 };

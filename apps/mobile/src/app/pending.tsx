@@ -155,7 +155,10 @@ export default function PendingScreen() {
             page: view.sentence?.page,
             capturedLabel: savedLabel(view.ask.createdAt),
             reason: view.ask.pendingReason ?? '기다리는 중',
-            failed: view.ask.pendingReason === '연결 실패',
+            /** 우리 쪽 문제로 못 풀었다 — 한도가 찬 것(질문 소진)과 구분한다 */
+            failed:
+              view.ask.pendingReason === '연결 실패' ||
+              view.ask.pendingReason === '중간에 끊김',
             book: view.book ? toBook(view.book) : undefined,
           }))}
           onPressAsk={open}
