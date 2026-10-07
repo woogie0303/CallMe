@@ -20,20 +20,31 @@ import { ASK_STATUSES, type AskStatus } from '../ask.schema';
 export const MAX_SENTENCES = 5;
 /** 한 문장에서 고를 수 있는 표현 수. 넘치면 답이 길어지고(출력 토큰이 비싸다) 서랍이 찬다. */
 export const MAX_PICKS = 8;
+/** 고른 표현 하나의 길이 — 구(句)를 고르는 것이지 문단을 고르는 것이 아니다. 앱도 같은 수에서 막는다. */
+export const MAX_PICK_CHARS = 120;
+/** 문장 하나의 길이 */
+export const MAX_SENTENCE_CHARS = 1000;
 
 /** 물을 문장 하나와, 독자가 그 안에서 고른 표현들(문장에 적힌 꼴 그대로) */
 export class AskSentenceDto {
-  @IsString()
-  @MinLength(1)
-  @MaxLength(1000)
+  @IsString({ message: '문장이 올바르지 않아요.' })
+  @MinLength(1, { message: '문장이 비어 있어요.' })
+  @MaxLength(MAX_SENTENCE_CHARS, {
+    message: `문장은 ${MAX_SENTENCE_CHARS.toLocaleString('ko-KR')}자까지만 받아요. 줄여서 고쳐 주세요.`,
+  })
   text!: string;
 
-  @IsArray()
+  @IsArray({ message: '고른 표현이 올바르지 않아요.' })
   @ArrayMinSize(1, { message: '모르는 표현을 하나 이상 골라 주세요.' })
-  @ArrayMaxSize(MAX_PICKS)
-  @IsString({ each: true })
-  @MinLength(1, { each: true })
-  @MaxLength(120, { each: true })
+  @ArrayMaxSize(MAX_PICKS, {
+    message: `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요.`,
+  })
+  @IsString({ each: true, message: '고른 표현이 올바르지 않아요.' })
+  @MinLength(1, { each: true, message: '고른 표현이 비어 있어요.' })
+  @MaxLength(MAX_PICK_CHARS, {
+    each: true,
+    message: `표현은 ${MAX_PICK_CHARS}자까지만 고를 수 있어요. 더 짧게 골라 주세요.`,
+  })
   picks!: string[];
 }
 
@@ -54,21 +65,26 @@ export class CreateAskDto {
   sentenceId?: string;
 
   @ValidateIf((dto: CreateAskDto) => Boolean(dto.sentenceId))
-  @IsArray()
+  @IsArray({ message: '고른 표현이 올바르지 않아요.' })
   @ArrayMinSize(1, { message: '모르는 표현을 하나 이상 골라 주세요.' })
-  @ArrayMaxSize(MAX_PICKS)
-  @IsString({ each: true })
-  @MinLength(1, { each: true })
-  @MaxLength(120, { each: true })
+  @ArrayMaxSize(MAX_PICKS, {
+    message: `한 문장에서 표현은 ${MAX_PICKS}개까지 고를 수 있어요.`,
+  })
+  @IsString({ each: true, message: '고른 표현이 올바르지 않아요.' })
+  @MinLength(1, { each: true, message: '고른 표현이 비어 있어요.' })
+  @MaxLength(MAX_PICK_CHARS, {
+    each: true,
+    message: `표현은 ${MAX_PICK_CHARS}자까지만 고를 수 있어요. 더 짧게 골라 주세요.`,
+  })
   picks?: string[];
 
   @ValidateIf((dto: CreateAskDto) => !dto.sentenceId)
-  @IsMongoId()
+  @IsMongoId({ message: '책을 찾지 못했어요.' })
   bookId?: string;
 
   @ValidateIf((dto: CreateAskDto) => !dto.sentenceId)
-  @IsArray()
-  @ArrayMinSize(1)
+  @IsArray({ message: '문장이 올바르지 않아요.' })
+  @ArrayMinSize(1, { message: '물어볼 문장을 골라 주세요.' })
   @ArrayMaxSize(MAX_SENTENCES, {
     message: `한 번에 ${MAX_SENTENCES}문장까지 물을 수 있어요.`,
   })
@@ -77,8 +93,8 @@ export class CreateAskDto {
   sentences?: AskSentenceDto[];
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: '쪽수는 숫자로 적어 주세요.' })
+  @Min(1, { message: '쪽수는 1 이상이어야 해요.' })
   page?: number;
 }
 

@@ -139,7 +139,8 @@ export class AnswerService {
     try {
       const response = await client.messages.parse({
         model,
-        max_tokens: 16000,
+        /** 다섯 문장에 표현 여덟 개씩이어도 3천 토큰 안쪽이다. 크게 잡을수록 오래 걸린다. */
+        max_tokens: 6000,
         /** 붙박이 부분만 캐시에 올린다 */
         system: [
           { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
