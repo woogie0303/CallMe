@@ -321,7 +321,7 @@ npx eas-cli build --platform ios --profile production   # 처음엔 Apple 로그
 npx eas-cli submit --platform ios --profile production  # App Store Connect에 앱(번들 id)을 먼저 만들어 둔다
 ```
 
-빌드 전에 확인할 것: 유료 개발자 계정 · 서버의 `ALLOW_DEV_LOGIN`이 꺼져 있고 `NODE_ENV=production`
+빌드 전에 확인할 것: 유료 개발자 계정 · 서버의 `NODE_ENV=production`
 · `PUBLIC_BASE_URL`이 실제 주소 · 세 소셜 콘솔의 redirect URI.
 
 **개인정보 처리방침은 노션에 올려 두었고**(`shared/config/legal.ts`의 `PRIVACY_POLICY_URL`) 마이 탭에서

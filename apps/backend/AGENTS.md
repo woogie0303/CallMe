@@ -189,13 +189,6 @@ DELETE /api/items/:id
 - **서버에는 오류 수집 서비스가 없다.** 앱은 Measure를 쓰지만(`apps/mobile/AGENTS.md`) Measure는 모바일
   전용이라 서버의 오류는 Render 로그로만 본다. 모델 오류는 `unavailable()`이 로그에 남긴다.
 
-## 개발용 문
-
-`POST /api/dev/login`은 소셜 로그인 앱이 등록되기 전까지만 여는 임시 문이다.
-`ALLOW_DEV_LOGIN=true`일 때만 열리고 `NODE_ENV=production`이면 거부하며, 열려
-있는 동안 부팅 로그가 매번 그 사실을 말한다. 검증이 끝나면
-`src/auth/dev-login.controller.ts`와 환경 변수를 함께 지운다.
-
 ## 아직 없는 것
 
 **Apple 로그인 토큰 회수는 코드만 있고 Apple과 통신해 본 적이 없다.** 로그인 때 앱이 보낸

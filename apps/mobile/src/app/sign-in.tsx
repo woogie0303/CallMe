@@ -38,7 +38,7 @@ const PROVIDERS: ProviderName[] = ['kakao', 'naver', 'google', 'apple'];
  */
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const { signIn, signInAsDeveloper, problem } = useSession();
+  const { signIn, problem } = useSession();
   const [busy, setBusy] = useState<string | null>(null);
 
   const attempt = async (label: string, run: () => Promise<void>) => {
