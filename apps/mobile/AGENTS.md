@@ -207,13 +207,14 @@ Apple 로그인 권한(`com.apple.developer.applesignin`)은 늘 들어간다 �
 - **`fetch`의 영어 오류('Network request failed')는 앱에 그대로 보이지 않는다.** `api()`가
   `NetworkError`로 바꿔 한국어로 말한다. 서버의 검증 메시지도 한국어다
   (`apps/backend/src/common/validation.ts`).
-- **오류 수집은 Sentry**(`shared/monitoring/sentry.ts`). 출시 빌드에서 `EXPO_PUBLIC_SENTRY_DSN`이
-  있을 때만 켜진다. 잡아서 처리한 오류(묻기 실패 등)도 `reportError`로 남긴다 — 화면이 경고
-  창만 띄우고 넘어가면 원인이 어디에도 남지 않는다. **독자의 글은 보내지 않는다**(
-  `sendDefaultPii` 끔). 줄 번호를 읽으려면 EAS 시크릿 `SENTRY_AUTH_TOKEN`·`SENTRY_ORG`·
-  `SENTRY_PROJECT`가 있어야 하고(`app.config.js`가 있을 때만 플러그인을 붙인다), 네이티브 모듈이라
-  넣은 뒤에는 개발 빌드를 다시 지어야 한다. **개인정보 처리방침에 오류 수집(기기·오류 정보)을
-  적어 둘 것.**
+- **오류 수집은 Measure**(measure.sh, `shared/monitoring/measure.ts`). 충돌과 화면 흐름이 대시보드에
+  모인다. 네이티브 쪽은 `app.config.js`의 `@measuresh/react-native` 플러그인이 켜고(출시 빌드가
+  끝날 때 심볼 파일도 올린다) 키는 환경 변수 `MEASURE_IOS_API_KEY`에서만 온다 — 로컬은 `.env`, EAS는
+  `eas env:create`. 키가 없으면 개발 빌드는 Measure 없이 지어지고, 출시 빌드는 빌드 전에 막힌다. JS 쪽은 `initMonitoring()`이 시작한다. **개발 빌드에서는 켜지
+  않는다**(`__DEV__`) — 개발 세션이 독자 통계에 섞이지 않게. 잡아서 처리한 오류(묻기 실패 등)도
+  `reportError`로 남긴다 — 화면이 경고 창만 띄우고 넘어가면 원인이 어디에도 남지 않는다. 네이티브
+  모듈이라 넣은 뒤에는 `prebuild --clean`과 빌드를 다시 해야 한다. **개인정보 처리방침에 오류 수집(기기·
+  오류 정보)과 수집 업체(Measure)를 적어 둘 것.** Sentry는 걷어냈다.
 
 ## 로그인 화면
 

@@ -178,8 +178,8 @@ DELETE /api/items/:id
 - **검증 메시지는 한국어다.** DTO에 한국어 `message`를 달고, 달지 않은 것은 `validationException`이
   일반 문장으로 바꾼다(원문은 로그에). 영어 기본 메시지가 앱에 그대로 보이지 않게 — 새 DTO를
   만들 때 `message`를 단다.
-- **오류 수집은 Sentry**(`instrument.ts`가 `main.ts` 맨 위에서 먼저 불린다). `SENTRY_DSN`이 없으면
-  꺼진다. 요청 본문은 보내지 않는다. 잡아서 '대기'로 돌린 모델 오류도 `unavailable()`에서 남긴다.
+- **서버에는 오류 수집 서비스가 없다.** 앱은 Measure를 쓰지만(`apps/mobile/AGENTS.md`) Measure는 모바일
+  전용이라 서버의 오류는 Render 로그로만 본다. 모델 오류는 `unavailable()`이 로그에 남긴다.
 
 ## 개발용 문
 

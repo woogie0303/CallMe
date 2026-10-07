@@ -26,6 +26,10 @@ if (process.env.EAS_BUILD_PROFILE === 'production') {
   const missing = [
     ['EXPO_PUBLIC_API_URL', '서버 주소 (eas.json의 production env)'],
     [
+      'MEASURE_IOS_API_KEY',
+      '오류 수집 키 (EAS 환경 변수 — 없으면 충돌이 어디에도 남지 않는다)',
+    ],
+    [
       'EXPO_PUBLIC_ADMOB_IOS_APP_ID',
       'AdMob iOS 앱 ID (구글 시험용 ID로는 출시 못 한다)',
     ],
@@ -97,18 +101,21 @@ module.exports = ({ config }) => {
        */
       createRunOncePlugin((c) => c, 'expo-notifications'),
       /**
-       * Sentry. 출시 빌드에서 JS 오류의 줄 번호를 읽을 수 있게 소스맵을 올린다. 올리려면
-       * `SENTRY_AUTH_TOKEN`(EAS 시크릿)이 필요해서, 토큰이 없으면 플러그인을 붙이지 않는다 —
-       * 붙인 채 토큰이 없으면 빌드 단계에서 업로드가 실패한다. 이 경우에도 오류는 수집되지만
-       * 줄 번호가 압축된 채로 보인다.
+       * 오류·성능 수집(Measure). 이 플러그인이 iOS의 AppDelegate에서 SDK를 켜고, 출시 빌드가
+       * 끝날 때마다 심볼 파일을 올려서 충돌 보고서의 줄 번호를 읽을 수 있게 한다. 키는
+       * 환경 변수 `MEASURE_IOS_API_KEY`에서만 온다(로컬은 `.env`, EAS는 환경 변수) — 소스에
+       * 적어 두지 않는다. 키가 없는 빌드(개발 빌드 등)는 Measure 없이 지어진다. 출시 빌드는
+       * 위 검사가 키가 없으면 빌드 전에 막는다. JS 쪽 시작은 `shared/monitoring/measure.ts`.
        */
-      ...(process.env.SENTRY_AUTH_TOKEN
+      ...(process.env.MEASURE_IOS_API_KEY
         ? [
             [
-              '@sentry/react-native/expo',
+              '@measuresh/react-native',
               {
-                organization: process.env.SENTRY_ORG,
-                project: process.env.SENTRY_PROJECT,
+                iosApiKey: process.env.MEASURE_IOS_API_KEY,
+                iosApiUrl:
+                  process.env.MEASURE_IOS_API_URL ??
+                  'https://ingest.measure.sh',
               },
             ],
           ]

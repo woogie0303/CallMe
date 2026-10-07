@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk';
-import * as Sentry from '@sentry/nestjs';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -53,14 +52,11 @@ export function unavailable(error: unknown, log: Logger): ModelUnavailable {
     log.warn('요청이 몰려 잠시 답할 수 없습니다.');
   } else if (error instanceof Anthropic.AuthenticationError) {
     log.error('ANTHROPIC_API_KEY가 올바르지 않습니다.');
-    Sentry.captureException(error);
   } else if (error instanceof Anthropic.APIError) {
     log.error(`Anthropic API ${error.status}: ${error.message}`);
-    Sentry.captureException(error);
   } else {
     /** 제한 시간 초과(APIConnectionTimeoutError)도 여기로 온다 — 몇 분씩 도는 로딩의 단서 */
     log.error(`모델 호출에 실패했습니다: ${String(error)}`);
-    Sentry.captureException(error);
   }
 
   return new ModelUnavailable('지금은 답을 받지 못했어요.');
