@@ -58,7 +58,7 @@ function ends(word: Word): boolean {
   return ENDS.test(word.text);
 }
 
-/** 고른 표현 하나 — 붙어 있는 낱말들의 범위 */
+/** 고른 표현 하나 — 한 손짓으로 고른 낱말들의 범위 */
 export type Pick = { from: number; to: number; surface: string };
 
 /** 물을 문장 하나와, 그 안에서 고른 표현들 */
@@ -102,29 +102,58 @@ export function surfaceOf(words: Word[], from: number, to: number): string {
     .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
 }
 
-/** 고른 낱말 번호들을 붙어 있는 덩어리로 묶는다 — 붙은 낱말은 한 표현(구)이다 */
-export function runsOf(
-  selected: Iterable<number>,
-): { from: number; to: number }[] {
-  const sorted = [...new Set(selected)].sort((a, b) => a - b);
-  const runs: { from: number; to: number }[] = [];
-  for (const i of sorted) {
-    const last = runs[runs.length - 1];
-    if (last && i === last.to + 1) last.to = i;
-    else runs.push({ from: i, to: i });
+/** 낱말 번호의 범위 — 양 끝을 포함한다 */
+export type Range = { from: number; to: number };
+
+/**
+ * 고른 표현들을 앞에서부터 가지런히 한다. **겹치는 것만** 합친다 — 이웃해 있다고 합치지
+ * 않는다. 한 표현은 손짓이 정한다: 누르면 낱말 하나, 끌면 지나간 만큼. 그래서
+ * `mesmerized.`와 `For once,`를 따로 눌렀으면 바로 옆이어도 두 표현이다.
+ */
+export function rangesOf(ranges: Iterable<Range>): Range[] {
+  const sorted = [...ranges].sort((a, b) => a.from - b.from || a.to - b.to);
+  const merged: Range[] = [];
+  for (const range of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && range.from <= last.to) last.to = Math.max(last.to, range.to);
+    else merged.push({ ...range });
   }
-  return runs;
+  return merged;
+}
+
+/** 고른 표현에 든 낱말 번호들 */
+export function indicesOf(ranges: Iterable<Range>): Set<number> {
+  const set = new Set<number>();
+  for (const { from, to } of ranges)
+    for (let i = from; i <= to; i += 1) set.add(i);
+  return set;
 }
 
 /**
- * 고른 낱말들을 문장별로 나눈다. 같은 문장에 든 표현은 한 문장 아래 모이고,
- * 문장 경계를 넘겨 끈 표현은 두 문장을 하나로 잇는다(겹치는 범위는 합친다).
+ * 낱말 하나를 눌렀을 때. 이미 고른 표현 안의 낱말이면 **그 표현 전체**를 푼다 — 구를
+ * 낱말 하나씩 풀게 하면 가운데가 빠져 두 토막이 된다. 아니면 그 낱말 하나가 새 표현이다.
+ */
+export function toggleRange(ranges: Range[], index: number): Range[] {
+  const hit = ranges.some((r) => index >= r.from && index <= r.to);
+  return hit
+    ? ranges.filter((r) => !(index >= r.from && index <= r.to))
+    : rangesOf([...ranges, { from: index, to: index }]);
+}
+
+/** 이 범위와 겹치는 표현을 모두 뺀다 — 시트의 칩에서 표현 하나를 뺄 때 */
+export function without(ranges: Range[], from: number, to: number): Range[] {
+  return ranges.filter((r) => r.to < from || r.from > to);
+}
+
+/**
+ * 고른 표현들을 문장별로 나눈다. 같은 문장에 든 표현은 한 문장 아래 모인다. 끌어서 고르는
+ * 표현은 문장 끝을 넘지 못하므로(`useWordPaint`) 두 문장을 잇는 표현은 생기지 않는다.
  */
 export function groupBySentence(
   words: Word[],
-  selected: Iterable<number>,
+  selected: Iterable<Range>,
 ): SentenceGroup[] {
-  const runs = runsOf(selected).filter(
+  const runs = rangesOf(selected).filter(
     (run) => run.from >= 0 && run.to < words.length,
   );
 
@@ -179,10 +208,10 @@ export function limitMessage(reason: Limit): string {
  */
 export function overflows(
   words: Word[],
-  selected: Iterable<number>,
+  selected: Iterable<Range>,
   { maxSentences = MAX_SENTENCES, whole = false } = {},
 ): Limit | null {
-  const runs = runsOf(selected);
+  const runs = rangesOf(selected);
   /** 끌다가 문단째 골라 버리는 일을 막는다 — 서버도 이 길이에서 거절한다 */
   if (
     runs.some(

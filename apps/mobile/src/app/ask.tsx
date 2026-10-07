@@ -19,12 +19,7 @@ import {
   useSentence,
 } from '@/entities/sentence/api/sentence.api';
 import { color, gutter, type } from '@/shared/config';
-import {
-  limitMessage,
-  runsOf,
-  surfaceOf,
-  tokenize,
-} from '@/shared/ocr/selection';
+import { limitMessage, surfaceOf, tokenize } from '@/shared/ocr/selection';
 import { usePicks } from '@/shared/ocr/use-picks';
 import {
   ActionButton,
@@ -33,9 +28,9 @@ import {
   HeartIcon,
   ScreenHeader,
 } from '@/shared/ui';
-import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 import { SentenceField } from '@/widgets/ask/ui/sentence-field';
 import { WordPicker } from '@/widgets/ask/ui/word-picker';
+import { useOpenScan } from '@/widgets/capture/lib/use-open-scan';
 
 /**
  * 어느 책에 대고 묻는지는 들어온 길이 정한다. 홈의 ✎에서 오면 지금 읽는 책이고,
@@ -73,12 +68,19 @@ export default function AskScreen() {
   const [typed, setTyped] = useState(params.text ?? '');
   const sentence = fixed ? (saved.data?.text ?? '') : typed;
 
-  /** 적은 글 전체가 한 문장이다 — 표현 수도 글 전체에서 센다 */
+  /**
+   * 담아둔 문장은 글 전체가 한 문장이다 — 표현 수도 글 전체에서 센다. 새로 적은 글은
+   * 사진과 같이 마침표로 문장을 나눈다 — 한 번에 여러 문장을 적었을 때 문장마다 묻는다.
+   */
   const words = useMemo(() => tokenize(sentence), [sentence]);
-  const picks = usePicks(words, { whole: true });
-  const surfaces = runsOf(picks.selected)
-    .map((run) => surfaceOf(words, run.from, run.to))
-    .filter(Boolean);
+  const picks = usePicks(words, { whole: fixed });
+  const surfaces = (
+    fixed
+      ? picks.ranges.map((range) => surfaceOf(words, range.from, range.to))
+      : picks.groups.flatMap((group) => group.picks.map((pick) => pick.surface))
+  ).filter(Boolean);
+  /** 고른 표현이 든 문장 수 — 담아둔 문장은 늘 한 문장이다 */
+  const sentenceCount = fixed ? (surfaces.length ? 1 : 0) : picks.groups.length;
   const clearPicks = picks.clear;
   /** 글을 고치면 낱말 자리가 바뀐다 — 고른 것을 풀어야 엉뚱한 낱말이 칠해지지 않는다 */
   useEffect(() => clearPicks(), [sentence, clearPicks]);
@@ -142,7 +144,10 @@ export default function AskScreen() {
           : {
               bookId: book!.id,
               page,
-              sentences: [{ text: sentence.trim(), picks: surfaces }],
+              sentences: picks.groups.map((group) => ({
+                text: group.text.trim(),
+                picks: group.picks.map((pick) => pick.surface),
+              })),
             },
       );
       if (!fixed) recordPage();
@@ -226,16 +231,15 @@ export default function AskScreen() {
           <View style={styles.pick}>
             <AppText style={styles.pickTitle}>
               {surfaces.length
-                ? `고른 표현 ${surfaces.length}개`
+                ? `고른 표현 ${surfaces.length}개 · 문장 ${sentenceCount}개`
                 : '모르는 낱말을 누르세요'}
             </AppText>
             <AppText style={styles.pickHint}>
-              {picks.limit
-                ? `${limitMessage(picks.limit.reason)}.`
-                : '옆으로 끌면 여러 낱말을 한 번에 골라요. 붙은 낱말은 한 표현이 돼요.'}
+              {picks.limit && `${limitMessage(picks.limit.reason)}.`}
             </AppText>
             <WordPicker
               words={words}
+              ranges={picks.ranges}
               selected={picks.selected}
               onChange={picks.change}
               onToggle={picks.toggle}

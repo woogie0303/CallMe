@@ -5,13 +5,20 @@ import { GestureDetector } from 'react-native-gesture-handler';
 
 import { accent, color, ink } from '@/shared/config';
 import { useWordPaint } from '@/shared/lib/use-word-paint';
-import type { SentenceGroup } from '@/shared/ocr/selection';
+import { bandsOf, type Band } from '@/shared/ocr/bands';
+import {
+  sentenceAround,
+  type Range,
+  type SentenceGroup,
+} from '@/shared/ocr/selection';
 import type { OcrFrame, OcrWord } from '@/shared/ocr/text-extractor';
 
 export type Shot = { uri: string; width: number; height: number };
 
 /** 낱말 칸보다 조금 넓게 잡는다 — 손가락은 글자보다 굵다(사진 픽셀이 아니라 화면 pt) */
 const SLOP = 4;
+/** 띠는 글자보다 살짝 넓게 — 글자에 딱 붙으면 획이 잘려 보인다(사진이 아니라 화면 pt) */
+const BAND_PAD = 2;
 
 /**
  * 찍은 쪽에서 **모르는 낱말을 고르는** 자리.
@@ -20,8 +27,9 @@ const SLOP = 4;
  * 보여줬는데, 그러면 방금 내가 본 쪽과 화면에 뜬 글이 서로 다른 것이 되어
  * '이 줄'을 짚는 감각이 사라진다.
  *
- * 누르면 낱말 하나, 끌면 지나간 만큼(`useWordPaint`). 붙은 낱말은 한 표현(구)이
- * 된다. 고른 낱말이 든 문장은 옅게 칠해져서 무엇을 묻게 되는지 시트를 열기 전에
+ * 누르면 낱말 하나가 따로 한 표현, 끌면 지나간 만큼이 한 표현(`useWordPaint`). 한 표현은
+ * 줄마다 **하나의 띠**로 칠해진다(`bandsOf`) — 낱말 칸을 따로 칠하면 붙은 낱말도 낱알로
+ * 보인다. 고른 표현이 든 문장은 옅은 띠로 칠해져서 무엇을 묻게 되는지 시트를 열기 전에
  * 보인다 — 문장 경계는 `shared/ocr/selection`이 정한다.
  *
  * 한동안은 문장의 처음과 끝 낱말을 짚어 문장을 골랐다. 그러면 무엇을 모르는지는
@@ -30,6 +38,7 @@ const SLOP = 4;
 export function PhotoPicker({
   shot,
   words,
+  ranges,
   selected,
   groups,
   onChange,
@@ -37,11 +46,14 @@ export function PhotoPicker({
 }: {
   shot: Shot;
   words: OcrWord[];
+  /** 고른 표현들 — 한 범위가 한 표현 */
+  ranges: Range[];
+  /** 어느 낱말이 골라져 있는가(스크린리더의 상태) */
   selected: ReadonlySet<number>;
   /** 고른 낱말이 든 문장들 — 옅게 칠한다 */
   groups: SentenceGroup[];
   /** 끄는 동안 통째로 바꾼다. 받았으면 true */
-  onChange: (next: ReadonlySet<number>) => boolean;
+  onChange: (next: Range[]) => boolean;
   /** 스크린리더가 낱말 하나를 눌렀을 때 */
   onToggle: (index: number) => void;
 }) {
@@ -78,10 +90,22 @@ export function PhotoPicker({
     return null;
   };
 
-  const gesture = useWordPaint({ hit, selected, onChange });
+  /** 문장 안에서 끌면 그 문장 끝까지만 — 두 문장에 걸친 표현은 하나로 묻기 어렵다 */
+  const clamp = (anchor: number) => sentenceAround(words, anchor);
+  const gesture = useWordPaint({ hit, ranges, onChange, clamp });
 
   const inSentence = (i: number) =>
     groups.some((group) => i >= group.from && i <= group.to);
+  const place = (band: Band) => {
+    if (!fit) return null;
+    return {
+      left: fit.dx + band.x * fit.scale - BAND_PAD,
+      top: fit.dy + band.y * fit.scale - BAND_PAD,
+      width: band.width * fit.scale + BAND_PAD * 2,
+      height: band.height * fit.scale + BAND_PAD * 2,
+      transform: [{ rotate: `${band.angle}rad` }],
+    };
+  };
 
   return (
     <GestureDetector gesture={gesture}>
@@ -92,6 +116,31 @@ export function PhotoPicker({
           contentFit="contain"
         />
 
+        {/* 고른 표현이 든 문장 — 옅은 띠. 고른 표현은 그 위에 진한 띠 */}
+        {fit
+          ? groups.flatMap((group) =>
+              bandsOf(words, group.from, group.to).map((band, k) => (
+                <View
+                  key={`s${group.from}-${k}`}
+                  pointerEvents="none"
+                  style={[styles.sentence, place(band)]}
+                />
+              )),
+            )
+          : null}
+        {fit
+          ? ranges.flatMap((range) =>
+              bandsOf(words, range.from, range.to).map((band, k) => (
+                <View
+                  key={`p${range.from}-${k}`}
+                  pointerEvents="none"
+                  style={[styles.pick, place(band)]}
+                />
+              )),
+            )
+          : null}
+
+        {/* 아직 안 고른 낱말은 눌리는 자리라는 것만 옅게 알린다. 고른 문장 안은 띠가 대신한다 */}
         {fit
           ? words.map((word, i) => {
               const on = selected.has(i);
@@ -107,10 +156,9 @@ export function PhotoPicker({
                   }
                   onAccessibilityTap={() => onToggle(i)}
                   style={[
-                    styles.word,
-                    inSentence(i) ? styles.wordSentence : null,
-                    on ? styles.wordOn : null,
+                    inSentence(i) ? null : styles.word,
                     {
+                      position: 'absolute',
                       left: fit.dx + word.frame.x * fit.scale,
                       top: fit.dy + word.frame.y * fit.scale,
                       width: word.frame.width * fit.scale,
@@ -164,15 +212,20 @@ const styles = StyleSheet.create({
    * 못 읽은 줄과 읽었는데 안 보이는 줄을 구분할 수 없었다.
    */
   word: {
-    position: 'absolute',
     borderRadius: 3,
     backgroundColor: accent(0.16),
   },
-  /** 고른 낱말이 든 문장 — 무엇을 묻게 되는지 */
-  wordSentence: { backgroundColor: accent(0.26) },
-  /** 고른 낱말 — 지금 모르는 것 */
-  wordOn: {
-    backgroundColor: accent(0.55),
+  /** 고른 표현이 든 문장 — 무엇을 묻게 되는지. 줄마다 하나의 띠 */
+  sentence: {
+    position: 'absolute',
+    borderRadius: 5,
+    backgroundColor: accent(0.24),
+  },
+  /** 고른 표현 — 지금 모르는 것. 줄마다 하나의 띠 */
+  pick: {
+    position: 'absolute',
+    borderRadius: 5,
+    backgroundColor: accent(0.5),
     borderWidth: 1.5,
     borderColor: color.primary,
   },

@@ -322,6 +322,7 @@ export default function ScanScreen() {
         <PhotoPicker
           shot={shot}
           words={words}
+          ranges={picks.ranges}
           selected={picks.selected}
           groups={picks.groups}
           onChange={picks.change}
