@@ -4,11 +4,10 @@
     "slug": "reread",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icons/icon.png",
     "scheme": "reread",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.dongwookkang.reread",
       "supportsTablet": false,
       "infoPlist": {
@@ -16,8 +15,7 @@
       }
     },
     "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
@@ -25,8 +23,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FDFBF7",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/images/icons/splash-icon.png",
+          "imageWidth": 90
         }
       ],
       [
@@ -47,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "55467f8b-076e-484c-b073-f783d27e05f0"
+      }
+    },
+    "owner": "woogie0303"
   }
 }
