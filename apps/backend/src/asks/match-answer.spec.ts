@@ -103,3 +103,26 @@ describe('matchAnswer', () => {
     expect(only).toEqual({ translation: '예전 질문.', picks: [] });
   });
 });
+
+describe('matchAnswer — 이미 번역이 있는 문장', () => {
+  it('모델이 번역을 비워 와도 전에 받은 번역을 그대로 쓴다', () => {
+    const [first] = matchAnswer(
+      [{ ...asked[0], knownTranslation: '전에 받은 번역' }],
+      {
+        sentences: [
+          {
+            translation: '',
+            picks: [
+              {
+                surface: 'brushed it off',
+                term: 'brush it off',
+                meaning: '뜻',
+              },
+            ],
+          },
+        ],
+      },
+    );
+    expect(first?.translation).toBe('전에 받은 번역');
+  });
+});

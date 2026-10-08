@@ -23,7 +23,8 @@ const AnswerFormat = z.object({
           .string()
           .describe(
             '문장이 외국어면 문장 전체의 자연스러운 한국어 번역(직역체로 쓰지 않는다). ' +
-              '문장이 한국어면 같은 뜻을 쉬운 한국어로 풀어 쓴 문장.',
+              '문장이 한국어면 같은 뜻을 쉬운 한국어로 풀어 쓴 문장. ' +
+              '"번역 생략"이라고 표시된 문장은 빈 문자열로 둔다.',
           ),
         picks: z
           .array(
@@ -54,8 +55,16 @@ const AnswerFormat = z.object({
 
 export type Answer = z.infer<typeof AnswerFormat>;
 
-/** 물을 문장 하나 — 글과, 독자가 그 안에서 고른 표현들 */
-export type AskedSentence = { text: string; picks: string[] };
+/**
+ * 물을 문장 하나 — 글과, 독자가 그 안에서 고른 표현들. 이미 번역을 받은 문장이면
+ * `knownTranslation`이 있고, 그때는 번역을 다시 시키지 않는다 — 다시 물을 때마다
+ * 문장 뜻이 달라지는 것을 막는다.
+ */
+export type AskedSentence = {
+  text: string;
+  picks: string[];
+  knownTranslation?: string;
+};
 
 /**
  * 프롬프트의 붙박이 부분. 요청마다 달라지는 것(책·문장)은 여기 넣지 않는다 —
@@ -78,6 +87,8 @@ const SYSTEM = `당신은 책을 읽는 한국어 사용자를 돕습니다. 책
      읽었을 때 그 장면이 그려지는 문장으로 씁니다.
    - 한국어 문장이면 옮길 필요가 없으니, 같은 뜻을 **쉬운 말로 풀어 씁니다.**
      원문을 거의 그대로 되풀이하지 않습니다.
+   - 문장 앞에 "번역 생략"이라고 적혀 있으면 이미 번역이 있는 문장입니다.
+     translation은 빈 문자열로 두고, 고른 표현만 풀어 줍니다.
 
 2) 독자가 고른 표현마다 사전에 실릴 꼴과 그 문장에서의 뜻을 씁니다.
    - surface에는 받은 표현을 **글자 하나 바꾸지 않고** 그대로 되돌려 적습니다.
@@ -179,7 +190,9 @@ function userPrompt(input: {
     : input.bookTitle;
   const blocks = input.sentences.map((sentence, i) =>
     [
-      `[문장 ${i + 1}]`,
+      sentence.knownTranslation
+        ? `[문장 ${i + 1}] (번역 생략)`
+        : `[문장 ${i + 1}]`,
       sentence.text,
       '고른 표현:',
       ...sentence.picks.map((pick) => `- ${pick}`),

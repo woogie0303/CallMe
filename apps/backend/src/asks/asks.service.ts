@@ -8,13 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Book, type BookDocument } from '../books/book.schema';
+import { ModelUnavailable } from '../common/claude';
+import { assertPageInBook } from '../common/page-in-book';
 import { ItemsService } from '../items/items.service';
 import { Reader } from '../readers/reader.schema';
 import { Sentence, type SentenceDocument } from '../sentences/sentence.schema';
-import { Ask, type AskDocument, type AskPick } from './ask.schema';
-import { ModelUnavailable } from '../common/claude';
-import { assertPageInBook } from '../common/page-in-book';
 import { AnswerService, type AskedSentence } from './anthropic/answer.service';
+import { Ask, type AskDocument, type AskPick } from './ask.schema';
 import {
   MAX_PICKS,
   type CreateAskDto,
@@ -347,9 +347,13 @@ export class AsksService {
       return this.wait(entries, '질문 소진');
     }
 
-    const asked: AskedSentence[] = entries.map(({ ask, sentence }) => ({
+    const known = await Promise.all(
+      entries.map(({ sentence }) => this.knownTranslation(readerId, sentence)),
+    );
+    const asked: AskedSentence[] = entries.map(({ ask, sentence }, i) => ({
       text: sentence.text,
       picks: ask.picks.map((pick) => pick.surface),
+      knownTranslation: known[i],
     }));
 
     let matched: (MatchedAnswer | null)[];
@@ -388,6 +392,26 @@ export class AsksService {
       done.push(await ask.save());
     }
     return done;
+  }
+
+  /**
+   * 이 문장이 전에 받은 번역. 다시 물을 때마다 모델에게 번역을 새로 시키면 '뜻 보기'의
+   * 문장 뜻이 매번 달라져서, 있으면 그것을 다시 쓴다.
+   */
+  private async knownTranslation(
+    readerId: string,
+    sentence: SentenceDocument,
+  ): Promise<string | undefined> {
+    const prev = await this.asks
+      .findOne({
+        readerId: new Types.ObjectId(readerId),
+        sentenceId: sentence._id,
+        status: 'answered',
+        translation: { $exists: true, $ne: '' },
+      })
+      .sort({ answeredAt: -1 })
+      .select('translation');
+    return prev?.translation?.trim() || undefined;
   }
 
   private wait(

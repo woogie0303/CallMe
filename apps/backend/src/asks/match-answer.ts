@@ -22,7 +22,10 @@ export function matchAnswer(
 ): (MatchedAnswer | null)[] {
   return asked.map((sentence, i) => {
     const got = answer.sentences[i];
-    if (!got?.translation.trim()) return null;
+    /** 이미 번역이 있는 문장은 모델이 번역을 비워 와도 그 번역을 그대로 쓴다 */
+    const translation =
+      sentence.knownTranslation ?? got?.translation.trim() ?? '';
+    if (!got || !translation) return null;
 
     const picks: MatchedAnswer['picks'] = [];
     for (const [j, surface] of sentence.picks.entries()) {
@@ -38,6 +41,6 @@ export function matchAnswer(
       });
     }
 
-    return { translation: got.translation.trim(), picks };
+    return { translation, picks };
   });
 }
